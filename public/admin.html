@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>لوحة الإدارة | iraq story game</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="admin-wrap">
+      <div class="admin-topbar">
+        <h1>لوحة إدارة iraq story game</h1>
+        <div class="topbar-actions">
+          <a class="btn-secondary" href="/">العودة للرئيسية</a>
+          <button type="button" id="logoutBtn" class="btn-secondary">تسجيل خروج</button>
+        </div>
+      </div>
+
+      <section id="adminStatus" class="status" aria-live="polite"></section>
+
+      <section class="admin-grid">
+        <article class="admin-card">
+          <h2>إضافة / تعديل شركة</h2>
+          <form id="companyForm" class="form-grid">
+            <input id="companyId" type="hidden" />
+            <label>
+              <span>Slug</span>
+              <input id="companySlug" required placeholder="example-company" />
+            </label>
+            <label>
+              <span>اسم الشركة عربي</span>
+              <input id="companyNameAr" required placeholder="اسم الشركة" />
+            </label>
+            <label>
+              <span>اسم الشركة إنجليزي</span>
+              <input id="companyNameEn" required placeholder="Company Name" />
+            </label>
+            <div class="form-actions">
+              <button type="submit" class="btn-primary">حفظ الشركة</button>
+              <button type="button" id="companyReset" class="btn-secondary">تفريغ</button>
+            </div>
+          </form>
+        </article>
+
+        <article class="admin-card">
+          <h2>إضافة / تعديل لعبة</h2>
+          <form id="gameForm" class="form-grid">
+            <input id="gameId" type="hidden" />
+            <label>
+              <span>الشركة</span>
+              <select id="gameCompany" required></select>
+            </label>
+            <label>
+              <span>اسم اللعبة عربي</span>
+              <input id="gameNameAr" required />
+            </label>
+            <label>
+              <span>اسم اللعبة إنجليزي</span>
+              <input id="gameNameEn" required />
+            </label>
+            <label>
+              <span>النوع</span>
+              <input id="gameGenre" required placeholder="Action / Shooter / RPG" />
+            </label>
+            <label>
+              <span>سنة الإصدار</span>
+              <input id="gameYear" type="number" min="1970" max="2100" required />
+            </label>
+            <label>
+              <span>سعر اللعبة (ر.س)</span>
+              <input id="gamePrice" type="number" min="0" step="1" value="0" />
+            </label>
+            <label>
+              <span>صورة اللعبة من الجهاز</span>
+              <input id="gameImage" type="file" accept="image/*" />
+            </label>
+            <p id="gameImageHint" class="hint-text"></p>
+            <label>
+              <span>وصف اللعبة</span>
+              <textarea id="gameDescription" rows="4" placeholder="وصف مختصر"></textarea>
+            </label>
+            <div class="form-actions">
+              <button type="submit" class="btn-primary">حفظ اللعبة</button>
+              <button type="button" id="gameReset" class="btn-secondary">تفريغ</button>
+            </div>
+          </form>
+        </article>
+      </section>
+
+      <section class="admin-card">
+        <h2>الشركات والألعاب الحالية</h2>
+        <p class="hint-text">ملاحظة: حذف شركة سيحذف جميع ألعابها.</p>
+        <div id="adminCatalog" class="admin-catalog"></div>
+      </section>
+    </main>
+
+    <script src="admin.js" defer></script>
+  </body>
+</html>

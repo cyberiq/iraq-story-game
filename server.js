@@ -1,0 +1,646 @@
+require("dotenv").config();
+
+const express = require("express");
+const cors = require("cors");
+const path = require("path");
+const fs = require("fs");
+const session = require("express-session");
+const multer = require("multer");
+
+const {
+  seedData,
+  initDatabase,
+  getCatalog,
+  getGameDetailsById,
+  getCompaniesList,
+  createCompany,
+  updateCompany,
+  createGame,
+  updateGame,
+  deleteCompany,
+  deleteGame
+} = require("./db");
+
+const app = express();
+const PORT = Number(process.env.PORT || 3000);
+const ADMIN_USERNAME = process.env.ADMIN_USERNAME || "admin";
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "admin";
+const SESSION_SECRET = process.env.SESSION_SECRET || "iraq-story-game-session-secret";
+let databaseReady = false;
+
+const uploadsDir = path.join(__dirname, "public", "uploads");
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir, { recursive: true });
+}
+
+const storage = multer.diskStorage({
+  destination(req, file, cb) {
+    cb(null, uploadsDir);
+  },
+  filename(req, file, cb) {
+    const extension = path.extname(file.originalname || "").toLowerCase();
+    const safeExt = extension || ".jpg";
+    cb(null, `${Date.now()}-${Math.round(Math.random() * 1e9)}${safeExt}`);
+  }
+});
+
+const upload = multer({
+  storage,
+  limits: {
+    fileSize: 5 * 1024 * 1024
+  },
+  fileFilter(req, file, cb) {
+    if (!file.mimetype || !file.mimetype.startsWith("image/")) {
+      return cb(new Error("Only image files are allowed"));
+    }
+
+    cb(null, true);
+  }
+});
+
+app.use(cors());
+app.use(express.json());
+app.use(
+  session({
+    secret: SESSION_SECRET,
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+      httpOnly: true,
+      sameSite: "lax",
+      secure: false,
+      maxAge: 1000 * 60 * 60 * 12
+    }
+  })
+);
+app.use(express.static(path.join(__dirname, "public")));
+
+function requireAdmin(req, res, next) {
+  if (req.session && req.session.isAdmin === true) {
+    return next();
+  }
+
+  return res.status(401).json({ error: "Unauthorized" });
+}
+
+function fallbackCatalog() {
+  return seedData.map((company, companyIndex) => ({
+    id: companyIndex + 1,
+    slug: company.slug,
+    name_ar: company.name_ar,
+    name_en: company.name_en,
+    games: company.games.map((game, gameIndex) => ({
+      id: (companyIndex + 1) * 100 + gameIndex + 1,
+      name_ar: game.name_ar,
+      name_en: game.name_en,
+      genre: game.genre,
+      release_year: game.release_year,
+      cover_image_url: game.cover_image_url,
+      description: game.description,
+      price: game.price ?? 0
+    }))
+  }));
+}
+
+function fallbackGameById(id) {
+  const companies = fallbackCatalog();
+  for (const company of companies) {
+    const game = company.games.find((entry) => Number(entry.id) === Number(id));
+    if (game) {
+      return {
+        id: game.id,
+        name_ar: game.name_ar,
+        name_en: game.name_en,
+        genre: game.genre,
+        release_year: game.release_year,
+        cover_image_url: game.cover_image_url,
+        description: game.description,
+        price: game.price,
+        company: {
+          id: company.id,
+          slug: company.slug,
+          name_ar: company.name_ar,
+          name_en: company.name_en
+        }
+      };
+    }
+  }
+  return null;
+}
+
+let fallbackCompanyState = JSON.parse(JSON.stringify(seedData.map((company, companyIndex) => ({
+  id: companyIndex + 1,
+  slug: company.slug,
+  name_ar: company.name_ar,
+  name_en: company.name_en,
+  games: company.games.map((game, gameIndex) => ({
+    id: (companyIndex + 1) * 100 + gameIndex + 1,
+    ...game
+  }))
+}))));
+
+function nextFallbackCompanyId() {
+  return fallbackCompanyState.reduce((maxId, company) => Math.max(maxId, Number(company.id || 0)), 0) + 1;
+}
+
+function nextFallbackGameId() {
+  return fallbackCompanyState.reduce((maxId, company) => {
+    const companyMax = (company.games || []).reduce((innerMax, game) => Math.max(innerMax, Number(game.id || 0)), 0);
+    return Math.max(maxId, companyMax);
+  }, 0) + 1;
+}
+
+function findFallbackCompanyById(id) {
+  return fallbackCompanyState.find((company) => Number(company.id) === Number(id));
+}
+
+function findFallbackGameById(id) {
+  for (const company of fallbackCompanyState) {
+    const game = (company.games || []).find((entry) => Number(entry.id) === Number(id));
+    if (game) {
+      return { company, game };
+    }
+  }
+  return null;
+}
+
+function fallbackCompaniesList() {
+  return fallbackCompanyState.map((company) => ({
+    id: company.id,
+    slug: company.slug,
+    name_ar: company.name_ar,
+    name_en: company.name_en
+  }));
+}
+
+function fallbackCatalog() {
+  return fallbackCompanyState.map((company) => ({
+    id: company.id,
+    slug: company.slug,
+    name_ar: company.name_ar,
+    name_en: company.name_en,
+    games: (company.games || []).map((game) => ({
+      id: game.id,
+      name_ar: game.name_ar,
+      name_en: game.name_en,
+      genre: game.genre,
+      release_year: game.release_year,
+      cover_image_url: game.cover_image_url,
+      description: game.description,
+      price: game.price ?? 0
+    }))
+  }));
+}
+
+app.get("/api/health", (req, res) => {
+  res.json({ ok: true, service: "game-catalog", databaseReady });
+});
+
+app.get("/api/auth/status", (req, res) => {
+  const authenticated = Boolean(req.session && req.session.isAdmin === true);
+  res.json({ authenticated });
+});
+
+app.post("/api/auth/login", (req, res) => {
+  const { username, password } = req.body || {};
+  const normalizedUsername = String(username || "").trim();
+  const normalizedPassword = String(password || "").trim();
+
+  if (normalizedUsername === ADMIN_USERNAME && normalizedPassword === ADMIN_PASSWORD) {
+    req.session.isAdmin = true;
+    return res.json({ ok: true });
+  }
+
+  return res.status(401).json({ error: "اسم المستخدم أو كلمة المرور غير صحيحة" });
+});
+
+app.post("/api/auth/logout", (req, res) => {
+  if (!req.session) {
+    return res.json({ ok: true });
+  }
+
+  req.session.destroy(() => {
+    res.clearCookie("connect.sid");
+    res.json({ ok: true });
+  });
+});
+
+app.get("/api/catalog", async (req, res) => {
+  if (!databaseReady) {
+    const { search = "", sort = "name_asc" } = req.query;
+    const companies = fallbackCatalog();
+    const term = String(search || "").trim().toLowerCase();
+    const filtered = !term
+      ? companies
+      : companies.filter((company) => {
+          const companyMatch =
+            company.name_ar.toLowerCase().includes(term) || company.name_en.toLowerCase().includes(term);
+          const games = company.games.filter(
+            (game) =>
+              game.name_ar.toLowerCase().includes(term) || game.name_en.toLowerCase().includes(term)
+          );
+          return companyMatch || games.length;
+        });
+
+    const sorted = [...filtered];
+    sorted.forEach((company) => {
+      company.games.sort((a, b) => {
+        switch (sort) {
+          case "name_desc":
+            return String(b.name_en).localeCompare(String(a.name_en));
+          case "year_asc":
+            return Number(a.release_year) - Number(b.release_year);
+          case "year_desc":
+            return Number(b.release_year) - Number(a.release_year);
+          case "company_asc":
+            return String(company.name_en).localeCompare(String(company.name_en));
+          default:
+            return String(a.name_en).localeCompare(String(b.name_en));
+        }
+      });
+    });
+
+    if (sort === "company_asc") {
+      sorted.sort((a, b) => String(a.name_en).localeCompare(String(b.name_en)));
+    }
+
+    return res.json({ companies: sorted });
+  }
+
+  try {
+    const { search = "", sort = "name_asc" } = req.query;
+    const companies = await getCatalog({ search, sort });
+    res.json({ companies });
+  } catch (error) {
+    console.error("Failed to fetch catalog", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+app.get("/api/games/:id", async (req, res) => {
+  const id = Number(req.params.id);
+  if (!Number.isInteger(id) || id <= 0) {
+    return res.status(400).json({ error: "Invalid game id" });
+  }
+
+  if (!databaseReady) {
+    const game = fallbackGameById(id);
+    if (!game) {
+      return res.status(404).json({ error: "Game not found" });
+    }
+    return res.json({ game });
+  }
+
+  try {
+    const game = await getGameDetailsById(id);
+    if (!game) {
+      return res.status(404).json({ error: "Game not found" });
+    }
+
+    res.json({ game });
+  } catch (error) {
+    console.error("Failed to fetch game details", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+app.get("/api/companies", async (req, res) => {
+  if (!databaseReady) {
+    return res.json({ companies: fallbackCompaniesList() });
+  }
+
+  try {
+    const companies = await getCompaniesList();
+    res.json({ companies });
+  } catch (error) {
+    console.error("Failed to fetch companies", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+app.post("/api/companies", requireAdmin, async (req, res) => {
+  const { slug, name_ar, name_en } = req.body || {};
+
+  if (!slug || !name_ar || !name_en) {
+    return res.status(400).json({ error: "slug, name_ar, name_en are required" });
+  }
+
+  if (!databaseReady) {
+    const normalizedSlug = String(slug).trim();
+    const duplicate = fallbackCompanyState.some((company) => company.slug === normalizedSlug);
+    if (duplicate) {
+      return res.status(409).json({ error: "Company slug already exists" });
+    }
+
+    const created = {
+      id: nextFallbackCompanyId(),
+      slug: normalizedSlug,
+      name_ar: String(name_ar).trim(),
+      name_en: String(name_en).trim(),
+      games: []
+    };
+
+    fallbackCompanyState.push(created);
+    return res.status(201).json({ id: created.id, slug: created.slug });
+  }
+
+  try {
+    const created = await createCompany({ slug, name_ar, name_en });
+    res.status(201).json(created);
+  } catch (error) {
+    console.error("Failed to create company", error);
+    if (error && error.code === "ER_DUP_ENTRY") {
+      return res.status(409).json({ error: "Company slug already exists" });
+    }
+
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+app.put("/api/companies/:id", requireAdmin, async (req, res) => {
+  const id = Number(req.params.id);
+  const { slug, name_ar, name_en } = req.body || {};
+
+  if (!Number.isInteger(id) || id <= 0) {
+    return res.status(400).json({ error: "Invalid company id" });
+  }
+
+  if (!slug || !name_ar || !name_en) {
+    return res.status(400).json({ error: "slug, name_ar, name_en are required" });
+  }
+
+  if (!databaseReady) {
+    const company = findFallbackCompanyById(id);
+    if (!company) {
+      return res.status(404).json({ error: "Company not found" });
+    }
+
+    company.slug = String(slug).trim();
+    company.name_ar = String(name_ar).trim();
+    company.name_en = String(name_en).trim();
+    return res.json({ updated: true });
+  }
+
+  try {
+    const affected = await updateCompany(id, { slug, name_ar, name_en });
+    if (!affected) {
+      return res.status(404).json({ error: "Company not found" });
+    }
+
+    res.json({ updated: true });
+  } catch (error) {
+    console.error("Failed to update company", error);
+    if (error && error.code === "ER_DUP_ENTRY") {
+      return res.status(409).json({ error: "Company slug already exists" });
+    }
+
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+app.delete("/api/companies/:id", requireAdmin, async (req, res) => {
+  const id = Number(req.params.id);
+
+  if (!Number.isInteger(id) || id <= 0) {
+    return res.status(400).json({ error: "Invalid company id" });
+  }
+
+  if (!databaseReady) {
+    const index = fallbackCompanyState.findIndex((company) => Number(company.id) === id);
+    if (index === -1) {
+      return res.status(404).json({ error: "Company not found" });
+    }
+
+    fallbackCompanyState.splice(index, 1);
+    return res.json({ deleted: true });
+  }
+
+  try {
+    const affected = await deleteCompany(id);
+    if (!affected) {
+      return res.status(404).json({ error: "Company not found" });
+    }
+
+    res.json({ deleted: true });
+  } catch (error) {
+    console.error("Failed to delete company", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+app.post("/api/games", requireAdmin, upload.single("image"), async (req, res) => {
+  const { company_id, name_ar, name_en, genre, release_year, price, description = "" } = req.body || {};
+  const year = Number(release_year);
+  const coverImagePath = req.file ? `/uploads/${req.file.filename}` : "";
+
+  if (!company_id || !name_ar || !name_en || !genre || !Number.isInteger(year)) {
+    return res.status(400).json({
+      error: "company_id, name_ar, name_en, genre, release_year are required"
+    });
+  }
+
+  if (!databaseReady) {
+    const company = findFallbackCompanyById(company_id);
+    if (!company) {
+      return res.status(404).json({ error: "Company not found" });
+    }
+
+    const game = {
+      id: nextFallbackGameId(),
+      name_ar: String(name_ar).trim(),
+      name_en: String(name_en).trim(),
+      genre: String(genre).trim(),
+      release_year: year,
+      price: Number(req.body.price ?? 0),
+      cover_image_url: coverImagePath || "",
+      description: String(description).trim(),
+    };
+
+    company.games.push(game);
+    return res.status(201).json({ id: game.id });
+  }
+
+  try {
+    const created = await createGame({
+      company_id,
+      name_ar,
+      name_en,
+      genre,
+      release_year: year,
+      price: Number(price ?? 0),
+      cover_image_url: coverImagePath,
+      description
+    });
+
+    res.status(201).json(created);
+  } catch (error) {
+    console.error("Failed to create game", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+app.put("/api/games/:id", requireAdmin, upload.single("image"), async (req, res) => {
+  const id = Number(req.params.id);
+  const { company_id, name_ar, name_en, genre, release_year, price, current_cover_image_url = "", description = "" } = req.body || {};
+  const year = Number(release_year);
+  const coverImagePath = req.file ? `/uploads/${req.file.filename}` : (current_cover_image_url || "");
+
+  if (!Number.isInteger(id) || id <= 0) {
+    return res.status(400).json({ error: "Invalid game id" });
+  }
+
+  if (!company_id || !name_ar || !name_en || !genre || !Number.isInteger(year)) {
+    return res.status(400).json({
+      error: "company_id, name_ar, name_en, genre, release_year are required"
+    });
+  }
+
+  if (!databaseReady) {
+    const found = findFallbackGameById(id);
+    if (!found) {
+      return res.status(404).json({ error: "Game not found" });
+    }
+
+    const { company } = found;
+    const game = found.game;
+
+    const targetCompany = findFallbackCompanyById(company_id);
+    if (!targetCompany) {
+      return res.status(404).json({ error: "Company not found" });
+    }
+
+    const nextGame = {
+      ...game,
+      name_ar: String(name_ar).trim(),
+      name_en: String(name_en).trim(),
+      genre: String(genre).trim(),
+      release_year: year,
+      cover_image_url: coverImagePath || game.cover_image_url || "",
+      description: String(description).trim(),
+      price: Number(price ?? game.price ?? 0)
+    };
+
+    if (company.id !== targetCompany.id) {
+      const sourceIndex = company.games.findIndex((entry) => Number(entry.id) === Number(id));
+      if (sourceIndex >= 0) {
+        company.games.splice(sourceIndex, 1);
+      }
+      targetCompany.games.push(nextGame);
+    } else {
+      const sourceIndex = company.games.findIndex((entry) => Number(entry.id) === Number(id));
+      if (sourceIndex >= 0) {
+        company.games[sourceIndex] = nextGame;
+      }
+    }
+
+    return res.json({ updated: true });
+  }
+
+  try {
+    const affected = await updateGame(id, {
+      company_id,
+      name_ar,
+      name_en,
+      genre,
+      release_year: year,
+      price: Number(price ?? 0),
+      cover_image_url: coverImagePath,
+      description
+    });
+
+    if (!affected) {
+      return res.status(404).json({ error: "Game not found" });
+    }
+
+    res.json({ updated: true });
+  } catch (error) {
+    console.error("Failed to update game", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+app.delete("/api/games/:id", requireAdmin, async (req, res) => {
+  const id = Number(req.params.id);
+
+  if (!Number.isInteger(id) || id <= 0) {
+    return res.status(400).json({ error: "Invalid game id" });
+  }
+
+  if (!databaseReady) {
+    const found = findFallbackGameById(id);
+    if (!found) {
+      return res.status(404).json({ error: "Game not found" });
+    }
+
+    const company = found.company;
+    const index = company.games.findIndex((entry) => Number(entry.id) === Number(id));
+    if (index === -1) {
+      return res.status(404).json({ error: "Game not found" });
+    }
+
+    company.games.splice(index, 1);
+    return res.json({ deleted: true });
+  }
+
+  try {
+    const affected = await deleteGame(id);
+    if (!affected) {
+      return res.status(404).json({ error: "Game not found" });
+    }
+
+    res.json({ deleted: true });
+  } catch (error) {
+    console.error("Failed to delete game", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+app.use((error, req, res, next) => {
+  if (error && error.message === "Only image files are allowed") {
+    return res.status(400).json({ error: "Please upload a valid image file" });
+  }
+
+  if (error && error.code === "LIMIT_FILE_SIZE") {
+    return res.status(400).json({ error: "Image size must be 5MB or less" });
+  }
+
+  return next(error);
+});
+
+app.get("/login", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "login.html"));
+});
+
+app.get("/admin", (req, res) => {
+  if (!req.session || req.session.isAdmin !== true) {
+    return res.redirect("/login");
+  }
+
+  res.sendFile(path.join(__dirname, "public", "admin.html"));
+});
+
+app.get("/game", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "game.html"));
+});
+
+app.use((req, res, next) => {
+  if (req.path.startsWith("/api/")) {
+    return res.status(404).json({ error: "API route not found" });
+  }
+
+  res.sendFile(path.join(__dirname, "public", "index.html"));
+});
+
+(async () => {
+  try {
+    await initDatabase();
+    databaseReady = true;
+  } catch (error) {
+    databaseReady = false;
+    console.error("Database is not ready yet, server will continue with limited functionality.", error);
+  }
+
+  app.listen(PORT, () => {
+    console.log(`Server running on http://localhost:${PORT}`);
+  });
+})();

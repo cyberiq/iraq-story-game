@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>iraq story game</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="bg-shape bg-shape-a"></div>
+    <div class="bg-shape bg-shape-b"></div>
+
+    <header class="hero">
+      <p class="hero-kicker">Game Directory</p>
+      <h1>iraq story game</h1>
+      <p class="hero-subtitle">
+        تصفح شركات الألعاب مثل اكتفجن، PUBG، يلا، وغيرها مع قائمة الألعاب التي تنتجها.
+      </p>
+
+      <div class="controls">
+        <label class="control-field">
+          <span>بحث</span>
+          <input
+            id="searchInput"
+            type="search"
+            placeholder="ابحث باسم شركة أو لعبة..."
+            autocomplete="off"
+          />
+        </label>
+
+        <label class="control-field">
+          <span>فرز</span>
+          <select id="sortSelect">
+            <option value="name_asc">الاسم (A-Z)</option>
+            <option value="name_desc">الاسم (Z-A)</option>
+            <option value="year_desc">الأحدث أولًا</option>
+            <option value="year_asc">الأقدم أولًا</option>
+            <option value="company_asc">حسب الشركة</option>
+          </select>
+        </label>
+      </div>
+
+      <div class="hero-actions">
+        <a class="btn-secondary" href="/admin">لوحة الإدارة</a>
+      </div>
+    </header>
+
+    <main>
+      <section id="status" class="status" aria-live="polite"></section>
+      <section id="catalog" class="company-grid"></section>
+    </main>
+
+    <template id="companyTemplate">
+      <article class="company-card">
+        <div class="company-header">
+          <h2 class="company-name"></h2>
+          <p class="company-slug"></p>
+        </div>
+        <div class="games-list"></div>
+      </article>
+    </template>
+
+    <template id="gameTemplate">
+      <article class="game-card">
+        <img class="game-cover" alt="صورة اللعبة" loading="lazy" />
+        <div class="game-content">
+          <h3 class="game-name"></h3>
+          <p class="game-meta"></p>
+          <div class="game-price-row">
+            <span class="game-price">₪0</span>
+            <a class="details-link" href="#">تفاصيل اللعبة</a>
+          </div>
+        </div>
+      </article>
+    </template>
+
+    <script src="app.js" defer></script>
+  </body>
+</html>

@@ -1,0 +1,9 @@
+{
+  "appId": "com.iraqstory.game",
+  "appName": "iraq story game",
+  "webDir": "public",
+  "bundledWebRuntime": false,
+  "server": {
+    "androidScheme": "https"
+  }
+}
