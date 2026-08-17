@@ -26,7 +26,59 @@ const PORT = Number(process.env.PORT || 3000);
 const ADMIN_USERNAME = process.env.ADMIN_USERNAME || "admin";
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "admin";
 const SESSION_SECRET = process.env.SESSION_SECRET || "iraq-story-game-session-secret";
+const fallbackDataPath = path.join(__dirname, "data", "fallback-data.json");
+const adminSettingsPath = path.join(__dirname, "data", "admin-settings.json");
 let databaseReady = false;
+
+function ensureDataFiles() {
+  const dataDir = path.dirname(fallbackDataPath);
+  if (!fs.existsSync(dataDir)) {
+    fs.mkdirSync(dataDir, { recursive: true });
+  }
+
+  if (!fs.existsSync(fallbackDataPath)) {
+    fs.writeFileSync(fallbackDataPath, JSON.stringify(seedData.map((company, companyIndex) => ({
+      id: companyIndex + 1,
+      slug: company.slug,
+      name_ar: company.name_ar,
+      name_en: company.name_en,
+      games: company.games.map((game, gameIndex) => ({
+        id: (companyIndex + 1) * 100 + gameIndex + 1,
+        ...game,
+        currency: game.currency || "IQD"
+      }))
+    })), null, 2));
+  }
+
+  if (!fs.existsSync(adminSettingsPath)) {
+    fs.writeFileSync(adminSettingsPath, JSON.stringify({
+      username: ADMIN_USERNAME,
+      password: ADMIN_PASSWORD
+    }, null, 2));
+  }
+}
+
+function readJsonFile(filePath, fallbackValue) {
+  try {
+    const content = fs.readFileSync(filePath, "utf8");
+    return content ? JSON.parse(content) : fallbackValue;
+  } catch (error) {
+    return fallbackValue;
+  }
+}
+
+function writeJsonFile(filePath, value) {
+  fs.writeFileSync(filePath, JSON.stringify(value, null, 2));
+}
+
+let runtimeAdminSettings = readJsonFile(adminSettingsPath, {
+  username: ADMIN_USERNAME,
+  password: ADMIN_PASSWORD
+});
+
+function saveAdminSettings() {
+  writeJsonFile(adminSettingsPath, runtimeAdminSettings);
+}
 
 const uploadsDir = path.join(__dirname, "public", "uploads");
 if (!fs.existsSync(uploadsDir)) {
@@ -129,16 +181,34 @@ function fallbackGameById(id) {
   return null;
 }
 
-let fallbackCompanyState = JSON.parse(JSON.stringify(seedData.map((company, companyIndex) => ({
-  id: companyIndex + 1,
-  slug: company.slug,
-  name_ar: company.name_ar,
-  name_en: company.name_en,
-  games: company.games.map((game, gameIndex) => ({
-    id: (companyIndex + 1) * 100 + gameIndex + 1,
-    ...game
-  }))
-}))));
+let fallbackCompanyState = [];
+
+function loadFallbackState() {
+  ensureDataFiles();
+  const saved = readJsonFile(fallbackDataPath, []);
+  if (Array.isArray(saved) && saved.length) {
+    return JSON.parse(JSON.stringify(saved));
+  }
+
+  return JSON.parse(JSON.stringify(seedData.map((company, companyIndex) => ({
+    id: companyIndex + 1,
+    slug: company.slug,
+    name_ar: company.name_ar,
+    name_en: company.name_en,
+    games: company.games.map((game, gameIndex) => ({
+      id: (companyIndex + 1) * 100 + gameIndex + 1,
+      ...game,
+      currency: game.currency || "IQD"
+    }))
+  }))));
+}
+
+function saveFallbackState() {
+  ensureDataFiles();
+  writeJsonFile(fallbackDataPath, JSON.parse(JSON.stringify(fallbackCompanyState)));
+}
+
+fallbackCompanyState = loadFallbackState();
 
 function nextFallbackCompanyId() {
   return fallbackCompanyState.reduce((maxId, company) => Math.max(maxId, Number(company.id || 0)), 0) + 1;
@@ -188,7 +258,8 @@ function fallbackCatalog() {
       release_year: game.release_year,
       cover_image_url: game.cover_image_url,
       description: game.description,
-      price: game.price ?? 0
+      price: game.price ?? 0,
+      currency: game.currency || "IQD"
     }))
   }));
 }
@@ -207,12 +278,39 @@ app.post("/api/auth/login", (req, res) => {
   const normalizedUsername = String(username || "").trim();
   const normalizedPassword = String(password || "").trim();
 
-  if (normalizedUsername === ADMIN_USERNAME && normalizedPassword === ADMIN_PASSWORD) {
+  if (normalizedUsername === runtimeAdminSettings.username && normalizedPassword === runtimeAdminSettings.password) {
     req.session.isAdmin = true;
     return res.json({ ok: true });
   }
 
   return res.status(401).json({ error: "اسم المستخدم أو كلمة المرور غير صحيحة" });
+});
+
+app.post("/api/auth/change-password", requireAdmin, (req, res) => {
+  const { currentPassword = "", newPassword = "", confirmPassword = "" } = req.body || {};
+  const current = String(currentPassword).trim();
+  const next = String(newPassword).trim();
+  const confirm = String(confirmPassword).trim();
+
+  if (!current || !next || !confirm) {
+    return res.status(400).json({ error: "يجب إدخال كلمة المرور الحالية والجديدة وتأكيدها." });
+  }
+
+  if (next.length < 4) {
+    return res.status(400).json({ error: "كلمة المرور الجديدة يجب أن تكون 4 أحرف على الأقل." });
+  }
+
+  if (next !== confirm) {
+    return res.status(400).json({ error: "تأكيد كلمة المرور لا يطابق كلمة المرور الجديدة." });
+  }
+
+  if (current !== runtimeAdminSettings.password) {
+    return res.status(400).json({ error: "كلمة المرور الحالية غير صحيحة." });
+  }
+
+  runtimeAdminSettings.password = next;
+  saveAdminSettings();
+  return res.json({ ok: true, message: "تم تحديث كلمة المرور بنجاح." });
 });
 
 app.post("/api/auth/logout", (req, res) => {
@@ -430,7 +528,7 @@ app.delete("/api/companies/:id", requireAdmin, async (req, res) => {
 });
 
 app.post("/api/games", requireAdmin, upload.single("image"), async (req, res) => {
-  const { company_id, name_ar, name_en, genre, release_year, price, description = "" } = req.body || {};
+  const { company_id, name_ar, name_en, genre, release_year, price, currency = "IQD", description = "" } = req.body || {};
   const year = Number(release_year);
   const coverImagePath = req.file ? `/uploads/${req.file.filename}` : "";
 
@@ -453,11 +551,13 @@ app.post("/api/games", requireAdmin, upload.single("image"), async (req, res) =>
       genre: String(genre).trim(),
       release_year: year,
       price: Number(req.body.price ?? 0),
+      currency: String(currency || "IQD").toUpperCase(),
       cover_image_url: coverImagePath || "",
       description: String(description).trim(),
     };
 
     company.games.push(game);
+    saveFallbackState();
     return res.status(201).json({ id: game.id });
   }
 
@@ -469,6 +569,7 @@ app.post("/api/games", requireAdmin, upload.single("image"), async (req, res) =>
       genre,
       release_year: year,
       price: Number(price ?? 0),
+      currency: String(currency || "IQD").toUpperCase(),
       cover_image_url: coverImagePath,
       description
     });
@@ -482,7 +583,7 @@ app.post("/api/games", requireAdmin, upload.single("image"), async (req, res) =>
 
 app.put("/api/games/:id", requireAdmin, upload.single("image"), async (req, res) => {
   const id = Number(req.params.id);
-  const { company_id, name_ar, name_en, genre, release_year, price, current_cover_image_url = "", description = "" } = req.body || {};
+  const { company_id, name_ar, name_en, genre, release_year, price, currency = "IQD", current_cover_image_url = "", description = "" } = req.body || {};
   const year = Number(release_year);
   const coverImagePath = req.file ? `/uploads/${req.file.filename}` : (current_cover_image_url || "");
 
@@ -518,7 +619,8 @@ app.put("/api/games/:id", requireAdmin, upload.single("image"), async (req, res)
       release_year: year,
       cover_image_url: coverImagePath || game.cover_image_url || "",
       description: String(description).trim(),
-      price: Number(price ?? game.price ?? 0)
+      price: Number(price ?? game.price ?? 0),
+      currency: String(currency || game.currency || "IQD").toUpperCase()
     };
 
     if (company.id !== targetCompany.id) {
@@ -534,6 +636,7 @@ app.put("/api/games/:id", requireAdmin, upload.single("image"), async (req, res)
       }
     }
 
+    saveFallbackState();
     return res.json({ updated: true });
   }
 
@@ -545,6 +648,7 @@ app.put("/api/games/:id", requireAdmin, upload.single("image"), async (req, res)
       genre,
       release_year: year,
       price: Number(price ?? 0),
+      currency: String(currency || "IQD").toUpperCase(),
       cover_image_url: coverImagePath,
       description
     });
@@ -580,6 +684,7 @@ app.delete("/api/games/:id", requireAdmin, async (req, res) => {
     }
 
     company.games.splice(index, 1);
+    saveFallbackState();
     return res.json({ deleted: true });
   }
 
@@ -624,6 +729,14 @@ app.get("/admin", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "admin.html"));
 });
 
+app.get("/admin/password", (req, res) => {
+  if (!req.session || req.session.isAdmin !== true) {
+    return res.redirect("/login");
+  }
+
+  res.sendFile(path.join(__dirname, "public", "change-password.html"));
+});
+
 app.get("/game", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "game.html"));
 });
@@ -656,6 +769,8 @@ app.use((req, res, next) => {
     }
   }
 
+  ensureDataFiles();
+  ensureDataFiles();
   app.listen(PORT, () => {
     console.log(`Server running on http://localhost:${PORT}`);
   });
