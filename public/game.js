@@ -7,12 +7,15 @@ const metaNode = document.getElementById("detailMeta");
 const descriptionNode = document.getElementById("detailDescription");
 const priceNode = document.getElementById("detailPrice");
 
-function formatPrice(value) {
+function formatPrice(value, currency = "IQD") {
   const numericValue = Number(value ?? 0);
   if (!Number.isFinite(numericValue) || numericValue <= 0) {
     return "مجانية";
   }
-  return `${numericValue} ر.س`;
+
+  const normalizedCurrency = String(currency || "IQD").toUpperCase();
+  const label = normalizedCurrency === "USD" ? "$" : "د.ع";
+  return `${numericValue} ${label}`;
 }
 
 function fallbackImage(gameName) {
@@ -62,7 +65,7 @@ async function loadGameDetails() {
     companyNode.textContent = `الشركة: ${game.company.name_ar} / ${game.company.name_en}`;
     metaNode.textContent = `النوع: ${game.genre} - سنة الإصدار: ${game.release_year}`;
     descriptionNode.textContent = game.description || "لا يوجد وصف متاح لهذه اللعبة حاليًا.";
-    priceNode.textContent = formatPrice(game.price ?? 0);
+    priceNode.textContent = formatPrice(game.price ?? 0, game.currency || "IQD");
 
     cardNode.classList.remove("hidden");
     setStatus("");

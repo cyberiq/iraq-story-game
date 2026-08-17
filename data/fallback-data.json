@@ -1,0 +1,163 @@
+[
+  {
+    "id": 1,
+    "slug": "activision",
+    "name_ar": "اكتفجن",
+    "name_en": "Activision",
+    "games": [
+      {
+        "id": 101,
+        "name_ar": "كول اوف ديوتي: مودرن وورفير 3",
+        "name_en": "Call of Duty: Modern Warfare III",
+        "genre": "Shooter",
+        "release_year": 2023,
+        "price": 179,
+        "currency": "IQD",
+        "cover_image_url": "https://cdn.cloudflare.steamstatic.com/steam/apps/2519060/header.jpg",
+        "description": "جزء جديد من سلسلة Call of Duty مع طور قصة وطور جماعي سريع."
+      },
+      {
+        "id": 102,
+        "name_ar": "كراش بانديكوت 4",
+        "name_en": "Crash Bandicoot 4",
+        "genre": "Platform",
+        "release_year": 2020,
+        "price": 89,
+        "currency": "IQD",
+        "cover_image_url": "https://cdn.cloudflare.steamstatic.com/steam/apps/1378990/header.jpg",
+        "description": "لعبة منصات كلاسيكية سريعة بإيقاع ممتع وتحديات متتالية."
+      },
+      {
+        "id": 103,
+        "name_ar": "دايابلو 4",
+        "name_en": "Diablo IV",
+        "genre": "Action RPG",
+        "release_year": 2023,
+        "price": 199,
+        "currency": "IQD",
+        "cover_image_url": "https://cdn.cloudflare.steamstatic.com/steam/apps/2344520/header.jpg",
+        "description": "تجربة اكشن RPG مظلمة مع عالم مفتوح وزعماء أقوياء."
+      }
+    ]
+  },
+  {
+    "id": 2,
+    "slug": "pubg-corp",
+    "name_ar": "بوبجي كوربوريشن",
+    "name_en": "PUBG Corporation",
+    "games": [
+      {
+        "id": 201,
+        "name_ar": "بوبجي: باتل غراوند",
+        "name_en": "PUBG: Battlegrounds",
+        "genre": "Battle Royale",
+        "release_year": 2017,
+        "price": 119,
+        "currency": "IQD",
+        "cover_image_url": "https://cdn.cloudflare.steamstatic.com/steam/apps/578080/header.jpg",
+        "description": "أشهر ألعاب الباتل رويال بتكتيك واقعي وتنوع خرائط."
+      },
+      {
+        "id": 202,
+        "name_ar": "نيو ستيت موبايل",
+        "name_en": "New State Mobile",
+        "genre": "Battle Royale",
+        "release_year": 2021,
+        "price": 79,
+        "currency": "USD",
+        "cover_image_url": "https://images.unsplash.com/photo-1614729939124-032f0f317cf4?auto=format&fit=crop&w=800&q=80",
+        "description": "نسخة موبايل حديثة بعناصر مستقبلية وأسلوب سريع."
+      }
+    ]
+  },
+  {
+    "id": 3,
+    "slug": "yalla-tech",
+    "name_ar": "يلا تكنولوجي",
+    "name_en": "Yalla Technology",
+    "games": [
+      {
+        "id": 301,
+        "name_ar": "يلا لودو",
+        "name_en": "Yalla Ludo",
+        "genre": "Board",
+        "release_year": 2018,
+        "price": 33,
+        "currency": "IQD",
+        "cover_image_url": "https://images.unsplash.com/photo-1606502713237-65a5a5ed2f4e?auto=format&fit=crop&w=800&q=80",
+        "description": "لعبة اجتماعية أونلاين تعتمد على لودو والدردشة الصوتية."
+      },
+      {
+        "id": 302,
+        "name_ar": "يلا بالوت",
+        "name_en": "Yalla Baloot",
+        "genre": "Card",
+        "release_year": 2021,
+        "price": 42,
+        "currency": "IQD",
+        "cover_image_url": "https://images.unsplash.com/photo-1529699211952-734e80c4d42b?auto=format&fit=crop&w=800&q=80",
+        "description": "تجربة أوراق لعب خليجية تنافسية مع غرف أصدقاء."
+      }
+    ]
+  },
+  {
+    "id": 4,
+    "slug": "riot",
+    "name_ar": "رايوت جيمز",
+    "name_en": "Riot Games",
+    "games": [
+      {
+        "id": 401,
+        "name_ar": "ليغ اوف ليجندز",
+        "name_en": "League of Legends",
+        "genre": "MOBA",
+        "release_year": 2009,
+        "price": 0,
+        "cover_image_url": "https://images.unsplash.com/photo-1511512578047-dfb367046420?auto=format&fit=crop&w=800&q=80",
+        "description": "MOBA جماعية تعتمد على اختيار الأبطال والخطط الدقيقة.",
+        "currency": "IQD"
+      },
+      {
+        "id": 402,
+        "name_ar": "فالورانت",
+        "name_en": "Valorant",
+        "genre": "Tactical Shooter",
+        "release_year": 2020,
+        "price": 0,
+        "cover_image_url": "https://images.unsplash.com/photo-1580327344181-c1163234e5a0?auto=format&fit=crop&w=800&q=80",
+        "description": "تصويب تكتيكي 5v5 مع قدرات وكلاء متنوعة.",
+        "currency": "IQD"
+      }
+    ]
+  },
+  {
+    "id": 5,
+    "slug": "epic-games",
+    "name_ar": "ايبك جيمز",
+    "name_en": "Epic Games",
+    "games": [
+      {
+        "id": 501,
+        "name_ar": "فورتنايت",
+        "name_en": "Fortnite",
+        "genre": "Battle Royale",
+        "release_year": 2017,
+        "price": 0,
+        "cover_image_url": "https://cdn.cloudflare.steamstatic.com/steam/apps/2878980/header.jpg",
+        "description": "لعبة باتل رويال بإيقاع سريع مع بناء ومعارك مستمرة.",
+        "currency": "IQD"
+      },
+      {
+        "id": 502,
+        "name_ar": "روكيت ليغ",
+        "name_en": "Rocket League",
+        "genre": "Sports",
+        "release_year": 2015,
+        "price": 79,
+        "cover_image_url": "https://cdn.cloudflare.steamstatic.com/steam/apps/252950/header.jpg",
+        "description": "كرة قدم بالسيارات تجمع بين المهارة والسرعة.",
+        "currency": "IQD"
+      }
+    ]
+  }
+]

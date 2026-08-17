@@ -170,12 +170,15 @@ function setStatus(message) {
   statusNode.textContent = message;
 }
 
-function formatPrice(value) {
+function formatPrice(value, currency = "IQD") {
   const numericValue = Number(value ?? 0);
   if (!Number.isFinite(numericValue) || numericValue <= 0) {
     return "مجانية";
   }
-  return `${numericValue} ر.س`;
+
+  const normalizedCurrency = String(currency || "IQD").toUpperCase();
+  const label = normalizedCurrency === "USD" ? "$" : "د.ع";
+  return `${numericValue} ${label}`;
 }
 
 function createGameNode(game) {
@@ -194,7 +197,7 @@ function createGameNode(game) {
 
   gameName.textContent = `${game.name_ar} / ${game.name_en}`;
   gameMeta.textContent = `${game.genre} - ${game.release_year}`;
-  gamePrice.textContent = formatPrice(game.price ?? game.price_num ?? 0);
+  gamePrice.textContent = formatPrice(game.price ?? game.price_num ?? 0, game.currency || "IQD");
   detailsLink.href = `/game?id=${game.id}`;
 
   return node;

@@ -136,51 +136,6 @@ function requireAdmin(req, res, next) {
   return res.status(401).json({ error: "Unauthorized" });
 }
 
-function fallbackCatalog() {
-  return seedData.map((company, companyIndex) => ({
-    id: companyIndex + 1,
-    slug: company.slug,
-    name_ar: company.name_ar,
-    name_en: company.name_en,
-    games: company.games.map((game, gameIndex) => ({
-      id: (companyIndex + 1) * 100 + gameIndex + 1,
-      name_ar: game.name_ar,
-      name_en: game.name_en,
-      genre: game.genre,
-      release_year: game.release_year,
-      cover_image_url: game.cover_image_url,
-      description: game.description,
-      price: game.price ?? 0
-    }))
-  }));
-}
-
-function fallbackGameById(id) {
-  const companies = fallbackCatalog();
-  for (const company of companies) {
-    const game = company.games.find((entry) => Number(entry.id) === Number(id));
-    if (game) {
-      return {
-        id: game.id,
-        name_ar: game.name_ar,
-        name_en: game.name_en,
-        genre: game.genre,
-        release_year: game.release_year,
-        cover_image_url: game.cover_image_url,
-        description: game.description,
-        price: game.price,
-        company: {
-          id: company.id,
-          slug: company.slug,
-          name_ar: company.name_ar,
-          name_en: company.name_en
-        }
-      };
-    }
-  }
-  return null;
-}
-
 let fallbackCompanyState = [];
 
 function loadFallbackState() {
@@ -262,6 +217,33 @@ function fallbackCatalog() {
       currency: game.currency || "IQD"
     }))
   }));
+}
+
+function fallbackGameById(id) {
+  const companies = fallbackCatalog();
+  for (const company of companies) {
+    const game = company.games.find((entry) => Number(entry.id) === Number(id));
+    if (game) {
+      return {
+        id: game.id,
+        name_ar: game.name_ar,
+        name_en: game.name_en,
+        genre: game.genre,
+        release_year: game.release_year,
+        cover_image_url: game.cover_image_url,
+        description: game.description,
+        price: game.price,
+        currency: game.currency || "IQD",
+        company: {
+          id: company.id,
+          slug: company.slug,
+          name_ar: company.name_ar,
+          name_en: company.name_en
+        }
+      };
+    }
+  }
+  return null;
 }
 
 app.get("/api/health", (req, res) => {
@@ -769,7 +751,6 @@ app.use((req, res, next) => {
     }
   }
 
-  ensureDataFiles();
   ensureDataFiles();
   app.listen(PORT, () => {
     console.log(`Server running on http://localhost:${PORT}`);

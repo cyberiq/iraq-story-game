@@ -21,6 +21,7 @@ const seedData = [
         genre: "Shooter",
         release_year: 2023,
         price: 179,
+        currency: "IQD",
         cover_image_url: "https://cdn.cloudflare.steamstatic.com/steam/apps/2519060/header.jpg",
         description: "جزء جديد من سلسلة Call of Duty مع طور قصة وطور جماعي سريع."
       },
@@ -30,6 +31,7 @@ const seedData = [
         genre: "Platform",
         release_year: 2020,
         price: 89,
+        currency: "IQD",
         cover_image_url: "https://cdn.cloudflare.steamstatic.com/steam/apps/1378990/header.jpg",
         description: "لعبة منصات كلاسيكية سريعة بإيقاع ممتع وتحديات متتالية."
       },
@@ -39,6 +41,7 @@ const seedData = [
         genre: "Action RPG",
         release_year: 2023,
         price: 199,
+        currency: "IQD",
         cover_image_url: "https://cdn.cloudflare.steamstatic.com/steam/apps/2344520/header.jpg",
         description: "تجربة اكشن RPG مظلمة مع عالم مفتوح وزعماء أقوياء."
       }
@@ -55,6 +58,7 @@ const seedData = [
         genre: "Battle Royale",
         release_year: 2017,
         price: 119,
+        currency: "IQD",
         cover_image_url: "https://cdn.cloudflare.steamstatic.com/steam/apps/578080/header.jpg",
         description: "أشهر ألعاب الباتل رويال بتكتيك واقعي وتنوع خرائط."
       },
@@ -64,6 +68,7 @@ const seedData = [
         genre: "Battle Royale",
         release_year: 2021,
         price: 79,
+        currency: "USD",
         cover_image_url: "https://images.unsplash.com/photo-1614729939124-032f0f317cf4?auto=format&fit=crop&w=800&q=80",
         description: "نسخة موبايل حديثة بعناصر مستقبلية وأسلوب سريع."
       }
@@ -80,6 +85,7 @@ const seedData = [
         genre: "Board",
         release_year: 2018,
         price: 33,
+        currency: "IQD",
         cover_image_url: "https://images.unsplash.com/photo-1606502713237-65a5a5ed2f4e?auto=format&fit=crop&w=800&q=80",
         description: "لعبة اجتماعية أونلاين تعتمد على لودو والدردشة الصوتية."
       },
@@ -89,6 +95,7 @@ const seedData = [
         genre: "Card",
         release_year: 2021,
         price: 42,
+        currency: "IQD",
         cover_image_url: "https://images.unsplash.com/photo-1529699211952-734e80c4d42b?auto=format&fit=crop&w=800&q=80",
         description: "تجربة أوراق لعب خليجية تنافسية مع غرف أصدقاء."
       }
@@ -185,6 +192,7 @@ async function createSchema(conn) {
       genre VARCHAR(80) NOT NULL,
       release_year INT NOT NULL,
       price DECIMAL(10,2) NOT NULL DEFAULT 0,
+      currency VARCHAR(10) NOT NULL DEFAULT 'IQD',
       cover_color VARCHAR(20) NULL,
       cover_image_url VARCHAR(600) NULL,
       description TEXT NULL,
@@ -200,6 +208,7 @@ async function createSchema(conn) {
   await conn.query("ALTER TABLE games ADD COLUMN IF NOT EXISTS description TEXT NULL");
   await conn.query("ALTER TABLE games ADD COLUMN IF NOT EXISTS cover_color VARCHAR(20) NULL");
   await conn.query("ALTER TABLE games ADD COLUMN IF NOT EXISTS price DECIMAL(10,2) NOT NULL DEFAULT 0");
+  await conn.query("ALTER TABLE games ADD COLUMN IF NOT EXISTS currency VARCHAR(10) NOT NULL DEFAULT 'IQD'");
   await conn.query("ALTER TABLE games MODIFY COLUMN cover_color VARCHAR(20) NULL");
 }
 
@@ -218,7 +227,7 @@ async function seedIfEmpty(conn) {
     const companyId = Number(result.insertId);
     for (const game of company.games) {
       await conn.query(
-        "INSERT INTO games (company_id, name_ar, name_en, genre, release_year, price, cover_color, cover_image_url, description) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        "INSERT INTO games (company_id, name_ar, name_en, genre, release_year, price, currency, cover_color, cover_image_url, description) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
         [
           companyId,
           game.name_ar,
@@ -226,6 +235,7 @@ async function seedIfEmpty(conn) {
           game.genre,
           game.release_year,
           Number(game.price ?? 0),
+          String(game.currency || "IQD").toUpperCase(),
           null,
           game.cover_image_url,
           game.description
@@ -243,10 +253,11 @@ async function backfillImages(conn) {
         UPDATE games
         SET cover_image_url = COALESCE(cover_image_url, ?),
             description = COALESCE(description, ?),
-            price = COALESCE(price, ?)
+            price = COALESCE(price, ?),
+            currency = COALESCE(currency, ?)
         WHERE name_en = ?
         `,
-        [game.cover_image_url, game.description, Number(game.price ?? 0), game.name_en]
+        [game.cover_image_url, game.description, Number(game.price ?? 0), String(game.currency || "IQD").toUpperCase(), game.name_en]
       );
     }
   }
@@ -299,6 +310,7 @@ async function getCatalog({ search = "", sort = "name_asc" }) {
         g.genre,
         g.release_year,
         g.price,
+        g.currency,
         g.cover_image_url,
         g.description
       FROM companies c
@@ -333,6 +345,7 @@ async function getCatalog({ search = "", sort = "name_asc" }) {
         genre: row.genre,
         release_year: row.release_year,
         price: Number(row.price ?? 0),
+        currency: row.currency || "IQD",
         cover_image_url: row.cover_image_url,
         description: row.description
       });
@@ -357,6 +370,7 @@ async function getGameDetailsById(id) {
         g.genre,
         g.release_year,
         g.price,
+        g.currency,
         g.cover_image_url,
         g.description,
         c.id AS company_id,
@@ -383,6 +397,7 @@ async function getGameDetailsById(id) {
       genre: row.genre,
       release_year: row.release_year,
       price: Number(row.price ?? 0),
+      currency: row.currency || "IQD",
       cover_image_url: row.cover_image_url,
       description: row.description,
       company: {
@@ -452,6 +467,7 @@ async function createGame({
   genre,
   release_year,
   price,
+  currency,
   cover_image_url,
   description
 }) {
@@ -461,8 +477,8 @@ async function createGame({
     const result = await conn.query(
       `
       INSERT INTO games
-      (company_id, name_ar, name_en, genre, release_year, price, cover_color, cover_image_url, description)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+      (company_id, name_ar, name_en, genre, release_year, price, currency, cover_color, cover_image_url, description)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `,
       [
         Number(company_id),
@@ -471,6 +487,7 @@ async function createGame({
         genre.trim(),
         Number(release_year),
         Number(price ?? 0),
+        String(currency || "IQD").toUpperCase(),
         null,
         (cover_image_url || "").trim() || null,
         (description || "").trim() || null
@@ -485,7 +502,7 @@ async function createGame({
 
 async function updateGame(
   id,
-  { company_id, name_ar, name_en, genre, release_year, price, cover_image_url, description }
+  { company_id, name_ar, name_en, genre, release_year, price, currency, cover_image_url, description }
 ) {
   const conn = await pool.getConnection();
 
@@ -499,6 +516,7 @@ async function updateGame(
           genre = ?,
           release_year = ?,
           price = ?,
+          currency = ?,
           cover_image_url = ?,
           description = ?
       WHERE id = ?
@@ -510,6 +528,7 @@ async function updateGame(
         genre.trim(),
         Number(release_year),
         Number(price ?? 0),
+        String(currency || "IQD").toUpperCase(),
         (cover_image_url || "").trim() || null,
         (description || "").trim() || null,
         Number(id)

@@ -18,6 +18,7 @@
         <h1>لوحة إدارة iraq story game</h1>
         <div class="topbar-actions">
           <a class="btn-secondary" href="/">العودة للرئيسية</a>
+          <a class="btn-secondary" href="/admin/password">تغيير كلمة المرور</a>
           <button type="button" id="logoutBtn" class="btn-secondary">تسجيل خروج</button>
         </div>
       </div>
@@ -73,8 +74,15 @@
               <input id="gameYear" type="number" min="1970" max="2100" required />
             </label>
             <label>
-              <span>سعر اللعبة (ر.س)</span>
+              <span>سعر اللعبة</span>
               <input id="gamePrice" type="number" min="0" step="1" value="0" />
+            </label>
+            <label>
+              <span>العملة</span>
+              <select id="gameCurrency">
+                <option value="IQD">دينار عراقي (IQD)</option>
+                <option value="USD">دولار أمريكي (USD)</option>
+              </select>
             </label>
             <label>
               <span>صورة اللعبة من الجهاز</span>

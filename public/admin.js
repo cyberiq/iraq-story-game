@@ -14,6 +14,7 @@ const gameNameEn = document.getElementById("gameNameEn");
 const gameGenre = document.getElementById("gameGenre");
 const gameYear = document.getElementById("gameYear");
 const gamePrice = document.getElementById("gamePrice");
+const gameCurrency = document.getElementById("gameCurrency");
 const gameImage = document.getElementById("gameImage");
 const gameImageHint = document.getElementById("gameImageHint");
 const gameDescription = document.getElementById("gameDescription");
@@ -143,6 +144,7 @@ function clearGameForm() {
   gameGenre.value = "";
   gameYear.value = "";
   gamePrice.value = "0";
+  gameCurrency.value = "IQD";
   gameImage.value = "";
   currentGameImageUrl = "";
   gameImageHint.textContent = "";
@@ -178,7 +180,8 @@ function renderAdminCatalog(companies) {
     company.games.forEach((game) => {
       const item = document.createElement("div");
       item.className = "admin-game-item";
-      const priceLabel = Number(game.price ?? 0) > 0 ? `${Number(game.price ?? 0)} ر.س` : "مجانية";
+      const currency = game.currency || "IQD";
+      const priceLabel = Number(game.price ?? 0) > 0 ? `${Number(game.price ?? 0)} ${currency}` : "مجانية";
       item.innerHTML = `
         <strong>${game.name_ar} / ${game.name_en}</strong>
         <span>${game.genre} - ${game.release_year} • ${priceLabel}</span>
@@ -273,6 +276,7 @@ function bindEditButtons(companies, catalogCompanies) {
       gameGenre.value = selected.genre;
       gameYear.value = selected.release_year;
       gamePrice.value = Number(selected.price ?? 0);
+      gameCurrency.value = selected.currency || "IQD";
       currentGameImageUrl = selected.cover_image_url || "";
       gameImage.value = "";
       gameImageHint.textContent = currentGameImageUrl
@@ -367,6 +371,7 @@ gameForm.addEventListener("submit", async (event) => {
   formData.append("genre", gameGenre.value.trim());
   formData.append("release_year", String(Number(gameYear.value)));
   formData.append("price", String(Number(gamePrice.value || 0)));
+  formData.append("currency", gameCurrency.value || "IQD");
   formData.append("description", gameDescription.value.trim());
 
   if (gameImage.files && gameImage.files[0]) {
