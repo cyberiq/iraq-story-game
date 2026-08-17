@@ -641,12 +641,19 @@ app.use((req, res, next) => {
 });
 
 (async () => {
-  try {
-    await initDatabase();
-    databaseReady = true;
-  } catch (error) {
+  const skipDatabase = String(process.env.SKIP_DB || "").toLowerCase() === "true";
+
+  if (skipDatabase) {
     databaseReady = false;
-    console.error("Database is not ready yet, server will continue with limited functionality.", error);
+    console.log("Database disabled via SKIP_DB=true, running in fallback mode.");
+  } else {
+    try {
+      await initDatabase();
+      databaseReady = true;
+    } catch (error) {
+      databaseReady = false;
+      console.error("Database is not ready yet, server will continue with limited functionality.", error);
+    }
   }
 
   app.listen(PORT, () => {
