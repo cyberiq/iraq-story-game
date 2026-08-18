@@ -274,9 +274,31 @@ app.post("/api/auth/login", (req, res) => {
   const normalizedUsername = String(username || "").trim();
   const normalizedPassword = String(password || "").trim();
 
+  // Initialize attempt tracking in session
+  if (!req.session.loginAttempts) req.session.loginAttempts = 0;
+  if (!req.session.lockUntil) req.session.lockUntil = 0;
+
+  const now = Date.now();
+  const LOCK_DURATION_MS = 10 * 60 * 1000; // 10 minutes
+  const MAX_ATTEMPTS = 5;
+
+  if (req.session.lockUntil && now < req.session.lockUntil) {
+    const waitMs = Math.ceil((req.session.lockUntil - now) / 1000);
+    return res.status(429).json({ error: `محاولة مرفوضة. حاول مرة أخرى بعد ${waitMs} ثانية.` });
+  }
+
   if (normalizedUsername === runtimeAdminSettings.username && normalizedPassword === runtimeAdminSettings.password) {
     req.session.isAdmin = true;
+    req.session.loginAttempts = 0;
+    req.session.lockUntil = 0;
     return res.json({ ok: true });
+  }
+
+  // failed attempt
+  req.session.loginAttempts = (req.session.loginAttempts || 0) + 1;
+  if (req.session.loginAttempts >= MAX_ATTEMPTS) {
+    req.session.lockUntil = Date.now() + LOCK_DURATION_MS;
+    return res.status(429).json({ error: `تجاوزت الحد الأقصى من المحاولات. الحساب مؤمّن مؤقتًا لمدة ${LOCK_DURATION_MS / 60000} دقائق.` });
   }
 
   return res.status(401).json({ error: "اسم المستخدم أو كلمة المرور غير صحيحة" });
