@@ -19,6 +19,7 @@ const gameCurrency = document.getElementById("gameCurrency");
 const gameImage = document.getElementById("gameImage");
 const gameImageUrl = document.getElementById("gameImageUrl");
 const gameImageHint = document.getElementById("gameImageHint");
+const gameImagePreview = document.getElementById("gameImagePreview");
 const gameDescription = document.getElementById("gameDescription");
 const gameReset = document.getElementById("gameReset");
 const logoutBtn = document.getElementById("logoutBtn");
@@ -156,6 +157,10 @@ function clearGameForm() {
   gameImageUrl.value = "";
   currentGameImageUrl = "";
   gameImageHint.textContent = "";
+  if (gameImagePreview) {
+    gameImagePreview.src = "";
+    gameImagePreview.style.display = "none";
+  }
   gameDescription.value = "";
 }
 
@@ -342,6 +347,10 @@ function bindEditButtons(companies, catalogCompanies) {
       gameImageHint.textContent = currentGameImageUrl
         ? `الصورة الحالية: ${currentGameImageUrl}`
         : "لا توجد صورة حالية";
+      if (gameImagePreview) {
+        gameImagePreview.src = currentGameImageUrl || "";
+        gameImagePreview.style.display = currentGameImageUrl ? "block" : "none";
+      }
       gameDescription.value = selected.description || "";
       setStatus(`وضع تعديل اللعبة: ${selected.name_en}`);
       window.scrollTo({ top: 0, behavior: "smooth" });
@@ -488,6 +497,38 @@ gameReset.addEventListener("click", () => {
   clearGameForm();
   setStatus("تم تفريغ نموذج اللعبة.");
 });
+
+// Live preview handlers: file change and URL input
+if (gameImage) {
+  gameImage.addEventListener('change', () => {
+    const f = gameImage.files && gameImage.files[0];
+    if (f && gameImagePreview) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        gameImagePreview.src = e.target.result;
+        gameImagePreview.style.display = 'block';
+      };
+      reader.readAsDataURL(f);
+    } else if (gameImagePreview) {
+      // if no file, try URL field or current
+      gameImagePreview.src = (gameImageUrl && gameImageUrl.value.trim()) || currentGameImageUrl || '';
+      gameImagePreview.style.display = gameImagePreview.src ? 'block' : 'none';
+    }
+  });
+}
+
+if (gameImageUrl) {
+  gameImageUrl.addEventListener('input', () => {
+    const v = gameImageUrl.value.trim();
+    if (v && gameImagePreview) {
+      gameImagePreview.src = v;
+      gameImagePreview.style.display = 'block';
+    } else if (gameImagePreview) {
+      gameImagePreview.src = currentGameImageUrl || '';
+      gameImagePreview.style.display = currentGameImageUrl ? 'block' : 'none';
+    }
+  });
+}
 
 logoutBtn.addEventListener("click", async () => {
   try {
