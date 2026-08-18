@@ -453,6 +453,20 @@ gameForm.addEventListener("submit", async (event) => {
     formData.append("cover_image_url", gameImageUrl.value.trim());
   }
 
+  // Basic URL validation on client-side: only allow http(s) and image extensions
+  if (gameImageUrl && gameImageUrl.value.trim()) {
+    const urlVal = gameImageUrl.value.trim();
+    try {
+      const parsed = new URL(urlVal);
+      if (!['http:', 'https:'].includes(parsed.protocol)) {
+        throw new Error('Invalid protocol');
+      }
+    } catch (e) {
+      setStatus('رابط الصورة غير صالح. استخدم رابط يبدأ بـ http أو https.');
+      return;
+    }
+  }
+
   if (currentGameImageUrl) {
     formData.append("current_cover_image_url", currentGameImageUrl);
   }

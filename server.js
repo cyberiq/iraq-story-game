@@ -260,6 +260,18 @@ function fallbackGameById(id) {
   return null;
 }
 
+function isValidImageUrlCandidate(u) {
+  if (!u || typeof u !== 'string') return false;
+  try {
+    const parsed = new URL(u);
+    if (!['http:', 'https:'].includes(parsed.protocol)) return false;
+    // basic extension check
+    return /\.(jpe?g|png|gif|webp|bmp|svg)(\?.*)?$/i.test(parsed.pathname + (parsed.search || ''));
+  } catch (e) {
+    return false;
+  }
+}
+
 app.get("/api/health", (req, res) => {
   res.json({ ok: true, service: "game-catalog", databaseReady });
 });
@@ -269,36 +281,41 @@ app.get("/api/auth/status", (req, res) => {
   res.json({ authenticated });
 });
 
+// Simple IP-based login attempt tracking to mitigate brute-force
+const loginAttemptsByIp = {};
 app.post("/api/auth/login", (req, res) => {
   const { username, password } = req.body || {};
   const normalizedUsername = String(username || "").trim();
   const normalizedPassword = String(password || "").trim();
 
-  // Initialize attempt tracking in session
-  if (!req.session.loginAttempts) req.session.loginAttempts = 0;
-  if (!req.session.lockUntil) req.session.lockUntil = 0;
-
+  const ip = (req.ip || req.connection.remoteAddress || 'unknown').toString();
   const now = Date.now();
-  const LOCK_DURATION_MS = 10 * 60 * 1000; // 10 minutes
-  const MAX_ATTEMPTS = 5;
+  const LOCK_DURATION_MS = Number(process.env.LOGIN_LOCK_MS || 10 * 60 * 1000); // default 10 minutes
+  const MAX_ATTEMPTS = Number(process.env.LOGIN_MAX_ATTEMPTS || 5);
 
-  if (req.session.lockUntil && now < req.session.lockUntil) {
-    const waitMs = Math.ceil((req.session.lockUntil - now) / 1000);
-    return res.status(429).json({ error: `محاولة مرفوضة. حاول مرة أخرى بعد ${waitMs} ثانية.` });
+  if (!loginAttemptsByIp[ip]) {
+    loginAttemptsByIp[ip] = { attempts: 0, lockUntil: 0 };
+  }
+
+  const record = loginAttemptsByIp[ip];
+  if (record.lockUntil && now < record.lockUntil) {
+    const waitSec = Math.ceil((record.lockUntil - now) / 1000);
+    return res.status(429).json({ error: `ممنوع مؤقتًا. حاول مرة أخرى بعد ${waitSec} ثانية.` });
   }
 
   if (normalizedUsername === runtimeAdminSettings.username && normalizedPassword === runtimeAdminSettings.password) {
     req.session.isAdmin = true;
-    req.session.loginAttempts = 0;
-    req.session.lockUntil = 0;
+    // reset IP record
+    record.attempts = 0;
+    record.lockUntil = 0;
     return res.json({ ok: true });
   }
 
   // failed attempt
-  req.session.loginAttempts = (req.session.loginAttempts || 0) + 1;
-  if (req.session.loginAttempts >= MAX_ATTEMPTS) {
-    req.session.lockUntil = Date.now() + LOCK_DURATION_MS;
-    return res.status(429).json({ error: `تجاوزت الحد الأقصى من المحاولات. الحساب مؤمّن مؤقتًا لمدة ${LOCK_DURATION_MS / 60000} دقائق.` });
+  record.attempts = (record.attempts || 0) + 1;
+  if (record.attempts >= MAX_ATTEMPTS) {
+    record.lockUntil = Date.now() + LOCK_DURATION_MS;
+    return res.status(429).json({ error: `تجاوزت الحد الأقصى من المحاولات. المحاولة مؤمّنة لمدة ${Math.ceil(LOCK_DURATION_MS/60000)} دقيقة.` });
   }
 
   return res.status(401).json({ error: "اسم المستخدم أو كلمة المرور غير صحيحة" });
@@ -641,6 +658,13 @@ app.post("/api/games", requireAdmin, upload.single("image"), async (req, res) =>
   const year = Number(release_year);
   const coverImagePath = req.file ? `/uploads/${req.file.filename}` : (req.body.cover_image_url ? String(req.body.cover_image_url).trim() : "");
 
+  // If a cover image URL was provided (and no file), validate it
+  if (!req.file && coverImagePath) {
+    if (!isValidImageUrlCandidate(coverImagePath)) {
+      return res.status(400).json({ error: 'رابط الصورة غير صالح أو لا يشير لصيغة صورة مدعومة.' });
+    }
+  }
+
   if (!company_id || !name_ar || !name_en || !genre || !Number.isInteger(year)) {
     return res.status(400).json({
       error: "company_id, name_ar, name_en, genre, release_year are required"
@@ -697,6 +721,13 @@ app.put("/api/games/:id", requireAdmin, upload.single("image"), async (req, res)
   const { company_id, product_type = 'game', name_ar, name_en, genre, release_year, price, currency = "IQD", current_cover_image_url = "", description = "" } = req.body || {};
   const year = Number(release_year);
   const coverImagePath = req.file ? `/uploads/${req.file.filename}` : (req.body.cover_image_url ? String(req.body.cover_image_url).trim() : (current_cover_image_url || ""));
+
+  // If a cover image URL was provided (and no file), validate it
+  if (!req.file && coverImagePath && String(coverImagePath || '').startsWith('http')) {
+    if (!isValidImageUrlCandidate(coverImagePath)) {
+      return res.status(400).json({ error: 'رابط الصورة غير صالح أو لا يشير لصيغة صورة مدعومة.' });
+    }
+  }
 
   if (!Number.isInteger(id) || id <= 0) {
     return res.status(400).json({ error: "Invalid game id" });
