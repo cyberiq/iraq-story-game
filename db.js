@@ -1,6 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 const initSqlJs = require('sql.js');
+const { Pool } = require('pg');
 
 const DB_PATH = process.env.SQLITE_FILE || path.join(__dirname, 'data', 'database.sqlite');
 
@@ -58,6 +59,43 @@ function ensureDataDir() {
 
 let SQL = null;
 let db = null;
+let usePg = Boolean(process.env.DATABASE_URL);
+let pgPool = null;
+
+async function initPg() {
+  if (!process.env.DATABASE_URL) return;
+  pgPool = new Pool({ connectionString: process.env.DATABASE_URL, ssl: { rejectUnauthorized: false } });
+  // create tables if not exists
+  await pgPool.query(`
+    CREATE TABLE IF NOT EXISTS companies (
+      id SERIAL PRIMARY KEY,
+      slug TEXT NOT NULL UNIQUE,
+      name_ar TEXT NOT NULL,
+      name_en TEXT NOT NULL,
+      created_at TIMESTAMP DEFAULT NOW()
+    );
+    CREATE TABLE IF NOT EXISTS games (
+      id SERIAL PRIMARY KEY,
+      company_id INTEGER NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
+      product_type TEXT NOT NULL DEFAULT 'game',
+      name_ar TEXT NOT NULL,
+      name_en TEXT NOT NULL,
+      genre TEXT NOT NULL,
+      release_year INTEGER NOT NULL,
+      price NUMERIC NOT NULL DEFAULT 0,
+      currency TEXT NOT NULL DEFAULT 'IQD',
+      cover_image_url TEXT,
+      description TEXT,
+      created_at TIMESTAMP DEFAULT NOW()
+    );
+    CREATE TABLE IF NOT EXISTS coupons (
+      code TEXT PRIMARY KEY,
+      percent INTEGER NOT NULL,
+      active INTEGER NOT NULL DEFAULT 1,
+      created_at TIMESTAMP DEFAULT NOW()
+    );
+  `);
+}
 
 function rowsFromResult(res) {
   if (!res || !res.length) return [];
@@ -78,6 +116,12 @@ async function saveDatabaseFile() {
 async function initDatabase() {
   SQL = await initSqlJs({ locateFile: (file) => path.join(__dirname, 'node_modules', 'sql.js', 'dist', file) });
   ensureDataDir();
+  if (usePg) {
+    await initPg();
+    // no local sqlite DB needed when using Postgres
+    db = null;
+    return;
+  }
 
   if (fs.existsSync(DB_PATH)) {
     const buf = fs.readFileSync(DB_PATH);
@@ -145,6 +189,13 @@ async function initDatabase() {
   }
 }
 
+// Helper: run query on pg and return rows
+async function pgQueryRows(text, params = []) {
+  if (!pgPool) throw new Error('pgPool not initialized');
+  const res = await pgPool.query(text, params);
+  return res.rows;
+}
+
 function buildOrderBy(sort) {
   switch (sort) {
     case 'name_desc': return 'g.name_en DESC';
@@ -156,6 +207,45 @@ function buildOrderBy(sort) {
 }
 
 async function getCatalog({ search = '', sort = 'name_asc' } = {}) {
+  if (usePg) {
+    const term = `%${String(search || '').trim()}%`;
+    const orderBy = buildOrderBy(sort);
+    const rows = await pgQueryRows(
+      `SELECT c.id as company_id, c.slug, c.name_ar as company_name_ar, c.name_en as company_name_en,
+              g.id as game_id, g.product_type as game_product_type, g.name_ar as game_name_ar, g.name_en as game_name_en, g.genre, g.release_year, g.price, g.currency, g.cover_image_url, g.description
+       FROM companies c JOIN games g ON g.company_id = c.id
+       WHERE $1 = '%' OR c.name_ar ILIKE $2 OR c.name_en ILIKE $2 OR g.name_ar ILIKE $2 OR g.name_en ILIKE $2
+       ORDER BY ${orderBy}`,
+      [term, term]
+    );
+
+    const companyMap = new Map();
+    for (const row of rows) {
+      if (!companyMap.has(row.company_id)) {
+        companyMap.set(row.company_id, {
+          id: row.company_id,
+          slug: row.slug,
+          name_ar: row.company_name_ar,
+          name_en: row.company_name_en,
+          games: []
+        });
+      }
+      companyMap.get(row.company_id).games.push({
+        id: row.game_id,
+        product_type: row.game_product_type || 'game',
+        name_ar: row.game_name_ar,
+        name_en: row.game_name_en,
+        genre: row.genre,
+        release_year: row.release_year,
+        price: Number(row.price || 0),
+        currency: row.currency || 'IQD',
+        cover_image_url: row.cover_image_url,
+        description: row.description
+      });
+    }
+    return Array.from(companyMap.values());
+  }
+
   const term = `%${String(search || '').trim()}%`;
   const orderBy = buildOrderBy(sort);
   const sql = `
@@ -210,6 +300,35 @@ async function getCatalog({ search = '', sort = 'name_asc' } = {}) {
 }
 
 async function getGameDetailsById(id) {
+  if (usePg) {
+    const rows = await pgQueryRows(
+      `SELECT g.id, g.product_type, g.name_ar, g.name_en, g.genre, g.release_year, g.price, g.currency, g.cover_image_url, g.description,
+              c.id as company_id, c.slug as company_slug, c.name_ar as company_name_ar, c.name_en as company_name_en
+       FROM games g JOIN companies c ON c.id = g.company_id WHERE g.id = $1 LIMIT 1`,
+      [Number(id)]
+    );
+    if (!rows || !rows.length) return null;
+    const row = rows[0];
+    return {
+      id: row.id,
+      product_type: row.product_type || 'game',
+      name_ar: row.name_ar,
+      name_en: row.name_en,
+      genre: row.genre,
+      release_year: row.release_year,
+      price: Number(row.price || 0),
+      currency: row.currency || 'IQD',
+      cover_image_url: row.cover_image_url,
+      description: row.description,
+      company: {
+        id: row.company_id,
+        slug: row.company_slug,
+        name_ar: row.company_name_ar,
+        name_en: row.company_name_en
+      }
+    };
+  }
+
   const stmt = db.prepare(`
     SELECT g.id, g.product_type, g.name_ar, g.name_en, g.genre, g.release_year, g.price, g.currency, g.cover_image_url, g.description,
            c.id as company_id, c.slug as company_slug, c.name_ar as company_name_ar, c.name_en as company_name_en
@@ -243,6 +362,9 @@ async function getGameDetailsById(id) {
 }
 
 async function getCompaniesList() {
+  if (usePg) {
+    return await pgQueryRows('SELECT id, slug, name_ar, name_en FROM companies ORDER BY name_en ASC');
+  }
   const stmt = db.prepare('SELECT id, slug, name_ar, name_en FROM companies ORDER BY name_en ASC');
   const rows = [];
   try {
@@ -256,6 +378,9 @@ async function getCompaniesList() {
 }
 
 async function getCoupons() {
+  if (usePg) {
+    return await pgQueryRows('SELECT code, percent, active FROM coupons ORDER BY created_at DESC');
+  }
   const stmt = db.prepare('SELECT code, percent, active FROM coupons ORDER BY created_at DESC');
   const rows = [];
   try {
@@ -269,6 +394,10 @@ async function getCoupons() {
 }
 
 async function createCoupon({ code, percent }) {
+  if (usePg) {
+    await pgQueryRows('INSERT INTO coupons (code, percent, active) VALUES ($1, $2, 1)', [String(code).trim(), Number(percent || 0)]);
+    return { code: String(code).trim() };
+  }
   const stmt = db.prepare('INSERT INTO coupons (code, percent, active) VALUES (?, ?, 1)');
   try {
     stmt.run([String(code).trim(), Number(percent || 0)]);
@@ -281,6 +410,10 @@ async function createCoupon({ code, percent }) {
 }
 
 async function deleteCoupon(code) {
+  if (usePg) {
+    const res = await pgPool.query('DELETE FROM coupons WHERE code = $1', [String(code).trim()]);
+    return res.rowCount || 0;
+  }
   const stmt = db.prepare('DELETE FROM coupons WHERE code = ?');
   try {
     stmt.run([String(code).trim()]);
@@ -294,6 +427,13 @@ async function deleteCoupon(code) {
 }
 
 async function validateCoupon(code) {
+  if (usePg) {
+    const rows = await pgQueryRows('SELECT percent, active FROM coupons WHERE code = $1 LIMIT 1', [String(code).trim()]);
+    if (!rows || !rows.length) return null;
+    const row = rows[0];
+    if (!row || Number(row.active || 0) !== 1) return null;
+    return { percent: Number(row.percent || 0) };
+  }
   const stmt = db.prepare('SELECT percent, active FROM coupons WHERE code = ? LIMIT 1');
   try {
     stmt.bind([String(code).trim()]);
@@ -307,6 +447,10 @@ async function validateCoupon(code) {
 }
 
 async function createCompany({ slug, name_ar, name_en }) {
+  if (usePg) {
+    const res = await pgPool.query('INSERT INTO companies (slug, name_ar, name_en) VALUES ($1, $2, $3) RETURNING id', [String(slug).trim(), String(name_ar).trim(), String(name_en).trim()]);
+    return { id: res.rows[0].id };
+  }
   const stmt = db.prepare('INSERT INTO companies (slug, name_ar, name_en) VALUES (?, ?, ?)');
   try {
     stmt.run([String(slug).trim(), String(name_ar).trim(), String(name_en).trim()]);
@@ -320,6 +464,10 @@ async function createCompany({ slug, name_ar, name_en }) {
 }
 
 async function updateCompany(id, { slug, name_ar, name_en }) {
+  if (usePg) {
+    const res = await pgPool.query('UPDATE companies SET slug=$1, name_ar=$2, name_en=$3 WHERE id=$4', [String(slug).trim(), String(name_ar).trim(), String(name_en).trim(), Number(id)]);
+    return res.rowCount || 0;
+  }
   const stmt = db.prepare('UPDATE companies SET slug = ?, name_ar = ?, name_en = ? WHERE id = ?');
   try {
     stmt.run([String(slug).trim(), String(name_ar).trim(), String(name_en).trim(), Number(id)]);
@@ -333,6 +481,13 @@ async function updateCompany(id, { slug, name_ar, name_en }) {
 }
 
 async function createGame({ company_id, product_type = 'game', name_ar, name_en, genre, release_year, price, currency, cover_image_url, description }) {
+  if (usePg) {
+    const res = await pgPool.query(
+      'INSERT INTO games (company_id, product_type, name_ar, name_en, genre, release_year, price, currency, cover_image_url, description) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) RETURNING id',
+      [Number(company_id), String(product_type || 'game'), String(name_ar).trim(), String(name_en).trim(), String(genre).trim(), Number(release_year), Number(price || 0), String(currency || 'IQD').toUpperCase(), (cover_image_url || '').trim() || null, (description || '').trim() || null]
+    );
+    return { id: res.rows[0].id };
+  }
   const stmt = db.prepare('INSERT INTO games (company_id, product_type, name_ar, name_en, genre, release_year, price, currency, cover_image_url, description) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
   try {
     stmt.run([
@@ -357,6 +512,10 @@ async function createGame({ company_id, product_type = 'game', name_ar, name_en,
 }
 
 async function updateGame(id, { company_id, product_type = 'game', name_ar, name_en, genre, release_year, price, currency, cover_image_url, description }) {
+  if (usePg) {
+    const res = await pgPool.query('UPDATE games SET company_id=$1, product_type=$2, name_ar=$3, name_en=$4, genre=$5, release_year=$6, price=$7, currency=$8, cover_image_url=$9, description=$10 WHERE id=$11', [Number(company_id), String(product_type || 'game'), String(name_ar).trim(), String(name_en).trim(), String(genre).trim(), Number(release_year), Number(price || 0), String(currency || 'IQD').toUpperCase(), (cover_image_url || '').trim() || null, (description || '').trim() || null, Number(id)]);
+    return res.rowCount || 0;
+  }
   const stmt = db.prepare('UPDATE games SET company_id = ?, product_type = ?, name_ar = ?, name_en = ?, genre = ?, release_year = ?, price = ?, currency = ?, cover_image_url = ?, description = ? WHERE id = ?');
   try {
     stmt.run([
@@ -382,6 +541,10 @@ async function updateGame(id, { company_id, product_type = 'game', name_ar, name
 }
 
 async function deleteCompany(id) {
+  if (usePg) {
+    const res = await pgPool.query('DELETE FROM companies WHERE id = $1', [Number(id)]);
+    return res.rowCount || 0;
+  }
   const stmt = db.prepare('DELETE FROM companies WHERE id = ?');
   try {
     stmt.run([Number(id)]);

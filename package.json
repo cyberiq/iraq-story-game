@@ -6,6 +6,7 @@
   "scripts": {
     "start": "node server.js",
     "dev": "node server.js",
+    "migrate:sqlite-to-postgres": "node scripts/migrate-sqlite-to-postgres.js",
     "cap:sync": "npx cap sync",
     "cap:open:android": "npx cap open android",
     "cap:open:ios": "npx cap open ios"
@@ -20,7 +21,8 @@
     "express": "^5.2.1",
     "express-session": "^1.19.0",
     "multer": "^2.2.0",
-    "sql.js": "^1.8.0"
+    "sql.js": "^1.8.0",
+    "pg": "^8.11.0"
   },
   "devDependencies": {
     "@capacitor/cli": "^8.5.0",
