@@ -96,6 +96,7 @@ async function initDatabase() {
       CREATE TABLE IF NOT EXISTS games (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         company_id INTEGER NOT NULL,
+        product_type TEXT NOT NULL DEFAULT 'game',
         name_ar TEXT NOT NULL,
         name_en TEXT NOT NULL,
         genre TEXT NOT NULL,
@@ -106,6 +107,12 @@ async function initDatabase() {
         description TEXT,
         created_at TEXT DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY(company_id) REFERENCES companies(id) ON DELETE CASCADE
+      );
+      CREATE TABLE IF NOT EXISTS coupons (
+        code TEXT PRIMARY KEY,
+        percent INTEGER NOT NULL,
+        active INTEGER NOT NULL DEFAULT 1,
+        created_at TEXT DEFAULT CURRENT_TIMESTAMP
       );
     `);
 
@@ -154,7 +161,7 @@ async function getCatalog({ search = '', sort = 'name_asc' } = {}) {
   const sql = `
     SELECT
       c.id as company_id, c.slug, c.name_ar as company_name_ar, c.name_en as company_name_en,
-      g.id as game_id, g.name_ar as game_name_ar, g.name_en as game_name_en, g.genre, g.release_year, g.price, g.currency, g.cover_image_url, g.description
+      g.id as game_id, g.product_type as game_product_type, g.name_ar as game_name_ar, g.name_en as game_name_en, g.genre, g.release_year, g.price, g.currency, g.cover_image_url, g.description
     FROM companies c
     JOIN games g ON g.company_id = c.id
     WHERE (? = '%%') OR c.name_ar LIKE ? OR c.name_en LIKE ? OR g.name_ar LIKE ? OR g.name_en LIKE ?
@@ -187,6 +194,7 @@ async function getCatalog({ search = '', sort = 'name_asc' } = {}) {
 
     companyMap.get(row.company_id).games.push({
       id: row.game_id,
+      product_type: row.game_product_type || 'game',
       name_ar: row.game_name_ar,
       name_en: row.game_name_en,
       genre: row.genre,
@@ -203,7 +211,7 @@ async function getCatalog({ search = '', sort = 'name_asc' } = {}) {
 
 async function getGameDetailsById(id) {
   const stmt = db.prepare(`
-    SELECT g.id, g.name_ar, g.name_en, g.genre, g.release_year, g.price, g.currency, g.cover_image_url, g.description,
+    SELECT g.id, g.product_type, g.name_ar, g.name_en, g.genre, g.release_year, g.price, g.currency, g.cover_image_url, g.description,
            c.id as company_id, c.slug as company_slug, c.name_ar as company_name_ar, c.name_en as company_name_en
     FROM games g JOIN companies c ON c.id = g.company_id WHERE g.id = ? LIMIT 1
   `);
@@ -213,6 +221,7 @@ async function getGameDetailsById(id) {
     const row = stmt.getAsObject();
     return {
       id: row.id,
+      product_type: row.product_type || 'game',
       name_ar: row.name_ar,
       name_en: row.name_en,
       genre: row.genre,
@@ -246,6 +255,57 @@ async function getCompaniesList() {
   return rows;
 }
 
+async function getCoupons() {
+  const stmt = db.prepare('SELECT code, percent, active FROM coupons ORDER BY created_at DESC');
+  const rows = [];
+  try {
+    while (stmt.step()) {
+      rows.push(stmt.getAsObject());
+    }
+  } finally {
+    stmt.free();
+  }
+  return rows;
+}
+
+async function createCoupon({ code, percent }) {
+  const stmt = db.prepare('INSERT INTO coupons (code, percent, active) VALUES (?, ?, 1)');
+  try {
+    stmt.run([String(code).trim(), Number(percent || 0)]);
+  } finally {
+    stmt.free();
+  }
+
+  await saveDatabaseFile();
+  return { code: String(code).trim() };
+}
+
+async function deleteCoupon(code) {
+  const stmt = db.prepare('DELETE FROM coupons WHERE code = ?');
+  try {
+    stmt.run([String(code).trim()]);
+  } finally {
+    stmt.free();
+  }
+
+  const changes = rowsFromResult(db.exec('SELECT changes() as changes'))[0].changes || 0;
+  if (changes) await saveDatabaseFile();
+  return Number(changes);
+}
+
+async function validateCoupon(code) {
+  const stmt = db.prepare('SELECT percent, active FROM coupons WHERE code = ? LIMIT 1');
+  try {
+    stmt.bind([String(code).trim()]);
+    if (!stmt.step()) return null;
+    const row = stmt.getAsObject();
+    if (!row || Number(row.active || 0) !== 1) return null;
+    return { percent: Number(row.percent || 0) };
+  } finally {
+    stmt.free();
+  }
+}
+
 async function createCompany({ slug, name_ar, name_en }) {
   const stmt = db.prepare('INSERT INTO companies (slug, name_ar, name_en) VALUES (?, ?, ?)');
   try {
@@ -272,11 +332,12 @@ async function updateCompany(id, { slug, name_ar, name_en }) {
   return Number(changes);
 }
 
-async function createGame({ company_id, name_ar, name_en, genre, release_year, price, currency, cover_image_url, description }) {
-  const stmt = db.prepare('INSERT INTO games (company_id, name_ar, name_en, genre, release_year, price, currency, cover_image_url, description) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)');
+async function createGame({ company_id, product_type = 'game', name_ar, name_en, genre, release_year, price, currency, cover_image_url, description }) {
+  const stmt = db.prepare('INSERT INTO games (company_id, product_type, name_ar, name_en, genre, release_year, price, currency, cover_image_url, description) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
   try {
     stmt.run([
       Number(company_id),
+      String(product_type || 'game'),
       String(name_ar).trim(),
       String(name_en).trim(),
       String(genre).trim(),
@@ -295,11 +356,12 @@ async function createGame({ company_id, name_ar, name_en, genre, release_year, p
   return { id };
 }
 
-async function updateGame(id, { company_id, name_ar, name_en, genre, release_year, price, currency, cover_image_url, description }) {
-  const stmt = db.prepare('UPDATE games SET company_id = ?, name_ar = ?, name_en = ?, genre = ?, release_year = ?, price = ?, currency = ?, cover_image_url = ?, description = ? WHERE id = ?');
+async function updateGame(id, { company_id, product_type = 'game', name_ar, name_en, genre, release_year, price, currency, cover_image_url, description }) {
+  const stmt = db.prepare('UPDATE games SET company_id = ?, product_type = ?, name_ar = ?, name_en = ?, genre = ?, release_year = ?, price = ?, currency = ?, cover_image_url = ?, description = ? WHERE id = ?');
   try {
     stmt.run([
       Number(company_id),
+      String(product_type || 'game'),
       String(name_ar).trim(),
       String(name_en).trim(),
       String(genre).trim(),
@@ -357,4 +419,5 @@ module.exports = {
   updateGame,
   deleteCompany,
   deleteGame
+  ,getCoupons, createCoupon, deleteCoupon, validateCoupon
 };

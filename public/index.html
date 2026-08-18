@@ -31,7 +31,9 @@
             type="search"
             placeholder="ابحث باسم شركة أو لعبة..."
             autocomplete="off"
+            list="searchSuggestions"
           />
+          <datalist id="searchSuggestions"></datalist>
         </label>
 
         <label class="control-field">
@@ -42,6 +44,15 @@
             <option value="year_desc">الأحدث أولًا</option>
             <option value="year_asc">الأقدم أولًا</option>
             <option value="company_asc">حسب الشركة</option>
+          </select>
+        </label>
+        <label class="control-field">
+          <span>نوع المنتج</span>
+          <select id="productTypeSelect">
+            <option value="all">الكل</option>
+            <option value="game">لعبة</option>
+            <option value="card">كارد</option>
+            <option value="token">يطقاات</option>
           </select>
         </label>
       </div>

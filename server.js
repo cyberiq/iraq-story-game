@@ -19,6 +19,7 @@ const {
   updateGame,
   deleteCompany,
   deleteGame
+  ,getCoupons, createCoupon, deleteCoupon, validateCoupon
 } = require("./db");
 
 const app = express();
@@ -28,6 +29,7 @@ const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "admin";
 const SESSION_SECRET = process.env.SESSION_SECRET || "iraq-story-game-session-secret";
 const fallbackDataPath = path.join(__dirname, "data", "fallback-data.json");
 const adminSettingsPath = path.join(__dirname, "data", "admin-settings.json");
+const couponsPath = path.join(__dirname, "data", "coupons.json");
 let databaseReady = false;
 
 function ensureDataFiles() {
@@ -44,8 +46,9 @@ function ensureDataFiles() {
       name_en: company.name_en,
       games: company.games.map((game, gameIndex) => ({
         id: (companyIndex + 1) * 100 + gameIndex + 1,
-        ...game,
-        currency: game.currency || "IQD"
+          ...game,
+          product_type: game.product_type || 'game',
+          currency: game.currency || "IQD"
       }))
     })), null, 2));
   }
@@ -55,6 +58,9 @@ function ensureDataFiles() {
       username: ADMIN_USERNAME,
       password: ADMIN_PASSWORD
     }, null, 2));
+  }
+  if (!fs.existsSync(couponsPath)) {
+    fs.writeFileSync(couponsPath, JSON.stringify([], null, 2));
   }
 }
 
@@ -78,6 +84,12 @@ let runtimeAdminSettings = readJsonFile(adminSettingsPath, {
 
 function saveAdminSettings() {
   writeJsonFile(adminSettingsPath, runtimeAdminSettings);
+}
+
+let runtimeCoupons = readJsonFile(couponsPath, []);
+
+function saveCouponsFile() {
+  writeJsonFile(couponsPath, runtimeCoupons);
 }
 
 const uploadsDir = path.join(__dirname, "public", "uploads");
@@ -207,6 +219,7 @@ function fallbackCatalog() {
     name_en: company.name_en,
     games: (company.games || []).map((game) => ({
       id: game.id,
+      product_type: game.product_type || 'game',
       name_ar: game.name_ar,
       name_en: game.name_en,
       genre: game.genre,
@@ -226,6 +239,7 @@ function fallbackGameById(id) {
     if (game) {
       return {
         id: game.id,
+        product_type: game.product_type || 'game',
         name_ar: game.name_ar,
         name_en: game.name_en,
         genre: game.genre,
@@ -306,9 +320,89 @@ app.post("/api/auth/logout", (req, res) => {
   });
 });
 
+// Coupons - admin management
+app.get('/api/coupons', requireAdmin, async (req, res) => {
+  if (!databaseReady) {
+    return res.json({ coupons: runtimeCoupons });
+  }
+
+  try {
+    const coupons = await getCoupons();
+    res.json({ coupons });
+  } catch (error) {
+    console.error('Failed to fetch coupons', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+app.post('/api/coupons', requireAdmin, async (req, res) => {
+  const { code, percent } = req.body || {};
+  if (!code || !Number.isFinite(Number(percent))) {
+    return res.status(400).json({ error: 'code and percent are required' });
+  }
+
+  if (!databaseReady) {
+    const exists = runtimeCoupons.find((c) => c.code === String(code).trim());
+    if (exists) return res.status(409).json({ error: 'Coupon already exists' });
+    runtimeCoupons.unshift({ code: String(code).trim(), percent: Number(percent), active: 1 });
+    saveCouponsFile();
+    return res.status(201).json({ code: String(code).trim() });
+  }
+
+  try {
+    const created = await createCoupon({ code, percent: Number(percent) });
+    res.status(201).json(created);
+  } catch (error) {
+    console.error('Failed to create coupon', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+app.delete('/api/coupons/:code', requireAdmin, async (req, res) => {
+  const code = String(req.params.code || '').trim();
+  if (!code) return res.status(400).json({ error: 'Invalid code' });
+  if (!databaseReady) {
+    const idx = runtimeCoupons.findIndex((c) => c.code === code);
+    if (idx === -1) return res.status(404).json({ error: 'Coupon not found' });
+    runtimeCoupons.splice(idx, 1);
+    saveCouponsFile();
+    return res.json({ deleted: true });
+  }
+
+  try {
+    const affected = await deleteCoupon(code);
+    if (!affected) return res.status(404).json({ error: 'Coupon not found' });
+    res.json({ deleted: true });
+  } catch (error) {
+    console.error('Failed to delete coupon', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Public validate coupon
+app.post('/api/coupons/validate', async (req, res) => {
+  const { code } = req.body || {};
+  if (!code) return res.status(400).json({ error: 'code is required' });
+
+  if (!databaseReady) {
+    const found = runtimeCoupons.find((c) => c.code === String(code).trim() && Number(c.active || 0) === 1);
+    if (!found) return res.status(404).json({ error: 'Coupon not found' });
+    return res.json({ ok: true, percent: Number(found.percent || 0) });
+  }
+
+  try {
+    const valid = await validateCoupon(code);
+    if (!valid) return res.status(404).json({ error: 'Coupon not found' });
+    res.json({ ok: true, percent: valid.percent });
+  } catch (error) {
+    console.error('Failed to validate coupon', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 app.get("/api/catalog", async (req, res) => {
   if (!databaseReady) {
-    const { search = "", sort = "name_asc" } = req.query;
+    const { search = "", sort = "name_asc", product_type = "all" } = req.query;
     const companies = fallbackCatalog();
     const term = String(search || "").trim().toLowerCase();
     const filtered = !term
@@ -323,7 +417,12 @@ app.get("/api/catalog", async (req, res) => {
           return companyMatch || games.length;
         });
 
-    const sorted = [...filtered];
+    const typeFiltered = (product_type && product_type !== 'all') ? filtered.map((company) => ({
+      ...company,
+      games: (company.games || []).filter((g) => String(g.product_type || 'game') === String(product_type))
+    })).filter((c) => (c.games || []).length > 0) : filtered;
+
+    const sorted = [...typeFiltered];
     sorted.forEach((company) => {
       company.games.sort((a, b) => {
         switch (sort) {
@@ -349,8 +448,14 @@ app.get("/api/catalog", async (req, res) => {
   }
 
   try {
-    const { search = "", sort = "name_asc" } = req.query;
-    const companies = await getCatalog({ search, sort });
+    const { search = "", sort = "name_asc", product_type = "all" } = req.query;
+    let companies = await getCatalog({ search, sort });
+    if (product_type && product_type !== 'all') {
+      companies = companies.map((company) => ({
+        ...company,
+        games: (company.games || []).filter((g) => String(g.product_type || 'game') === String(product_type))
+      })).filter((c) => (c.games || []).length > 0);
+    }
     res.json({ companies });
   } catch (error) {
     console.error("Failed to fetch catalog", error);
@@ -510,7 +615,7 @@ app.delete("/api/companies/:id", requireAdmin, async (req, res) => {
 });
 
 app.post("/api/games", requireAdmin, upload.single("image"), async (req, res) => {
-  const { company_id, name_ar, name_en, genre, release_year, price, currency = "IQD", description = "" } = req.body || {};
+  const { company_id, product_type = 'game', name_ar, name_en, genre, release_year, price, currency = "IQD", description = "" } = req.body || {};
   const year = Number(release_year);
   const coverImagePath = req.file ? `/uploads/${req.file.filename}` : "";
 
@@ -528,6 +633,7 @@ app.post("/api/games", requireAdmin, upload.single("image"), async (req, res) =>
 
     const game = {
       id: nextFallbackGameId(),
+      product_type: String(product_type || 'game'),
       name_ar: String(name_ar).trim(),
       name_en: String(name_en).trim(),
       genre: String(genre).trim(),
@@ -546,6 +652,7 @@ app.post("/api/games", requireAdmin, upload.single("image"), async (req, res) =>
   try {
     const created = await createGame({
       company_id,
+      product_type: String(product_type || 'game'),
       name_ar,
       name_en,
       genre,
@@ -565,7 +672,7 @@ app.post("/api/games", requireAdmin, upload.single("image"), async (req, res) =>
 
 app.put("/api/games/:id", requireAdmin, upload.single("image"), async (req, res) => {
   const id = Number(req.params.id);
-  const { company_id, name_ar, name_en, genre, release_year, price, currency = "IQD", current_cover_image_url = "", description = "" } = req.body || {};
+  const { company_id, product_type = 'game', name_ar, name_en, genre, release_year, price, currency = "IQD", current_cover_image_url = "", description = "" } = req.body || {};
   const year = Number(release_year);
   const coverImagePath = req.file ? `/uploads/${req.file.filename}` : (current_cover_image_url || "");
 
@@ -595,6 +702,7 @@ app.put("/api/games/:id", requireAdmin, upload.single("image"), async (req, res)
 
     const nextGame = {
       ...game,
+      product_type: String(product_type || game.product_type || 'game'),
       name_ar: String(name_ar).trim(),
       name_en: String(name_en).trim(),
       genre: String(genre).trim(),
@@ -625,6 +733,7 @@ app.put("/api/games/:id", requireAdmin, upload.single("image"), async (req, res)
   try {
     const affected = await updateGame(id, {
       company_id,
+      product_type: String(product_type || 'game'),
       name_ar,
       name_en,
       genre,

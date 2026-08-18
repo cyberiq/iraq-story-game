@@ -12,6 +12,7 @@ const gameCompany = document.getElementById("gameCompany");
 const gameNameAr = document.getElementById("gameNameAr");
 const gameNameEn = document.getElementById("gameNameEn");
 const gameGenre = document.getElementById("gameGenre");
+const gameProductType = document.getElementById("gameProductType");
 const gameYear = document.getElementById("gameYear");
 const gamePrice = document.getElementById("gamePrice");
 const gameCurrency = document.getElementById("gameCurrency");
@@ -22,6 +23,10 @@ const gameReset = document.getElementById("gameReset");
 const logoutBtn = document.getElementById("logoutBtn");
 
 const adminCatalog = document.getElementById("adminCatalog");
+const couponForm = document.getElementById('couponForm');
+const couponCode = document.getElementById('couponCode');
+const couponPercent = document.getElementById('couponPercent');
+const couponList = document.getElementById('couponList');
 
 const fallbackAdminCompanies = [
   {
@@ -142,6 +147,7 @@ function clearGameForm() {
   gameNameAr.value = "";
   gameNameEn.value = "";
   gameGenre.value = "";
+  gameProductType.value = "game";
   gameYear.value = "";
   gamePrice.value = "0";
   gameCurrency.value = "IQD";
@@ -214,6 +220,7 @@ async function loadData() {
     bindEditButtons(companies, catalogPayload.companies || []);
 
     setStatus("تم تحميل البيانات.");
+    await loadCoupons();
   } catch (error) {
     console.error(error);
 
@@ -229,6 +236,55 @@ async function loadData() {
     setStatus(`خطأ: ${error.message}`);
   }
 }
+
+async function loadCoupons() {
+  try {
+    const payload = await fetchJson('/api/coupons');
+    const coupons = payload.coupons || [];
+    couponList.innerHTML = '';
+    if (!coupons.length) {
+      couponList.textContent = 'لا توجد كوبونات.';
+      return;
+    }
+
+    coupons.forEach((c) => {
+      const row = document.createElement('div');
+      row.className = 'coupon-row';
+      row.innerHTML = `<strong>${c.code}</strong> — ${c.percent}% <button data-delete-coupon="${c.code}" class="btn-danger">حذف</button>`;
+      couponList.appendChild(row);
+    });
+
+    const delBtns = couponList.querySelectorAll('[data-delete-coupon]');
+    delBtns.forEach((b) => b.addEventListener('click', async () => {
+      const code = b.getAttribute('data-delete-coupon');
+      if (!confirm('حذف الكوبون؟')) return;
+      try {
+        await fetchJson(`/api/coupons/${encodeURIComponent(code)}`, { method: 'DELETE' });
+        setStatus('تم حذف الكوبون.');
+        await loadCoupons();
+      } catch (err) {
+        setStatus(`خطأ: ${err.message}`);
+      }
+    }));
+  } catch (err) {
+    console.error(err);
+    couponList.textContent = 'خطأ في تحميل الكوبونات.';
+  }
+}
+
+couponForm && couponForm.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  try {
+    const payload = { code: couponCode.value.trim(), percent: Number(couponPercent.value) };
+    await fetchJson('/api/coupons', { method: 'POST', body: JSON.stringify(payload) });
+    couponCode.value = '';
+    couponPercent.value = '10';
+    setStatus('تم إضافة الكوبون.');
+    await loadCoupons();
+  } catch (err) {
+    setStatus(`خطأ: ${err.message}`);
+  }
+});
 
 function bindEditButtons(companies, catalogCompanies) {
   const companyButtons = document.querySelectorAll("[data-edit-company]");
@@ -274,6 +330,7 @@ function bindEditButtons(companies, catalogCompanies) {
       gameNameAr.value = selected.name_ar;
       gameNameEn.value = selected.name_en;
       gameGenre.value = selected.genre;
+      gameProductType.value = selected.product_type || 'game';
       gameYear.value = selected.release_year;
       gamePrice.value = Number(selected.price ?? 0);
       gameCurrency.value = selected.currency || "IQD";
@@ -372,6 +429,7 @@ gameForm.addEventListener("submit", async (event) => {
   formData.append("release_year", String(Number(gameYear.value)));
   formData.append("price", String(Number(gamePrice.value || 0)));
   formData.append("currency", gameCurrency.value || "IQD");
+  formData.append("product_type", gameProductType.value || 'game');
   formData.append("description", gameDescription.value.trim());
 
   if (gameImage.files && gameImage.files[0]) {

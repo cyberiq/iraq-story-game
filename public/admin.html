@@ -70,6 +70,14 @@
               <input id="gameGenre" required placeholder="Action / Shooter / RPG" />
             </label>
             <label>
+              <span>نوع المنتج</span>
+              <select id="gameProductType">
+                <option value="game">لعبة</option>
+                <option value="card">كارد</option>
+                <option value="token">يطقاات</option>
+              </select>
+            </label>
+            <label>
               <span>سنة الإصدار</span>
               <input id="gameYear" type="number" min="1970" max="2100" required />
             </label>
@@ -105,6 +113,23 @@
         <h2>الشركات والألعاب الحالية</h2>
         <p class="hint-text">ملاحظة: حذف شركة سيحذف جميع ألعابها.</p>
         <div id="adminCatalog" class="admin-catalog"></div>
+      </section>
+      <section class="admin-card">
+        <h2>إدارة كوبونات التخفيض</h2>
+        <form id="couponForm" class="form-grid">
+          <label>
+            <span>رمز الكوبون</span>
+            <input id="couponCode" required placeholder="SAVE10" />
+          </label>
+          <label>
+            <span>نسبة الخصم (%)</span>
+            <input id="couponPercent" type="number" min="1" max="100" value="10" />
+          </label>
+          <div class="form-actions">
+            <button type="submit" class="btn-primary">إضافة الكوبون</button>
+          </div>
+        </form>
+        <div id="couponList" class="coupon-list"></div>
       </section>
     </main>
 

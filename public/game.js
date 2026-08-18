@@ -6,6 +6,12 @@ const companyNode = document.getElementById("detailCompany");
 const metaNode = document.getElementById("detailMeta");
 const descriptionNode = document.getElementById("detailDescription");
 const priceNode = document.getElementById("detailPrice");
+const couponInput = document.getElementById('couponInput');
+const applyCouponBtn = document.getElementById('applyCouponBtn');
+const discountInfo = document.getElementById('discountInfo');
+const buyBtn = document.getElementById('buyBtn');
+let currentGame = null;
+let activeCoupon = null;
 
 function formatPrice(value, currency = "IQD") {
   const numericValue = Number(value ?? 0);
@@ -66,6 +72,59 @@ async function loadGameDetails() {
     metaNode.textContent = `النوع: ${game.genre} - سنة الإصدار: ${game.release_year}`;
     descriptionNode.textContent = game.description || "لا يوجد وصف متاح لهذه اللعبة حاليًا.";
     priceNode.textContent = formatPrice(game.price ?? 0, game.currency || "IQD");
+    activeCoupon = null;
+    discountInfo.textContent = '';
+    couponInput.value = '';
+    currentGame = game;
+
+    applyCouponBtn.addEventListener('click', async () => {
+      const code = (couponInput.value || '').trim();
+      if (!code) {
+        discountInfo.textContent = 'أدخل رمز كوبون.';
+        return;
+      }
+
+      try {
+        const res = await fetch('/api/coupons/validate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ code })
+        });
+
+        if (!res.ok) {
+          const payload = await res.json().catch(() => ({}));
+          discountInfo.textContent = payload.error || 'الكوبون غير صالح.';
+          activeCoupon = null;
+          return;
+        }
+
+        const payload = await res.json();
+        activeCoupon = payload;
+        const percent = Number(payload.percent || 0);
+        const discounted = Number(game.price || 0) * (1 - percent / 100);
+        discountInfo.textContent = `تم تطبيق الكوبون: ${percent}% — السعر بعد الخصم: ${formatPrice(Math.round(discounted), game.currency)}`;
+      } catch (err) {
+        console.error(err);
+        discountInfo.textContent = 'خطأ في التحقق من الكوبون.';
+      }
+    });
+
+    buyBtn.addEventListener('click', () => {
+      if (!currentGame) return;
+      const code = (couponInput.value || '').trim();
+      const priceValue = Number(currentGame.price || 0);
+      let finalPrice = priceValue;
+      if (activeCoupon && Number(activeCoupon.percent || 0) > 0) {
+        finalPrice = Math.round(priceValue * (1 - Number(activeCoupon.percent) / 100));
+      }
+
+      const displayPrice = formatPrice(finalPrice, currentGame.currency || 'IQD');
+      const message = `أرغب بشراء: ${currentGame.name_ar} / ${currentGame.name_en} (ID:${currentGame.id})‎\nالسعر: ${displayPrice}\nرمز الكوبون: ${code || 'لا يوجد'}`;
+      // WhatsApp number provided by user
+      const waNumber = '7713377783';
+      const waUrl = `https://wa.me/${waNumber}?text=${encodeURIComponent(message)}`;
+      window.location.href = waUrl;
+    });
 
     cardNode.classList.remove("hidden");
     setStatus("");

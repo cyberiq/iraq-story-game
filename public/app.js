@@ -1,5 +1,7 @@
 const searchInput = document.getElementById("searchInput");
 const sortSelect = document.getElementById("sortSelect");
+const productTypeSelect = document.getElementById('productTypeSelect');
+const searchSuggestions = document.getElementById('searchSuggestions');
 const catalogContainer = document.getElementById("catalog");
 const statusNode = document.getElementById("status");
 
@@ -304,6 +306,7 @@ async function fetchCatalog() {
   const search = searchInput.value.trim();
   const sort = sortSelect.value;
   const params = new URLSearchParams({ search, sort });
+  if (productTypeSelect && productTypeSelect.value) params.append('product_type', productTypeSelect.value);
 
   setStatus("جاري تحميل البيانات...");
 
@@ -338,10 +341,47 @@ function onSearchInput() {
   window.clearTimeout(debounceTimer);
   debounceTimer = window.setTimeout(() => {
     fetchCatalog();
+    fetchSuggestions();
   }, 260);
 }
 
 searchInput.addEventListener("input", onSearchInput);
 sortSelect.addEventListener("change", fetchCatalog);
+productTypeSelect && productTypeSelect.addEventListener('change', fetchCatalog);
+
+async function fetchSuggestions() {
+  const term = searchInput.value.trim();
+  if (!term) {
+    searchSuggestions.innerHTML = '';
+    return;
+  }
+
+  try {
+    const params = new URLSearchParams({ search: term, sort: 'name_asc' });
+    if (productTypeSelect && productTypeSelect.value) params.append('product_type', productTypeSelect.value);
+    const response = await fetch(`/api/catalog?${params.toString()}`);
+    if (!response.ok) return;
+    const payload = await response.json();
+    const companies = payload.companies || [];
+    const set = new Set();
+    searchSuggestions.innerHTML = '';
+    for (const company of companies) {
+      set.add(company.name_ar);
+      set.add(company.name_en);
+      for (const g of company.games || []) {
+        set.add(g.name_ar);
+        set.add(g.name_en);
+      }
+    }
+
+    for (const s of Array.from(set).slice(0, 20)) {
+      const opt = document.createElement('option');
+      opt.value = s;
+      searchSuggestions.appendChild(opt);
+    }
+  } catch (err) {
+    // ignore
+  }
+}
 
 document.addEventListener("DOMContentLoaded", fetchCatalog);
