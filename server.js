@@ -617,7 +617,7 @@ app.delete("/api/companies/:id", requireAdmin, async (req, res) => {
 app.post("/api/games", requireAdmin, upload.single("image"), async (req, res) => {
   const { company_id, product_type = 'game', name_ar, name_en, genre, release_year, price, currency = "IQD", description = "" } = req.body || {};
   const year = Number(release_year);
-  const coverImagePath = req.file ? `/uploads/${req.file.filename}` : "";
+  const coverImagePath = req.file ? `/uploads/${req.file.filename}` : (req.body.cover_image_url ? String(req.body.cover_image_url).trim() : "");
 
   if (!company_id || !name_ar || !name_en || !genre || !Number.isInteger(year)) {
     return res.status(400).json({
@@ -674,7 +674,7 @@ app.put("/api/games/:id", requireAdmin, upload.single("image"), async (req, res)
   const id = Number(req.params.id);
   const { company_id, product_type = 'game', name_ar, name_en, genre, release_year, price, currency = "IQD", current_cover_image_url = "", description = "" } = req.body || {};
   const year = Number(release_year);
-  const coverImagePath = req.file ? `/uploads/${req.file.filename}` : (current_cover_image_url || "");
+  const coverImagePath = req.file ? `/uploads/${req.file.filename}` : (req.body.cover_image_url ? String(req.body.cover_image_url).trim() : (current_cover_image_url || ""));
 
   if (!Number.isInteger(id) || id <= 0) {
     return res.status(400).json({ error: "Invalid game id" });

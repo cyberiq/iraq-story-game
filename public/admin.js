@@ -17,6 +17,7 @@ const gameYear = document.getElementById("gameYear");
 const gamePrice = document.getElementById("gamePrice");
 const gameCurrency = document.getElementById("gameCurrency");
 const gameImage = document.getElementById("gameImage");
+const gameImageUrl = document.getElementById("gameImageUrl");
 const gameImageHint = document.getElementById("gameImageHint");
 const gameDescription = document.getElementById("gameDescription");
 const gameReset = document.getElementById("gameReset");
@@ -152,6 +153,7 @@ function clearGameForm() {
   gamePrice.value = "0";
   gameCurrency.value = "IQD";
   gameImage.value = "";
+  gameImageUrl.value = "";
   currentGameImageUrl = "";
   gameImageHint.textContent = "";
   gameDescription.value = "";
@@ -336,6 +338,7 @@ function bindEditButtons(companies, catalogCompanies) {
       gameCurrency.value = selected.currency || "IQD";
       currentGameImageUrl = selected.cover_image_url || "";
       gameImage.value = "";
+      gameImageUrl.value = "";
       gameImageHint.textContent = currentGameImageUrl
         ? `الصورة الحالية: ${currentGameImageUrl}`
         : "لا توجد صورة حالية";
@@ -434,6 +437,11 @@ gameForm.addEventListener("submit", async (event) => {
 
   if (gameImage.files && gameImage.files[0]) {
     formData.append("image", gameImage.files[0]);
+  }
+
+  // If no file uploaded but a direct URL provided, include it
+  if ((!gameImage.files || !gameImage.files[0]) && gameImageUrl && gameImageUrl.value.trim()) {
+    formData.append("cover_image_url", gameImageUrl.value.trim());
   }
 
   if (currentGameImageUrl) {
