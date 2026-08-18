@@ -2,7 +2,7 @@ const fs = require('fs');
 const path = require('path');
 const initSqlJs = require('sql.js');
 
-const DB_PATH = process.env.SQLITE_FILE || path.join(__dirname, 'data', 'game_catalog.sqlite');
+const DB_PATH = process.env.SQLITE_FILE || path.join(__dirname, 'data', 'database.sqlite');
 
 const seedData = [
   {
