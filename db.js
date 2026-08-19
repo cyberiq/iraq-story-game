@@ -96,6 +96,15 @@ async function initPg() {
       created_at TIMESTAMP DEFAULT NOW()
     );
   `);
+  // Ensure compatible columns exist for older DBs that may lack newer fields
+  try {
+    await pgPool.query(`ALTER TABLE games ADD COLUMN IF NOT EXISTS product_subtype TEXT`);
+    await pgPool.query(`ALTER TABLE games ADD COLUMN IF NOT EXISTS product_type TEXT`);
+    await pgPool.query(`ALTER TABLE games ADD COLUMN IF NOT EXISTS currency TEXT`);
+  } catch (e) {
+    // Non-fatal: log but continue — queries above should be idempotent
+    console.warn('Error ensuring optional columns exist:', e && e.message);
+  }
 }
 
 function rowsFromResult(res) {
