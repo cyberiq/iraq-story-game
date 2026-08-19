@@ -78,6 +78,7 @@ async function initPg() {
       id SERIAL PRIMARY KEY,
       company_id INTEGER NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
       product_type TEXT NOT NULL DEFAULT 'game',
+      product_subtype TEXT,
       name_ar TEXT NOT NULL,
       name_en TEXT NOT NULL,
       genre TEXT NOT NULL,
@@ -141,6 +142,7 @@ async function initDatabase() {
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         company_id INTEGER NOT NULL,
         product_type TEXT NOT NULL DEFAULT 'game',
+        product_subtype TEXT,
         name_ar TEXT NOT NULL,
         name_en TEXT NOT NULL,
         genre TEXT NOT NULL,
@@ -212,7 +214,7 @@ async function getCatalog({ search = '', sort = 'name_asc' } = {}) {
     const orderBy = buildOrderBy(sort);
     const rows = await pgQueryRows(
       `SELECT c.id as company_id, c.slug, c.name_ar as company_name_ar, c.name_en as company_name_en,
-              g.id as game_id, g.product_type as game_product_type, g.name_ar as game_name_ar, g.name_en as game_name_en, g.genre, g.release_year, g.price, g.currency, g.cover_image_url, g.description
+              g.id as game_id, g.product_type as game_product_type, g.product_subtype as game_product_subtype, g.name_ar as game_name_ar, g.name_en as game_name_en, g.genre, g.release_year, g.price, g.currency, g.cover_image_url, g.description
        FROM companies c JOIN games g ON g.company_id = c.id
        WHERE $1 = '%' OR c.name_ar ILIKE $2 OR c.name_en ILIKE $2 OR g.name_ar ILIKE $2 OR g.name_en ILIKE $2
        ORDER BY ${orderBy}`,
@@ -233,6 +235,7 @@ async function getCatalog({ search = '', sort = 'name_asc' } = {}) {
       companyMap.get(row.company_id).games.push({
         id: row.game_id,
         product_type: row.game_product_type || 'game',
+        product_subtype: row.game_product_subtype || null,
         name_ar: row.game_name_ar,
         name_en: row.game_name_en,
         genre: row.genre,
@@ -251,7 +254,7 @@ async function getCatalog({ search = '', sort = 'name_asc' } = {}) {
   const sql = `
     SELECT
       c.id as company_id, c.slug, c.name_ar as company_name_ar, c.name_en as company_name_en,
-      g.id as game_id, g.product_type as game_product_type, g.name_ar as game_name_ar, g.name_en as game_name_en, g.genre, g.release_year, g.price, g.currency, g.cover_image_url, g.description
+      g.id as game_id, g.product_type as game_product_type, g.product_subtype as game_product_subtype, g.name_ar as game_name_ar, g.name_en as game_name_en, g.genre, g.release_year, g.price, g.currency, g.cover_image_url, g.description
     FROM companies c
     JOIN games g ON g.company_id = c.id
     WHERE (? = '%%') OR c.name_ar LIKE ? OR c.name_en LIKE ? OR g.name_ar LIKE ? OR g.name_en LIKE ?
@@ -285,6 +288,7 @@ async function getCatalog({ search = '', sort = 'name_asc' } = {}) {
     companyMap.get(row.company_id).games.push({
       id: row.game_id,
       product_type: row.game_product_type || 'game',
+      product_subtype: row.game_product_subtype || null,
       name_ar: row.game_name_ar,
       name_en: row.game_name_en,
       genre: row.genre,
@@ -302,7 +306,7 @@ async function getCatalog({ search = '', sort = 'name_asc' } = {}) {
 async function getGameDetailsById(id) {
   if (usePg) {
     const rows = await pgQueryRows(
-      `SELECT g.id, g.product_type, g.name_ar, g.name_en, g.genre, g.release_year, g.price, g.currency, g.cover_image_url, g.description,
+      `SELECT g.id, g.product_type, g.product_subtype, g.name_ar, g.name_en, g.genre, g.release_year, g.price, g.currency, g.cover_image_url, g.description,
               c.id as company_id, c.slug as company_slug, c.name_ar as company_name_ar, c.name_en as company_name_en
        FROM games g JOIN companies c ON c.id = g.company_id WHERE g.id = $1 LIMIT 1`,
       [Number(id)]
@@ -312,6 +316,7 @@ async function getGameDetailsById(id) {
     return {
       id: row.id,
       product_type: row.product_type || 'game',
+      product_subtype: row.product_subtype || null,
       name_ar: row.name_ar,
       name_en: row.name_en,
       genre: row.genre,
@@ -330,7 +335,7 @@ async function getGameDetailsById(id) {
   }
 
   const stmt = db.prepare(`
-    SELECT g.id, g.product_type, g.name_ar, g.name_en, g.genre, g.release_year, g.price, g.currency, g.cover_image_url, g.description,
+    SELECT g.id, g.product_type, g.product_subtype, g.name_ar, g.name_en, g.genre, g.release_year, g.price, g.currency, g.cover_image_url, g.description,
            c.id as company_id, c.slug as company_slug, c.name_ar as company_name_ar, c.name_en as company_name_en
     FROM games g JOIN companies c ON c.id = g.company_id WHERE g.id = ? LIMIT 1
   `);
@@ -341,6 +346,7 @@ async function getGameDetailsById(id) {
     return {
       id: row.id,
       product_type: row.product_type || 'game',
+      product_subtype: row.product_subtype || null,
       name_ar: row.name_ar,
       name_en: row.name_en,
       genre: row.genre,
@@ -480,19 +486,20 @@ async function updateCompany(id, { slug, name_ar, name_en }) {
   return Number(changes);
 }
 
-async function createGame({ company_id, product_type = 'game', name_ar, name_en, genre, release_year, price, currency, cover_image_url, description }) {
+async function createGame({ company_id, product_type = 'game', product_subtype = null, name_ar, name_en, genre, release_year, price, currency, cover_image_url, description }) {
   if (usePg) {
     const res = await pgPool.query(
-      'INSERT INTO games (company_id, product_type, name_ar, name_en, genre, release_year, price, currency, cover_image_url, description) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) RETURNING id',
-      [Number(company_id), String(product_type || 'game'), String(name_ar).trim(), String(name_en).trim(), String(genre).trim(), Number(release_year), Number(price || 0), String(currency || 'IQD').toUpperCase(), (cover_image_url || '').trim() || null, (description || '').trim() || null]
+      'INSERT INTO games (company_id, product_type, product_subtype, name_ar, name_en, genre, release_year, price, currency, cover_image_url, description) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11) RETURNING id',
+      [Number(company_id), String(product_type || 'game'), product_subtype || null, String(name_ar).trim(), String(name_en).trim(), String(genre).trim(), Number(release_year), Number(price || 0), String(currency || 'IQD').toUpperCase(), (cover_image_url || '').trim() || null, (description || '').trim() || null]
     );
     return { id: res.rows[0].id };
   }
-  const stmt = db.prepare('INSERT INTO games (company_id, product_type, name_ar, name_en, genre, release_year, price, currency, cover_image_url, description) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
+  const stmt = db.prepare('INSERT INTO games (company_id, product_type, product_subtype, name_ar, name_en, genre, release_year, price, currency, cover_image_url, description) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
   try {
     stmt.run([
       Number(company_id),
       String(product_type || 'game'),
+      product_subtype || null,
       String(name_ar).trim(),
       String(name_en).trim(),
       String(genre).trim(),
@@ -511,16 +518,17 @@ async function createGame({ company_id, product_type = 'game', name_ar, name_en,
   return { id };
 }
 
-async function updateGame(id, { company_id, product_type = 'game', name_ar, name_en, genre, release_year, price, currency, cover_image_url, description }) {
+async function updateGame(id, { company_id, product_type = 'game', product_subtype = null, name_ar, name_en, genre, release_year, price, currency, cover_image_url, description }) {
   if (usePg) {
-    const res = await pgPool.query('UPDATE games SET company_id=$1, product_type=$2, name_ar=$3, name_en=$4, genre=$5, release_year=$6, price=$7, currency=$8, cover_image_url=$9, description=$10 WHERE id=$11', [Number(company_id), String(product_type || 'game'), String(name_ar).trim(), String(name_en).trim(), String(genre).trim(), Number(release_year), Number(price || 0), String(currency || 'IQD').toUpperCase(), (cover_image_url || '').trim() || null, (description || '').trim() || null, Number(id)]);
+    const res = await pgPool.query('UPDATE games SET company_id=$1, product_type=$2, product_subtype=$3, name_ar=$4, name_en=$5, genre=$6, release_year=$7, price=$8, currency=$9, cover_image_url=$10, description=$11 WHERE id=$12', [Number(company_id), String(product_type || 'game'), product_subtype || null, String(name_ar).trim(), String(name_en).trim(), String(genre).trim(), Number(release_year), Number(price || 0), String(currency || 'IQD').toUpperCase(), (cover_image_url || '').trim() || null, (description || '').trim() || null, Number(id)]);
     return res.rowCount || 0;
   }
-  const stmt = db.prepare('UPDATE games SET company_id = ?, product_type = ?, name_ar = ?, name_en = ?, genre = ?, release_year = ?, price = ?, currency = ?, cover_image_url = ?, description = ? WHERE id = ?');
+  const stmt = db.prepare('UPDATE games SET company_id = ?, product_type = ?, product_subtype = ?, name_ar = ?, name_en = ?, genre = ?, release_year = ?, price = ?, currency = ?, cover_image_url = ?, description = ? WHERE id = ?');
   try {
     stmt.run([
       Number(company_id),
       String(product_type || 'game'),
+      product_subtype || null,
       String(name_ar).trim(),
       String(name_en).trim(),
       String(genre).trim(),

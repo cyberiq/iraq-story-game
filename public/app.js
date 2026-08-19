@@ -1,6 +1,5 @@
 const searchInput = document.getElementById("searchInput");
 const sortSelect = document.getElementById("sortSelect");
-const productTypeSelect = document.getElementById('productTypeSelect');
 const searchSuggestions = document.getElementById('searchSuggestions');
 const catalogContainer = document.getElementById("catalog");
 const statusNode = document.getElementById("status");
@@ -180,7 +179,7 @@ function formatPrice(value, currency = "IQD") {
 
   const normalizedCurrency = String(currency || "IQD").toUpperCase();
   const label = normalizedCurrency === "USD" ? "$" : "د.ع";
-  return `${numericValue} ${label}`;
+  return `${numericValue.toLocaleString('en-US')} ${label}`;
 }
 
 function createGameNode(game) {
@@ -306,7 +305,6 @@ async function fetchCatalog() {
   const search = searchInput.value.trim();
   const sort = sortSelect.value;
   const params = new URLSearchParams({ search, sort });
-  if (productTypeSelect && productTypeSelect.value) params.append('product_type', productTypeSelect.value);
 
   setStatus("جاري تحميل البيانات...");
 
@@ -347,7 +345,6 @@ function onSearchInput() {
 
 searchInput.addEventListener("input", onSearchInput);
 sortSelect.addEventListener("change", fetchCatalog);
-productTypeSelect && productTypeSelect.addEventListener('change', fetchCatalog);
 
 async function fetchSuggestions() {
   const term = searchInput.value.trim();
@@ -358,7 +355,6 @@ async function fetchSuggestions() {
 
   try {
     const params = new URLSearchParams({ search: term, sort: 'name_asc' });
-    if (productTypeSelect && productTypeSelect.value) params.append('product_type', productTypeSelect.value);
     const response = await fetch(`/api/catalog?${params.toString()}`);
     if (!response.ok) return;
     const payload = await response.json();

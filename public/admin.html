@@ -74,6 +74,7 @@
               <select id="gameProductType">
                 <option value="game">لعبة</option>
                 <option value="steam_card">بطاقة Steam</option>
+                <option value="account">حساب (مثال: حساب ببجي، حساب Steam)</option>
                 <option value="ps_card">بطاقة PlayStation</option>
                 <option value="xbox_card">بطاقة Xbox</option>
                 <option value="token">رمز / توكين</option>
@@ -84,8 +85,8 @@
               <input id="gameYear" type="number" min="1970" max="2100" required />
             </label>
             <label>
-              <span>سعر اللعبة</span>
-              <input id="gamePrice" type="number" min="0" step="1" value="0" />
+              <span>سعر المنتج (مثال: 10,000)</span>
+              <input id="gamePrice" type="text" inputmode="numeric" pattern="[0-9,]*" placeholder="10,000" />
             </label>
             <label>
               <span>العملة</span>
@@ -112,6 +113,10 @@
             <label>
               <span>وصف اللعبة</span>
               <textarea id="gameDescription" rows="4" placeholder="وصف مختصر"></textarea>
+            </label>
+            <label id="productSubtypeLabel" style="display:none;">
+              <span>تفصيل الفئة (مثال: حساب ببجي موبايل، حساب Steam)</span>
+              <input id="gameProductDetail" placeholder="مثال: PUBG Mobile / Steam" />
             </label>
             <div class="form-actions">
               <button type="submit" class="btn-primary">حفظ اللعبة</button>

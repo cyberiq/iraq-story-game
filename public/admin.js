@@ -20,6 +20,8 @@ const gameImage = document.getElementById("gameImage");
 const gameImageUrl = document.getElementById("gameImageUrl");
 const gameImageHint = document.getElementById("gameImageHint");
 const gameImagePreview = document.getElementById("gameImagePreview");
+const productSubtypeLabel = document.getElementById('productSubtypeLabel');
+const gameProductDetail = document.getElementById('gameProductDetail');
 const gameDescription = document.getElementById("gameDescription");
 const gameReset = document.getElementById("gameReset");
 const logoutBtn = document.getElementById("logoutBtn");
@@ -162,6 +164,8 @@ function clearGameForm() {
     gameImagePreview.style.display = "none";
   }
   gameDescription.value = "";
+  if (productSubtypeLabel) productSubtypeLabel.style.display = 'none';
+  if (gameProductDetail) gameProductDetail.value = '';
 }
 
 function renderAdminCatalog(companies) {
@@ -194,7 +198,10 @@ function renderAdminCatalog(companies) {
       const item = document.createElement("div");
       item.className = "admin-game-item";
       const currency = game.currency || "IQD";
-      const priceLabel = Number(game.price ?? 0) > 0 ? `${Number(game.price ?? 0)} ${currency}` : "مجانية";
+      const rawPrice = Number(game.price ?? 0);
+      const priceLabel = rawPrice > 0
+        ? `${rawPrice.toLocaleString('en-US')} ${currency === 'USD' ? '$' : 'د.ع'}`
+        : "مجانية";
       item.innerHTML = `
         <strong>${game.name_ar} / ${game.name_en}</strong>
         <span>${game.genre} - ${game.release_year} • ${priceLabel}</span>
@@ -339,11 +346,16 @@ function bindEditButtons(companies, catalogCompanies) {
       gameGenre.value = selected.genre;
       gameProductType.value = selected.product_type || 'game';
       gameYear.value = selected.release_year;
-      gamePrice.value = Number(selected.price ?? 0);
+      gamePrice.value = (Number(selected.price ?? 0) || 0).toLocaleString('en-US');
       gameCurrency.value = selected.currency || "IQD";
       currentGameImageUrl = selected.cover_image_url || "";
       gameImage.value = "";
       gameImageUrl.value = "";
+      // populate subtype/detail if present
+      if (gameProductDetail) {
+        gameProductDetail.value = selected.product_subtype || '';
+        productSubtypeLabel.style.display = selected.product_type === 'account' ? 'block' : 'none';
+      }
       gameImageHint.textContent = currentGameImageUrl
         ? `الصورة الحالية: ${currentGameImageUrl}`
         : "لا توجد صورة حالية";
@@ -439,8 +451,16 @@ gameForm.addEventListener("submit", async (event) => {
   formData.append("name_en", gameNameEn.value.trim());
   formData.append("genre", gameGenre.value.trim());
   formData.append("release_year", String(Number(gameYear.value)));
-  formData.append("price", String(Number(gamePrice.value || 0)));
-  formData.append("currency", gameCurrency.value || "IQD");
+  // normalize price: remove non-digit characters (commas) and send numeric value
+  const priceRaw = String(gamePrice.value || '').replace(/[^0-9]/g, '');
+  formData.append("price", String(Number(priceRaw || 0)));
+  // For non-game product types (cards/accounts/etc) force IQD and format accordingly
+  const pType = String(gameProductType.value || 'game');
+  if (pType !== 'game') {
+    formData.append("currency", 'IQD');
+  } else {
+    formData.append("currency", gameCurrency.value || "IQD");
+  }
   formData.append("product_type", gameProductType.value || 'game');
   formData.append("description", gameDescription.value.trim());
 
@@ -469,6 +489,10 @@ gameForm.addEventListener("submit", async (event) => {
 
   if (currentGameImageUrl) {
     formData.append("current_cover_image_url", currentGameImageUrl);
+  }
+  // attach product subtype/detail when present
+  if (gameProductDetail && gameProductDetail.value.trim()) {
+    formData.append('product_subtype', gameProductDetail.value.trim());
   }
 
   try {
@@ -541,6 +565,17 @@ if (gameImageUrl) {
       gameImagePreview.src = currentGameImageUrl || '';
       gameImagePreview.style.display = currentGameImageUrl ? 'block' : 'none';
     }
+  });
+}
+
+if (gameProductType) {
+  gameProductType.addEventListener('change', () => {
+    const v = String(gameProductType.value || '');
+    if (productSubtypeLabel) {
+      productSubtypeLabel.style.display = v === 'account' ? 'block' : 'none';
+    }
+    // if not a normal game, default currency to IQD
+    if (v !== 'game' && gameCurrency) gameCurrency.value = 'IQD';
   });
 }
 
