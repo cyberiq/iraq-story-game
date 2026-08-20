@@ -95,6 +95,10 @@ function setStatus(message) {
 
 let currentGameImageUrl = "";
 
+// Default exchange rate: 1 USD = 1300 IQD (change as needed)
+const EXCHANGE_RATE = 1300;
+let lastSelectedCurrency = 'IQD';
+
 function normalizeSlug(value) {
   return value
     .trim()
@@ -139,6 +143,50 @@ function fillCompaniesSelect(companies) {
   });
 }
 
+// Helper: format price for display according to currency
+function formatForCurrency(valueNum, currency) {
+  const n = Number(valueNum || 0) || 0;
+  if (currency === 'USD') return n.toFixed(2);
+  return Math.round(n).toLocaleString('en-US');
+}
+
+// When currency selection changes, convert the displayed price using EXCHANGE_RATE
+if (gameCurrency) {
+  gameCurrency.addEventListener('change', () => {
+    try {
+      const newCurr = String(gameCurrency.value || 'IQD');
+      let raw = String(gamePrice.value || '').replace(/[^0-9.,]/g, '');
+      raw = raw.replace(/,/g, '.');
+      let num = parseFloat(raw);
+      if (!isFinite(num)) num = 0;
+
+      if (lastSelectedCurrency === newCurr) {
+        lastSelectedCurrency = newCurr;
+        return;
+      }
+
+      let converted = num;
+      if (lastSelectedCurrency === 'IQD' && newCurr === 'USD') {
+        converted = +(num / EXCHANGE_RATE);
+      } else if (lastSelectedCurrency === 'USD' && newCurr === 'IQD') {
+        converted = +(num * EXCHANGE_RATE);
+      }
+
+      // Update display
+      if (newCurr === 'USD') {
+        gamePrice.value = converted.toFixed(2);
+      } else {
+        gamePrice.value = Math.round(converted).toLocaleString('en-US');
+      }
+
+      lastSelectedCurrency = newCurr;
+    } catch (e) {
+      // ignore
+    }
+  });
+}
+
+// Helper: format price for display according to currency
 function clearCompanyForm() {
   companyId.value = "";
   companySlug.value = "";
@@ -166,6 +214,7 @@ function clearGameForm() {
   gameDescription.value = "";
   if (productSubtypeLabel) productSubtypeLabel.style.display = 'none';
   if (gameProductDetail) gameProductDetail.value = '';
+  lastSelectedCurrency = 'IQD';
 }
 
 function renderAdminCatalog(companies) {
@@ -405,6 +454,7 @@ function bindEditButtons(companies, catalogCompanies) {
         gamePrice.value = selPriceNum.toLocaleString('en-US');
       }
       gameCurrency.value = selected.currency || "IQD";
+      lastSelectedCurrency = gameCurrency.value || 'IQD';
       currentGameImageUrl = selected.cover_image_url || "";
       gameImage.value = "";
       gameImageUrl.value = "";
@@ -640,7 +690,21 @@ if (gameProductType) {
     if (productSubtypeLabel) {
       productSubtypeLabel.style.display = v === 'account' ? 'block' : 'none';
     }
-    // Do not force currency when product type changes — allow selecting USD
+    // If product type is not a normal game, force IQD currency and update display
+    if (v !== 'game') {
+      const prev = lastSelectedCurrency;
+      gameCurrency.value = 'IQD';
+      // convert current displayed price to IQD if previous was USD
+      let raw = String(gamePrice.value || '').replace(/[^0-9.,]/g, '');
+      raw = raw.replace(/,/g, '.');
+      let num = parseFloat(raw);
+      if (!isFinite(num)) num = 0;
+      if (prev === 'USD') {
+        num = +(num * EXCHANGE_RATE);
+      }
+      gamePrice.value = Math.round(num).toLocaleString('en-US');
+      lastSelectedCurrency = 'IQD';
+    }
   });
 }
 
