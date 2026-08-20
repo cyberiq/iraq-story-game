@@ -661,6 +661,11 @@ async function deleteCompany(id) {
 }
 
 async function deleteGame(id) {
+  if (usePg) {
+    const res = await pgPool.query('DELETE FROM games WHERE id = $1', [Number(id)]);
+    return res.rowCount || 0;
+  }
+
   const stmt = db.prepare('DELETE FROM games WHERE id = ?');
   try {
     stmt.run([Number(id)]);

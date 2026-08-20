@@ -225,8 +225,7 @@ function clearGameForm() {
   if (productSubtypeLabel) productSubtypeLabel.style.display = 'none';
   if (gameProductDetail) gameProductDetail.value = '';
   lastSelectedCurrency = 'IQD';
-  }
-  // No changes made to trigger re-evaluation
+}
 
 function renderAdminCatalog(companies) {
   adminCatalog.innerHTML = "";
