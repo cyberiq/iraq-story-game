@@ -114,6 +114,12 @@ async function fetchJson(url, options = {}) {
     ...options
   });
 
+  if (response.status === 401) {
+    // session likely expired — redirect to login
+    try { window.location.href = '/login'; } catch (e) {}
+    throw new Error('Unauthorized');
+  }
+
   const payload = await response.json().catch(() => ({}));
   if (!response.ok) {
     const message = payload.error || `Request failed: ${response.status}`;
@@ -599,6 +605,22 @@ gameForm.addEventListener("submit", async (event) => {
       if (!['http:', 'https:'].includes(parsed.protocol)) {
         throw new Error('Invalid protocol');
       }
+      // Verify image loads (client-side) before submitting to avoid server HEAD rejections or hotlink blocking
+      const ok = await new Promise((resolve) => {
+        const tester = new Image();
+        let settled = false;
+        const tidy = () => { if (!settled) settled = true; };
+        tester.onload = () => { tidy(); resolve(true); };
+        tester.onerror = () => { tidy(); resolve(false); };
+        // timeout fallback
+        setTimeout(() => { if (!settled) { settled = true; resolve(false); } }, 4000);
+        tester.src = urlVal;
+      });
+
+      if (!ok) {
+        setStatus('رابط الصورة غير صالح أو لا يشير لصيغة صورة مدعومة.');
+        return;
+      }
     } catch (e) {
       setStatus('رابط الصورة غير صالح. استخدم رابط يبدأ بـ http أو https.');
       return;
@@ -677,8 +699,15 @@ if (gameImageUrl) {
   gameImageUrl.addEventListener('input', () => {
     const v = gameImageUrl.value.trim();
     if (v && gameImagePreview) {
+      gameImagePreview.onload = () => {
+        gameImagePreview.style.display = 'block';
+        setStatus('');
+      };
+      gameImagePreview.onerror = () => {
+        gameImagePreview.style.display = 'none';
+        setStatus('رابط الصورة غير صالح أو لا يشير لصيغة صورة مدعومة.');
+      };
       gameImagePreview.src = v;
-      gameImagePreview.style.display = 'block';
     } else if (gameImagePreview) {
       gameImagePreview.src = currentGameImageUrl || '';
       gameImagePreview.style.display = currentGameImageUrl ? 'block' : 'none';

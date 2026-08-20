@@ -303,7 +303,34 @@ function isValidImageUrlCandidate(u) {
     const parsed = new URL(u);
     if (!['http:', 'https:'].includes(parsed.protocol)) return false;
     // basic extension check
-    return /\.(jpe?g|png|gif|webp|bmp|svg)(\?.*)?$/i.test(parsed.pathname + (parsed.search || ''));
+    const extMatch = /\.(jpe?g|png|gif|webp|bmp|svg)(\?.*)?$/i.test(parsed.pathname + (parsed.search || ''));
+    if (extMatch) return true;
+
+    // If no extension, attempt a HEAD request to verify Content-Type without downloading body
+    // Avoid long waits — use a short timeout
+    const http = parsed.protocol === 'https:' ? require('https') : require('http');
+    return new Promise((resolve) => {
+      let finished = false;
+      const req = http.request({
+        method: 'HEAD',
+        host: parsed.hostname,
+        path: parsed.pathname + (parsed.search || ''),
+        port: parsed.port || (parsed.protocol === 'https:' ? 443 : 80),
+        timeout: 3000,
+        headers: {
+          'User-Agent': 'iraq-story-game/1.0 (+https://example)'
+        }
+      }, (res) => {
+        if (finished) return;
+        finished = true;
+        const ct = String(res.headers['content-type'] || '').toLowerCase();
+        resolve(ct.startsWith('image/'));
+      });
+
+      req.on('error', () => { if (!finished) { finished = true; resolve(false); } });
+      req.on('timeout', () => { req.destroy(); if (!finished) { finished = true; resolve(false); } });
+      req.end();
+    });
   } catch (e) {
     return false;
   }
@@ -697,7 +724,12 @@ app.post("/api/games", requireAdmin, upload.single("image"), async (req, res) =>
 
   // If a cover image URL was provided (and no file), validate it
   if (!req.file && coverImagePath) {
-    if (!isValidImageUrlCandidate(coverImagePath)) {
+    try {
+      const valid = await Promise.resolve(isValidImageUrlCandidate(coverImagePath));
+      if (!valid) {
+        return res.status(400).json({ error: 'رابط الصورة غير صالح أو لا يشير لصيغة صورة مدعومة.' });
+      }
+    } catch (err) {
       return res.status(400).json({ error: 'رابط الصورة غير صالح أو لا يشير لصيغة صورة مدعومة.' });
     }
   }
@@ -763,7 +795,12 @@ app.put("/api/games/:id", requireAdmin, upload.single("image"), async (req, res)
 
   // If a cover image URL was provided (and no file), validate it
   if (!req.file && coverImagePath && String(coverImagePath || '').startsWith('http')) {
-    if (!isValidImageUrlCandidate(coverImagePath)) {
+    try {
+      const valid = await Promise.resolve(isValidImageUrlCandidate(coverImagePath));
+      if (!valid) {
+        return res.status(400).json({ error: 'رابط الصورة غير صالح أو لا يشير لصيغة صورة مدعومة.' });
+      }
+    } catch (err) {
       return res.status(400).json({ error: 'رابط الصورة غير صالح أو لا يشير لصيغة صورة مدعومة.' });
     }
   }
