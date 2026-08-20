@@ -182,14 +182,31 @@ function renderAdminCatalog(companies) {
 
     const header = document.createElement("div");
     header.className = "admin-company-header";
-    header.innerHTML = `
-      <h3>${company.name_ar} / ${company.name_en}</h3>
-      <p>${company.slug}</p>
-      <div class="inline-actions">
-        <button type="button" class="btn-secondary" data-edit-company="${company.id}">تعديل الشركة</button>
-        <button type="button" class="btn-danger" data-delete-company="${company.id}">حذف الشركة</button>
-      </div>
-    `;
+
+    const h3 = document.createElement('h3');
+    h3.textContent = `${company.name_ar} / ${company.name_en}`;
+    const p = document.createElement('p');
+    p.textContent = company.slug;
+
+    const headerActions = document.createElement('div');
+    headerActions.className = 'inline-actions';
+    const editCompanyBtn = document.createElement('button');
+    editCompanyBtn.type = 'button';
+    editCompanyBtn.className = 'btn-secondary';
+    editCompanyBtn.setAttribute('data-edit-company', String(company.id));
+    editCompanyBtn.textContent = 'تعديل الشركة';
+    const deleteCompanyBtn = document.createElement('button');
+    deleteCompanyBtn.type = 'button';
+    deleteCompanyBtn.className = 'btn-danger';
+    deleteCompanyBtn.setAttribute('data-delete-company', String(company.id));
+    deleteCompanyBtn.textContent = 'حذف الشركة';
+
+    headerActions.appendChild(editCompanyBtn);
+    headerActions.appendChild(deleteCompanyBtn);
+
+    header.appendChild(h3);
+    header.appendChild(p);
+    header.appendChild(headerActions);
 
     const games = document.createElement("div");
     games.className = "admin-games-list";
@@ -197,6 +214,11 @@ function renderAdminCatalog(companies) {
     company.games.forEach((game) => {
       const item = document.createElement("div");
       item.className = "admin-game-item";
+
+      const title = document.createElement('strong');
+      title.textContent = `${game.name_ar} / ${game.name_en}`;
+
+      const meta = document.createElement('span');
       const currency = game.currency || "IQD";
       const rawPrice = Number(game.price ?? 0);
       const priceLabel = rawPrice > 0
@@ -204,14 +226,28 @@ function renderAdminCatalog(companies) {
             ? `${rawPrice.toFixed(2)} $`
             : `${rawPrice.toLocaleString('en-US')} د.ع`)
         : "مجانية";
-      item.innerHTML = `
-        <strong>${game.name_ar} / ${game.name_en}</strong>
-        <span>${game.genre} - ${game.release_year} • ${priceLabel}</span>
-        <div class="inline-actions">
-          <button type="button" class="btn-secondary" data-edit-game="${game.id}">تعديل اللعبة</button>
-          <button type="button" class="btn-danger" data-delete-game="${game.id}">حذف اللعبة</button>
-        </div>
-      `;
+      meta.textContent = `${game.genre} - ${game.release_year} • ${priceLabel}`;
+
+      const actions = document.createElement('div');
+      actions.className = 'inline-actions';
+      const editBtn = document.createElement('button');
+      editBtn.type = 'button';
+      editBtn.className = 'btn-secondary';
+      editBtn.setAttribute('data-edit-game', String(game.id));
+      editBtn.textContent = 'تعديل اللعبة';
+      const delBtn = document.createElement('button');
+      delBtn.type = 'button';
+      delBtn.className = 'btn-danger';
+      delBtn.setAttribute('data-delete-game', String(game.id));
+      delBtn.textContent = 'حذف اللعبة';
+
+      actions.appendChild(editBtn);
+      actions.appendChild(delBtn);
+
+      item.appendChild(title);
+      item.appendChild(meta);
+      item.appendChild(actions);
+
       games.appendChild(item);
     });
 
@@ -266,7 +302,20 @@ async function loadCoupons() {
     coupons.forEach((c) => {
       const row = document.createElement('div');
       row.className = 'coupon-row';
-      row.innerHTML = `<strong>${c.code}</strong> — ${c.percent}% <button data-delete-coupon="${c.code}" class="btn-danger">حذف</button>`;
+
+      const strong = document.createElement('strong');
+      strong.textContent = c.code;
+
+      const text = document.createTextNode(` — ${c.percent}% `);
+
+      const delBtn = document.createElement('button');
+      delBtn.className = 'btn-danger';
+      delBtn.setAttribute('data-delete-coupon', String(c.code));
+      delBtn.textContent = 'حذف';
+
+      row.appendChild(strong);
+      row.appendChild(text);
+      row.appendChild(delBtn);
       couponList.appendChild(row);
     });
 
