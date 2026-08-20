@@ -156,7 +156,8 @@ if (gameCurrency) {
     try {
       const newCurr = String(gameCurrency.value || 'IQD');
       let raw = String(gamePrice.value || '').replace(/[^0-9.,]/g, '');
-      raw = raw.replace(/,/g, '.');
+      // remove thousands separators (commas) before parsing
+      raw = raw.replace(/,/g, '');
       let num = parseFloat(raw);
       if (!isFinite(num)) num = 0;
 
@@ -560,7 +561,8 @@ gameForm.addEventListener("submit", async (event) => {
   formData.append("release_year", String(Number(gameYear.value)));
   // Normalize price: allow digits, comma, dot. Convert comma to dot for decimals.
   let priceRaw = String(gamePrice.value || '').replace(/[^0-9.,]/g, '');
-  priceRaw = priceRaw.replace(/,/g, '.');
+  // remove thousands separators so parseFloat works correctly
+  priceRaw = priceRaw.replace(/,/g, '');
   let parsedPrice = parseFloat(priceRaw);
   if (!isFinite(parsedPrice)) parsedPrice = 0;
 
@@ -696,7 +698,8 @@ if (gameProductType) {
       gameCurrency.value = 'IQD';
       // convert current displayed price to IQD if previous was USD
       let raw = String(gamePrice.value || '').replace(/[^0-9.,]/g, '');
-      raw = raw.replace(/,/g, '.');
+      // remove thousands separators
+      raw = raw.replace(/,/g, '');
       let num = parseFloat(raw);
       if (!isFinite(num)) num = 0;
       if (prev === 'USD') {
