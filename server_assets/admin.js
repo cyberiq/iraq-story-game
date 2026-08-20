@@ -111,6 +111,7 @@ function normalizeSlug(value) {
 async function fetchJson(url, options = {}) {
   const response = await fetch(url, {
     headers: { "Content-Type": "application/json" },
+    credentials: options.credentials || 'same-origin',
     ...options
   });
 
@@ -167,6 +168,8 @@ if (gameCurrency) {
       let num = parseFloat(raw);
       if (!isFinite(num)) num = 0;
 
+      console.debug('[admin] currency change', { lastSelectedCurrency, newCurr, raw, num });
+
       if (lastSelectedCurrency === newCurr) {
         lastSelectedCurrency = newCurr;
         return;
@@ -222,7 +225,8 @@ function clearGameForm() {
   if (productSubtypeLabel) productSubtypeLabel.style.display = 'none';
   if (gameProductDetail) gameProductDetail.value = '';
   lastSelectedCurrency = 'IQD';
-}
+  }
+  // No changes made to trigger re-evaluation
 
 function renderAdminCatalog(companies) {
   adminCatalog.innerHTML = "";
@@ -575,6 +579,8 @@ gameForm.addEventListener("submit", async (event) => {
   // Determine currency: for non-game product types default to IQD, otherwise use selected currency
   const pType = String(gameProductType.value || 'game');
   const selectedCurrency = pType !== 'game' ? 'IQD' : (gameCurrency.value || 'IQD');
+
+  console.debug('[admin] submit price parse', { priceRaw, parsedPrice, selectedCurrency, pType });
 
   if (selectedCurrency === 'USD') {
     // Preserve two decimals for USD
