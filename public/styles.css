@@ -219,6 +219,12 @@ select:focus {
   font-size: 0.82rem;
 }
 
+/* Admin: make price input a bit wider for readability */
+.admin-card input#gamePrice {
+  min-width: 260px;
+  padding: 0 16px;
+}
+
 .games-list {
   display: grid;
   gap: 12px;

@@ -200,7 +200,9 @@ function renderAdminCatalog(companies) {
       const currency = game.currency || "IQD";
       const rawPrice = Number(game.price ?? 0);
       const priceLabel = rawPrice > 0
-        ? `${rawPrice.toLocaleString('en-US')} ${currency === 'USD' ? '$' : 'د.ع'}`
+        ? (currency === 'USD'
+            ? `${rawPrice.toFixed(2)} $`
+            : `${rawPrice.toLocaleString('en-US')} د.ع`)
         : "مجانية";
       item.innerHTML = `
         <strong>${game.name_ar} / ${game.name_en}</strong>
@@ -346,7 +348,13 @@ function bindEditButtons(companies, catalogCompanies) {
       gameGenre.value = selected.genre;
       gameProductType.value = selected.product_type || 'game';
       gameYear.value = selected.release_year;
-      gamePrice.value = (Number(selected.price ?? 0) || 0).toLocaleString('en-US');
+      // Populate price respecting currency: show two decimals for USD, integer with thousands for IQD
+      const selPriceNum = Number(selected.price ?? 0) || 0;
+      if ((selected.currency || 'IQD') === 'USD') {
+        gamePrice.value = selPriceNum.toFixed(2);
+      } else {
+        gamePrice.value = selPriceNum.toLocaleString('en-US');
+      }
       gameCurrency.value = selected.currency || "IQD";
       currentGameImageUrl = selected.cover_image_url || "";
       gameImage.value = "";
@@ -451,15 +459,24 @@ gameForm.addEventListener("submit", async (event) => {
   formData.append("name_en", gameNameEn.value.trim());
   formData.append("genre", gameGenre.value.trim());
   formData.append("release_year", String(Number(gameYear.value)));
-  // normalize price: remove non-digit characters (commas) and send numeric value
-  const priceRaw = String(gamePrice.value || '').replace(/[^0-9]/g, '');
-  formData.append("price", String(Number(priceRaw || 0)));
-  // For non-game product types (cards/accounts/etc) force IQD and format accordingly
+  // Normalize price: allow digits, comma, dot. Convert comma to dot for decimals.
+  let priceRaw = String(gamePrice.value || '').replace(/[^0-9.,]/g, '');
+  priceRaw = priceRaw.replace(/,/g, '.');
+  let parsedPrice = parseFloat(priceRaw);
+  if (!isFinite(parsedPrice)) parsedPrice = 0;
+
+  // Determine currency: for non-game product types default to IQD, otherwise use selected currency
   const pType = String(gameProductType.value || 'game');
-  if (pType !== 'game') {
-    formData.append("currency", 'IQD');
+  const selectedCurrency = pType !== 'game' ? 'IQD' : (gameCurrency.value || 'IQD');
+
+  if (selectedCurrency === 'USD') {
+    // Preserve two decimals for USD
+    formData.append('price', String(Number(parsedPrice).toFixed(2)));
+    formData.append('currency', 'USD');
   } else {
-    formData.append("currency", gameCurrency.value || "IQD");
+    // IQD: store whole number
+    formData.append('price', String(Math.round(parsedPrice)));
+    formData.append('currency', 'IQD');
   }
   formData.append("product_type", gameProductType.value || 'game');
   formData.append("description", gameDescription.value.trim());
@@ -574,8 +591,7 @@ if (gameProductType) {
     if (productSubtypeLabel) {
       productSubtypeLabel.style.display = v === 'account' ? 'block' : 'none';
     }
-    // if not a normal game, default currency to IQD
-    if (v !== 'game' && gameCurrency) gameCurrency.value = 'IQD';
+    // Do not force currency when product type changes — allow selecting USD
   });
 }
 
