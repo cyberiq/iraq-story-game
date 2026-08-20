@@ -581,3 +581,26 @@ textarea:focus {
 .contact-manager:focus, .contact-manager:hover {
   transform: translateY(-3px);
 }
+
+/* small Arabic marker 'ه' above the contact button to indicate where to click */
+.contact-manager::before {
+  content: 'ه';
+  position: absolute;
+  top: -14px;
+  left: 12px;
+  background: rgba(0,0,0,0.6);
+  color: var(--brand);
+  padding: 2px 6px;
+  border-radius: 8px;
+  font-weight: 900;
+  font-size: 12px;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(0,0,0,0.35);
+  animation: pulse 1400ms infinite ease-in-out;
+}
+
+@keyframes pulse {
+  0% { transform: translateY(-2px) scale(1); opacity: 1; }
+  50% { transform: translateY(-6px) scale(1.05); opacity: 0.9; }
+  100% { transform: translateY(-2px) scale(1); opacity: 1; }
+}
