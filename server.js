@@ -132,11 +132,48 @@ app.use(
     cookie: {
       httpOnly: true,
       sameSite: "lax",
-      secure: false,
+      secure: String(process.env.NODE_ENV || '').toLowerCase() === 'production',
       maxAge: 1000 * 60 * 60 * 12
     }
   })
 );
+// If running behind a proxy/load balancer in production, trust first proxy for secure cookies
+if (String(process.env.NODE_ENV || '').toLowerCase() === 'production') {
+  app.set('trust proxy', 1);
+}
+
+// Protect sensitive admin static files: only allow when session is admin
+// Serve admin assets through guarded routes to prevent accidental public access or cache bypass
+app.get('/admin', (req, res) => {
+  if (!req.session || req.session.isAdmin !== true) return res.redirect('/login');
+  return res.sendFile(path.join(__dirname, 'public', 'admin.html'));
+});
+
+app.get('/admin.html', (req, res) => {
+  if (!req.session || req.session.isAdmin !== true) return res.redirect('/login');
+  return res.sendFile(path.join(__dirname, 'public', 'admin.html'));
+});
+
+app.get('/admin.js', (req, res) => {
+  if (!req.session || req.session.isAdmin !== true) return res.status(401).json({ error: 'Unauthorized' });
+  return res.sendFile(path.join(__dirname, 'server_assets', 'admin.js'));
+});
+
+// new secured path for admin JS assets
+app.get('/admin-assets/admin.js', (req, res) => {
+  if (!req.session || req.session.isAdmin !== true) return res.status(401).json({ error: 'Unauthorized' });
+  return res.sendFile(path.join(__dirname, 'server_assets', 'admin.js'));
+});
+
+app.get('/change-password.html', (req, res) => {
+  if (!req.session || req.session.isAdmin !== true) return res.redirect('/login');
+  return res.sendFile(path.join(__dirname, 'public', 'change-password.html'));
+});
+
+app.get('/change-password.js', (req, res) => {
+  if (!req.session || req.session.isAdmin !== true) return res.status(401).json({ error: 'Unauthorized' });
+  return res.sendFile(path.join(__dirname, 'public', 'change-password.js'));
+});
 app.use(express.static(path.join(__dirname, "public"), { index: false }));
 app.use("/uploads", express.static(path.join(__dirname, "public", "uploads")));
 
