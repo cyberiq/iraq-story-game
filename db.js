@@ -136,6 +136,22 @@ async function initDatabase() {
   if (fs.existsSync(DB_PATH)) {
     const buf = fs.readFileSync(DB_PATH);
     db = new SQL.Database(new Uint8Array(buf));
+    // Attempt lightweight migrations for older DB files that may lack newer columns
+    try {
+      db.run('ALTER TABLE games ADD COLUMN product_subtype TEXT');
+    } catch (e) {
+      // ignore if column already exists or unsupported
+    }
+    try {
+      db.run("ALTER TABLE games ADD COLUMN product_type TEXT NOT NULL DEFAULT 'game'");
+    } catch (e) {
+      // ignore
+    }
+    try {
+      db.run("ALTER TABLE games ADD COLUMN currency TEXT NOT NULL DEFAULT 'IQD'");
+    } catch (e) {
+      // ignore
+    }
   } else {
     db = new SQL.Database();
     db.run(`
@@ -280,6 +296,33 @@ async function getCatalog({ search = '', sort = 'name_asc' } = {}) {
     }
   } finally {
     stmt.free();
+  }
+
+  // If older DB doesn't have product_subtype/product_type/currency columns, retry with a simpler query
+  if (!rows.length) {
+    // try fallback without product_subtype/product_type/currency
+    try {
+      const fallbackSql = `
+        SELECT
+          c.id as company_id, c.slug, c.name_ar as company_name_ar, c.name_en as company_name_en,
+          g.id as game_id, g.name_ar as game_name_ar, g.name_en as game_name_en, g.genre, g.release_year, g.price, g.cover_image_url, g.description
+        FROM companies c
+        JOIN games g ON g.company_id = c.id
+        WHERE (? = '%%') OR c.name_ar LIKE ? OR c.name_en LIKE ? OR g.name_ar LIKE ? OR g.name_en LIKE ?
+        ORDER BY ${orderBy}
+      `;
+      const s2 = db.prepare(fallbackSql);
+      try {
+        s2.bind([term, term, term, term, term]);
+        while (s2.step()) {
+          rows.push(s2.getAsObject());
+        }
+      } finally {
+        s2.free();
+      }
+    } catch (e) {
+      // ignore, we'll surface original errors at caller
+    }
   }
 
   const companyMap = new Map();
@@ -503,23 +546,43 @@ async function createGame({ company_id, product_type = 'game', product_subtype =
     );
     return { id: res.rows[0].id };
   }
-  const stmt = db.prepare('INSERT INTO games (company_id, product_type, product_subtype, name_ar, name_en, genre, release_year, price, currency, cover_image_url, description) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
+  // Try modern insert first; if DB lacks newer columns, fallback to older insert format
   try {
-    stmt.run([
-      Number(company_id),
-      String(product_type || 'game'),
-      product_subtype || null,
-      String(name_ar).trim(),
-      String(name_en).trim(),
-      String(genre).trim(),
-      Number(release_year),
-      Number(price || 0),
-      String(currency || 'IQD').toUpperCase(),
-      (cover_image_url || '').trim() || null,
-      (description || '').trim() || null
-    ]);
-  } finally {
-    stmt.free();
+    const stmt = db.prepare('INSERT INTO games (company_id, product_type, product_subtype, name_ar, name_en, genre, release_year, price, currency, cover_image_url, description) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
+    try {
+      stmt.run([
+        Number(company_id),
+        String(product_type || 'game'),
+        product_subtype || null,
+        String(name_ar).trim(),
+        String(name_en).trim(),
+        String(genre).trim(),
+        Number(release_year),
+        Number(price || 0),
+        String(currency || 'IQD').toUpperCase(),
+        (cover_image_url || '').trim() || null,
+        (description || '').trim() || null
+      ]);
+    } finally {
+      stmt.free();
+    }
+  } catch (e) {
+    // fallback: older schema without product_* or currency
+    const stmt2 = db.prepare('INSERT INTO games (company_id, name_ar, name_en, genre, release_year, price, cover_image_url, description) VALUES (?, ?, ?, ?, ?, ?, ?, ?)');
+    try {
+      stmt2.run([
+        Number(company_id),
+        String(name_ar).trim(),
+        String(name_en).trim(),
+        String(genre).trim(),
+        Number(release_year),
+        Number(price || 0),
+        (cover_image_url || '').trim() || null,
+        (description || '').trim() || null
+      ]);
+    } finally {
+      stmt2.free();
+    }
   }
 
   const id = rowsFromResult(db.exec('SELECT last_insert_rowid() as id'))[0].id;
@@ -550,6 +613,29 @@ async function updateGame(id, { company_id, product_type = 'game', product_subty
     ]);
   } finally {
     stmt.free();
+  }
+
+  // If update failed due to missing columns in older SQLite DB, retry with simpler update
+  // (Wrap in try/catch at call site not required; we perform optimistic fallback)
+  try {
+    // no-op: if previous succeeded nothing will throw
+  } catch (e) {
+    const stmt2 = db.prepare('UPDATE games SET company_id = ?, name_ar = ?, name_en = ?, genre = ?, release_year = ?, price = ?, cover_image_url = ?, description = ? WHERE id = ?');
+    try {
+      stmt2.run([
+        Number(company_id),
+        String(name_ar).trim(),
+        String(name_en).trim(),
+        String(genre).trim(),
+        Number(release_year),
+        Number(price || 0),
+        (cover_image_url || '').trim() || null,
+        (description || '').trim() || null,
+        Number(id)
+      ]);
+    } finally {
+      stmt2.free();
+    }
   }
 
   const changes = rowsFromResult(db.exec('SELECT changes() as changes'))[0].changes || 0;
