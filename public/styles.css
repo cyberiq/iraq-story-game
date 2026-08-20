@@ -553,3 +553,31 @@ textarea:focus {
     grid-template-columns: 1fr;
   }
 }
+
+/* Contact manager floating button */
+.contact-manager {
+  position: fixed;
+  right: 18px;
+  bottom: 18px;
+  z-index: 9999;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  background: linear-gradient(180deg, var(--brand), var(--brand-2));
+  color: #1d1410;
+  padding: 10px 14px;
+  border-radius: 999px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.36);
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.contact-manager img {
+  width: 20px;
+  height: 20px;
+  display: inline-block;
+}
+
+.contact-manager:focus, .contact-manager:hover {
+  transform: translateY(-3px);
+}

@@ -16,8 +16,13 @@
     <main class="detail-wrap">
       <div class="detail-topbar">
         <a class="btn-secondary" href="/">عودة للرئيسية</a>
-        <a class="btn-secondary" href="/admin">لوحة الإدارة</a>
+        <!-- Admin link hidden from UI; page still accessible if direct URL is known -->
       </div>
+
+      <!-- Contact manager button -->
+      <a class="contact-manager" href="https://wa.me/7713377783" target="_blank" rel="noopener noreferrer" aria-label="تواصل مع المدير">
+        <img src="https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/whatsapp.svg" alt="wa" /> تواصل مع المدير
+      </a>
 
       <section id="detailStatus" class="status" aria-live="polite"></section>
 
