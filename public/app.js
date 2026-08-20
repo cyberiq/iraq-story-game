@@ -1,5 +1,4 @@
 const searchInput = document.getElementById("searchInput");
-const sortSelect = document.getElementById("sortSelect");
 const searchSuggestions = document.getElementById('searchSuggestions');
 const catalogContainer = document.getElementById("catalog");
 const statusNode = document.getElementById("status");
@@ -303,7 +302,7 @@ async function fetchFallbackCatalog(search, sort) {
 
 async function fetchCatalog() {
   const search = searchInput.value.trim();
-  const sort = sortSelect.value;
+  const sort = 'name_asc'; // sorting disabled in UI; use default server-side ordering
   const params = new URLSearchParams({ search, sort });
 
   setStatus("جاري تحميل البيانات...");
@@ -344,7 +343,6 @@ function onSearchInput() {
 }
 
 searchInput.addEventListener("input", onSearchInput);
-sortSelect.addEventListener("change", fetchCatalog);
 
 async function fetchSuggestions() {
   const term = searchInput.value.trim();

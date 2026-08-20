@@ -182,33 +182,14 @@ function renderAdminCatalog(companies) {
 
     const header = document.createElement("div");
     header.className = "admin-company-header";
-
-    const title = document.createElement('h3');
-    title.textContent = `${company.name_ar} / ${company.name_en}`;
-
-    const slugNode = document.createElement('p');
-    slugNode.textContent = company.slug;
-
-    const actions = document.createElement('div');
-    actions.className = 'inline-actions';
-
-    const editBtn = document.createElement('button');
-    editBtn.type = 'button';
-    editBtn.className = 'btn-secondary';
-    editBtn.setAttribute('data-edit-company', String(company.id));
-    editBtn.textContent = 'تعديل الشركة';
-
-    const delBtn = document.createElement('button');
-    delBtn.type = 'button';
-    delBtn.className = 'btn-danger';
-    delBtn.setAttribute('data-delete-company', String(company.id));
-    delBtn.textContent = 'حذف الشركة';
-
-    actions.appendChild(editBtn);
-    actions.appendChild(delBtn);
-    header.appendChild(title);
-    header.appendChild(slugNode);
-    header.appendChild(actions);
+    header.innerHTML = `
+      <h3>${company.name_ar} / ${company.name_en}</h3>
+      <p>${company.slug}</p>
+      <div class="inline-actions">
+        <button type="button" class="btn-secondary" data-edit-company="${company.id}">تعديل الشركة</button>
+        <button type="button" class="btn-danger" data-delete-company="${company.id}">حذف الشركة</button>
+      </div>
+    `;
 
     const games = document.createElement("div");
     games.className = "admin-games-list";
@@ -221,34 +202,14 @@ function renderAdminCatalog(companies) {
       const priceLabel = rawPrice > 0
         ? `${rawPrice.toLocaleString('en-US')} ${currency === 'USD' ? '$' : 'د.ع'}`
         : "مجانية";
-
-      const title = document.createElement('strong');
-      title.textContent = `${game.name_ar} / ${game.name_en}`;
-
-      const meta = document.createElement('span');
-      meta.textContent = `${game.genre} - ${game.release_year} • ${priceLabel}`;
-
-      const inline = document.createElement('div');
-      inline.className = 'inline-actions';
-
-      const editG = document.createElement('button');
-      editG.type = 'button';
-      editG.className = 'btn-secondary';
-      editG.setAttribute('data-edit-game', String(game.id));
-      editG.textContent = 'تعديل اللعبة';
-
-      const delG = document.createElement('button');
-      delG.type = 'button';
-      delG.className = 'btn-danger';
-      delG.setAttribute('data-delete-game', String(game.id));
-      delG.textContent = 'حذف اللعبة';
-
-      inline.appendChild(editG);
-      inline.appendChild(delG);
-
-      item.appendChild(title);
-      item.appendChild(meta);
-      item.appendChild(inline);
+      item.innerHTML = `
+        <strong>${game.name_ar} / ${game.name_en}</strong>
+        <span>${game.genre} - ${game.release_year} • ${priceLabel}</span>
+        <div class="inline-actions">
+          <button type="button" class="btn-secondary" data-edit-game="${game.id}">تعديل اللعبة</button>
+          <button type="button" class="btn-danger" data-delete-game="${game.id}">حذف اللعبة</button>
+        </div>
+      `;
       games.appendChild(item);
     });
 
