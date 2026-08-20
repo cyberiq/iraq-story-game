@@ -889,6 +889,10 @@ app.get("/game", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "game.html"));
 });
 
+app.get("/contact", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "contact.html"));
+});
+
 app.use((req, res, next) => {
   if (req.path.startsWith("/api/")) {
     return res.status(404).json({ error: "API route not found" });
