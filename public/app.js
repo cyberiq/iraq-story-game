@@ -158,6 +158,110 @@ const localFallbackCompanies = [
         description: "كرة قدم بالسيارات"
       }
     ]
+  },
+  {
+    id: 6,
+    slug: "call-of-duty",
+    name_ar: "كول أوف ديوتي",
+    name_en: "Call of Duty",
+    games: [
+      {
+        id: 601,
+        name_ar: "كول اوف ديوتي (نداء الواجب)",
+        name_en: "Call of Duty",
+        genre: "Shooter",
+        release_year: 2003,
+        price: 59,
+        currency: "IQD",
+        cover_image_url: "https://cdn.cloudflare.steamstatic.com/steam/apps/2620/header.jpg",
+        description: "تدور أحداث اللعبة في الحرب العالمية الثانية عبر ثلاثة جنود مختلفين."
+      },
+      {
+        id: 602,
+        name_ar: "كول اوف ديوتي 4: المودرن وورفير",
+        name_en: "Call of Duty 4: Modern Warfare",
+        genre: "Shooter",
+        release_year: 2007,
+        price: 89,
+        currency: "IQD",
+        cover_image_url: "https://cdn.cloudflare.steamstatic.com/steam/apps/7940/header.jpg",
+        description: "نقلة نوعية إلى الحروب الحديثة مع قصة عن الإرهاب الدولي."
+      },
+      {
+        id: 603,
+        name_ar: "كول اوف ديوتي: مودرن وارفير 2",
+        name_en: "Call of Duty: Modern Warfare 2",
+        genre: "Shooter",
+        release_year: 2009,
+        price: 96,
+        currency: "IQD",
+        cover_image_url: "https://cdn.cloudflare.steamstatic.com/steam/apps/10190/header.jpg",
+        description: "تدور القصة حول فرقة المهام 141 ومواجهة التهديد الإرهابي العالمي."
+      },
+      {
+        id: 604,
+        name_ar: "كول اوف ديوتي: مودرن وارفير 3",
+        name_en: "Call of Duty: Modern Warfare III",
+        genre: "Shooter",
+        release_year: 2023,
+        price: 179,
+        currency: "IQD",
+        cover_image_url: "https://cdn.cloudflare.steamstatic.com/steam/apps/2519060/header.jpg",
+        description: "جزء جديد من السلسلة مع طور قصة وطور جماعي سريع."
+      }
+    ]
+  },
+  {
+    id: 7,
+    slug: "battlefield",
+    name_ar: "باتلفيلد",
+    name_en: "Battlefield",
+    games: [
+      {
+        id: 701,
+        name_ar: "باتلفيلد 1942",
+        name_en: "Battlefield 1942",
+        genre: "Shooter",
+        release_year: 2002,
+        price: 59,
+        currency: "IQD",
+        cover_image_url: "https://cdn.cloudflare.steamstatic.com/steam/apps/1659900/header.jpg",
+        description: "الجزء الأول من السلسلة في الحرب العالمية الثانية مع أسلوب جماعي واسع."
+      },
+      {
+        id: 702,
+        name_ar: "باتلفيلد 2",
+        name_en: "Battlefield 2",
+        genre: "Shooter",
+        release_year: 2005,
+        price: 68,
+        currency: "IQD",
+        cover_image_url: "https://cdn.cloudflare.steamstatic.com/steam/apps/15320/header.jpg",
+        description: "نقلة نوعية للحروب الحديثة مع القائد والكتائب."
+      },
+      {
+        id: 703,
+        name_ar: "باتلفيلد 3",
+        name_en: "Battlefield 3",
+        genre: "Shooter",
+        release_year: 2011,
+        price: 94,
+        currency: "IQD",
+        cover_image_url: "https://cdn.cloudflare.steamstatic.com/steam/apps/1238840/header.jpg",
+        description: "مغامرة حربية حديثة ورسومات انطباعية ومباريات جماعية ضخمة."
+      },
+      {
+        id: 704,
+        name_ar: "باتلفيلد 1",
+        name_en: "Battlefield 1",
+        genre: "Shooter",
+        release_year: 2016,
+        price: 110,
+        currency: "IQD",
+        cover_image_url: "https://cdn.cloudflare.steamstatic.com/steam/apps/1238820/header.jpg",
+        description: "تجربة رائعة عن الحرب العالمية الأولى بأسلوب سينمائي."
+      }
+    ]
   }
 ];
 
