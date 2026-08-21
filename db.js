@@ -443,6 +443,58 @@ let db = null;
 let usePg = Boolean(process.env.DATABASE_URL);
 let pgPool = null;
 
+async function seedPgWithStarterData() {
+  if (!pgPool) return;
+
+  const countResult = await pgPool.query('SELECT COUNT(*)::int AS count FROM companies');
+  const companyCount = Number(countResult.rows?.[0]?.count || 0);
+  if (companyCount > 0) return;
+
+  const client = await pgPool.connect();
+  try {
+    await client.query('BEGIN');
+
+    for (const company of seedData) {
+      const companyRes = await client.query(
+        'INSERT INTO companies (slug, name_ar, name_en) VALUES ($1, $2, $3) RETURNING id',
+        [String(company.slug).trim(), String(company.name_ar).trim(), String(company.name_en).trim()]
+      );
+
+      const companyId = Number(companyRes.rows[0].id);
+      for (const game of company.games || []) {
+        await client.query(
+          `INSERT INTO games (
+            company_id, product_type, product_subtype, name_ar, name_en, genre,
+            release_year, price, currency, cover_image_url, description
+          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
+          [
+            companyId,
+            String(game.product_type || 'game'),
+            game.product_subtype || null,
+            String(game.name_ar).trim(),
+            String(game.name_en).trim(),
+            String(game.genre).trim(),
+            Number(game.release_year),
+            Number(game.price || 0),
+            String(game.currency || 'IQD').toUpperCase(),
+            (game.cover_image_url || '').trim() || null,
+            (game.description || '').trim() || null
+          ]
+        );
+      }
+    }
+
+    await client.query('COMMIT');
+    console.log('Seeded PostgreSQL catalog with starter data.');
+  } catch (error) {
+    await client.query('ROLLBACK');
+    console.error('Failed to seed PostgreSQL catalog:', error);
+    throw error;
+  } finally {
+    client.release();
+  }
+}
+
 async function initPg() {
   if (!process.env.DATABASE_URL) return;
   pgPool = new Pool({ connectionString: process.env.DATABASE_URL, ssl: { rejectUnauthorized: false } });
@@ -486,6 +538,8 @@ async function initPg() {
     // Non-fatal: log but continue — queries above should be idempotent
     console.warn('Error ensuring optional columns exist:', e && e.message);
   }
+
+  await seedPgWithStarterData();
 }
 
 function rowsFromResult(res) {
@@ -1070,6 +1124,7 @@ module.exports = {
   createGame,
   updateGame,
   deleteCompany,
-  deleteGame
-  ,getCoupons, createCoupon, deleteCoupon, validateCoupon
+  deleteGame,
+  seedPgWithStarterData,
+  getCoupons, createCoupon, deleteCoupon, validateCoupon
 };
