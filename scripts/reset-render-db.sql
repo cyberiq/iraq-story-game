@@ -10,9 +10,13 @@ DELETE FROM companies;
 INSERT INTO companies (id, slug, name_ar, name_en) VALUES
   (1, 'activision', 'اكتفجن', 'Activision'),
   (2, 'yalla-tech', 'يلا تكنولوجي', 'Yalla Technology'),
-  (3, 'battlefield', 'باتلفيلد', 'Battlefield');
+  (3, 'battlefield', 'باتلفيلد', 'Battlefield'),
+  (4, 'medal-of-honor', 'ميدل أوف هونر', 'Medal of Honor'),
+  (5, 'god-of-war', 'جود أوف وور', 'God of War'),
+  (6, 'gaming-platforms', 'منصات الألعاب', 'Gaming Platforms'),
+  (7, 'ai-subscriptions', 'اشتراكات الذكاء الاصطناعي', 'AI Subscriptions');
 
-ALTER SEQUENCE companies_id_seq RESTART WITH 4;
+ALTER SEQUENCE companies_id_seq RESTART WITH 8;
 
 INSERT INTO games (
   company_id,
@@ -88,14 +92,6 @@ VALUES
   (5, 'game', NULL, 'جود أوف وور (2018)', 'God of War (2018)', 'Action RPG', 2018, 120, 'IQD', 'https://cdn.cloudflare.steamstatic.com/steam/apps/1593500/header.jpg', 'تحول جريء إلى الأسطورة النوردية مع كريتوس وابنه أتريوس في رحلة ملحمية.'),
   (5, 'game', NULL, 'جود أوف وور راجناروك', 'God of War Ragnarök', 'Action RPG', 2022, 130, 'IQD', 'https://cdn.cloudflare.steamstatic.com/steam/apps/2322010/header.jpg', 'خاتمة الحقبة النوردية في مواجهة الآلهة ومصير العوالم التسعة.'),
   (5, 'game', NULL, 'جود أوف وور راجناروك: فالهالا', 'God of War Ragnarök: Valhalla', 'Action', 2023, 70, 'IQD', 'https://cdn.cloudflare.steamstatic.com/steam/apps/2518590/header.jpg', 'محتوى إضافي يفتح شبح الماضي ويقدم تجربة شخصية في فالهالا.');
-
-INSERT INTO companies (id, slug, name_ar, name_en) VALUES
-  (4, 'medal-of-honor', 'ميدل أوف هونر', 'Medal of Honor'),
-  (5, 'god-of-war', 'جود أوف وور', 'God of War'),
-  (6, 'gaming-platforms', 'منصات الألعاب', 'Gaming Platforms'),
-  (7, 'ai-subscriptions', 'اشتراكات الذكاء الاصطناعي', 'AI Subscriptions');
-
-ALTER SEQUENCE companies_id_seq RESTART WITH 8;
 
 INSERT INTO games (
   company_id,
