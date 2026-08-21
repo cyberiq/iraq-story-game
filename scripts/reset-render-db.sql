@@ -7,10 +7,12 @@ DELETE FROM coupons;
 DELETE FROM games;
 DELETE FROM companies;
 
-INSERT INTO companies (slug, name_ar, name_en) VALUES
-  ('activision', 'اكتفجن', 'Activision'),
-  ('yalla-tech', 'يلا تكنولوجي', 'Yalla Technology'),
-  ('battlefield', 'باتلفيلد', 'Battlefield');
+INSERT INTO companies (id, slug, name_ar, name_en) VALUES
+  (1, 'activision', 'اكتفجن', 'Activision'),
+  (2, 'yalla-tech', 'يلا تكنولوجي', 'Yalla Technology'),
+  (3, 'battlefield', 'باتلفيلد', 'Battlefield');
+
+ALTER SEQUENCE companies_id_seq RESTART WITH 4;
 
 INSERT INTO games (
   company_id,
