@@ -280,6 +280,156 @@ const seedData = [
         description: 'لعبة اجتماعية أونلاين تعتمد على لودو والدردشة الصوتية.'
       }
     ]
+  },
+  {
+    slug: 'battlefield',
+    name_ar: 'باتلفيلد',
+    name_en: 'Battlefield',
+    games: [
+      {
+        name_ar: 'باتلفيلد 1942',
+        name_en: 'Battlefield 1942',
+        product_type: 'game',
+        genre: 'Shooter',
+        release_year: 2002,
+        price: 59,
+        currency: 'IQD',
+        cover_image_url: 'https://cdn.cloudflare.steamstatic.com/steam/apps/1659900/header.jpg',
+        description: 'اللعبة التي أطلقت السلسلة وتدور أحداثها في الحرب العالمية الثانية مع أسلوب اللعب الجماعي القائم على الفئات والمركبات.'
+      },
+      {
+        name_ar: 'باتلفيلد فيتنام',
+        name_en: 'Battlefield Vietnam',
+        product_type: 'game',
+        genre: 'Shooter',
+        release_year: 2004,
+        price: 62,
+        currency: 'IQD',
+        cover_image_url: 'https://cdn.cloudflare.steamstatic.com/steam/apps/1659300/header.jpg',
+        description: 'تنتقل المعارك إلى حرب فيتنام مع جبهات غابات كثيفة وتعديلات كبيرة على القتال بالمروحيات والمركبات.'
+      },
+      {
+        name_ar: 'باتلفيلد 2',
+        name_en: 'Battlefield 2',
+        product_type: 'game',
+        genre: 'Shooter',
+        release_year: 2005,
+        price: 68,
+        currency: 'IQD',
+        cover_image_url: 'https://cdn.cloudflare.steamstatic.com/steam/apps/15320/header.jpg',
+        description: 'نقلة نوعية للحروب الحديثة مع نظام القائد والكتائب والذكاء العسكري المتوازن داخل المعارك واسعة النطاق.'
+      },
+      {
+        name_ar: 'باتلفيلد 2142',
+        name_en: 'Battlefield 2142',
+        product_type: 'game',
+        genre: 'Shooter',
+        release_year: 2006,
+        price: 65,
+        currency: 'IQD',
+        cover_image_url: 'https://cdn.cloudflare.steamstatic.com/steam/apps/15130/header.jpg',
+        description: 'تأخذ السلسلة إلى عصري المستقبل القريب في حرب كوكبية بين القوى الكبرى باستخدام مركبات وألات ميكانيكية متقدمة.'
+      },
+      {
+        name_ar: 'باتلفيلد: باد كومباني',
+        name_en: 'Battlefield: Bad Company',
+        product_type: 'game',
+        genre: 'Shooter',
+        release_year: 2008,
+        price: 74,
+        currency: 'IQD',
+        cover_image_url: 'https://cdn.cloudflare.steamstatic.com/steam/apps/15100/header.jpg',
+        description: 'ركزت القصة على سرية من الجنود المتمردين وقدمت محرك Frostbite المميز للتدمير البيئي الشامل.'
+      },
+      {
+        name_ar: 'باتلفيلد 1943',
+        name_en: 'Battlefield 1943',
+        product_type: 'game',
+        genre: 'Shooter',
+        release_year: 2009,
+        price: 52,
+        currency: 'IQD',
+        cover_image_url: 'https://cdn.cloudflare.steamstatic.com/steam/apps/1238840/header.jpg',
+        description: 'لعبة جماعية أونلاين فقط تعود إلى قتال المحيط الهادئ في الحرب العالمية الثانية مع سلاسة وتوازن واضح.'
+      },
+      {
+        name_ar: 'باتلفيلد: باد كومباني 2',
+        name_en: 'Battlefield: Bad Company 2',
+        product_type: 'game',
+        genre: 'Shooter',
+        release_year: 2010,
+        price: 79,
+        currency: 'IQD',
+        cover_image_url: 'https://cdn.cloudflare.steamstatic.com/steam/apps/200130/header.jpg',
+        description: 'واحدة من أفضل أجزاء السلسلة؛ جلبت قصة ممتعة وتدميرًا بيئيًا كاملًا مع توازن ممتاز في التفاعل الجماعي.'
+      },
+      {
+        name_ar: 'باتلفيلد 3',
+        name_en: 'Battlefield 3',
+        product_type: 'game',
+        genre: 'Shooter',
+        release_year: 2011,
+        price: 94,
+        currency: 'IQD',
+        cover_image_url: 'https://cdn.cloudflare.steamstatic.com/steam/apps/1238840/header.jpg',
+        description: 'إنجاز تقني كبير في الرسوم والمعارك الحديثة، وتطرق إلى الحرب في الشرق الأوسط وأوروبا مع أعداد كبيرة من اللاعبين.'
+      },
+      {
+        name_ar: 'باتلفيلد 4',
+        name_en: 'Battlefield 4',
+        product_type: 'game',
+        genre: 'Shooter',
+        release_year: 2013,
+        price: 99,
+        currency: 'IQD',
+        cover_image_url: 'https://cdn.cloudflare.steamstatic.com/steam/apps/1238820/header.jpg',
+        description: 'نقطة تحول في السلسلة بفضل ميزة Levolution التي تسمح بتغيير الخريطة بشكل ديناميكي أثناء المعركة.'
+      },
+      {
+        name_ar: 'باتلفيلد هارد لاين',
+        name_en: 'Battlefield Hardline',
+        product_type: 'game',
+        genre: 'Shooter',
+        release_year: 2015,
+        price: 88,
+        currency: 'IQD',
+        cover_image_url: 'https://cdn.cloudflare.steamstatic.com/steam/apps/1238820/header.jpg',
+        description: 'التخلي عن الحروب العسكرية إلى صراع بين الشرطة والمجرمين مع مطاردات وسرقة بنوك ومعارك عنيفة وواقعية.'
+      },
+      {
+        name_ar: 'باتلفيلد 1',
+        name_en: 'Battlefield 1',
+        product_type: 'game',
+        genre: 'Shooter',
+        release_year: 2016,
+        price: 110,
+        currency: 'IQD',
+        cover_image_url: 'https://cdn.cloudflare.steamstatic.com/steam/apps/1238820/header.jpg',
+        description: 'تجاوزت السلسلة عصر الحرب العالمية الأولى بخلفية إنسانية وعسكرية مفعمة بالدموع والبطولة والجو المميز.'
+      },
+      {
+        name_ar: 'باتلفيلد 5',
+        name_en: 'Battlefield V',
+        product_type: 'game',
+        genre: 'Shooter',
+        release_year: 2018,
+        price: 109,
+        currency: 'IQD',
+        cover_image_url: 'https://cdn.cloudflare.steamstatic.com/steam/apps/1238820/header.jpg',
+        description: 'عودة للحرب العالمية الثانية مع التركيز على الجبهات الأقل شهرة وتعديلات على أسلوب البناء والتحصين.'
+      },
+      {
+        name_ar: 'باتلفيلد 2042',
+        name_en: 'Battlefield 2042',
+        product_type: 'game',
+        genre: 'Shooter',
+        release_year: 2021,
+        price: 119,
+        currency: 'IQD',
+        cover_image_url: 'https://cdn.cloudflare.steamstatic.com/steam/apps/1517290/header.jpg',
+        description: 'تدور في مستقبل قريب بعد الكوارث المناخية وتفكك الدول، مع خرائط ضخمة تصل لـ 128 لاعبًا وتركيز كامل على المباريات الجماعية.'
+      }
+    ]
   }
 ];
 
