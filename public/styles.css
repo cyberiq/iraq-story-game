@@ -193,14 +193,24 @@ select:focus {
 }
 
 .company-card {
-  background: linear-gradient(180deg, rgba(21, 27, 35, 0.96), rgba(14, 19, 27, 0.96));
+  position: relative;
+  background: linear-gradient(180deg, rgba(17, 22, 31, 0.96), rgba(11, 16, 23, 0.98));
   border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 24px;
+  border-radius: 28px;
   padding: 18px 18px 16px;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.22);
+  box-shadow: 0 22px 44px rgba(0, 0, 0, 0.28);
   animation: rise 450ms ease both;
   transition: transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
   overflow: hidden;
+}
+
+.company-card::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto auto 0;
+  width: 100%;
+  height: 3px;
+  background: linear-gradient(90deg, rgba(255,255,255,0), rgba(255,255,255,0.42), rgba(255,255,255,0));
 }
 
 .company-card:hover {
@@ -215,7 +225,7 @@ select:focus {
   justify-content: space-between;
   gap: 16px;
   margin-bottom: 16px;
-  padding-bottom: 14px;
+  padding: 8px 0 14px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 
@@ -227,14 +237,14 @@ select:focus {
 }
 
 .company-icon {
-  width: 46px;
-  height: 46px;
-  border-radius: 14px;
+  width: 54px;
+  height: 54px;
+  border-radius: 16px;
   display: grid;
   place-items: center;
-  font-size: 1.45rem;
+  font-size: 1.6rem;
   background: linear-gradient(135deg, #f3c98b, rgba(255,255,255,0.12));
-  box-shadow: inset 0 1px 0 rgba(255,255,255,0.2);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.22), 0 12px 28px rgba(243, 201, 139, 0.18);
 }
 
 .company-meta {
@@ -264,9 +274,11 @@ select:focus {
   background: rgba(243, 201, 139, 0.08);
   color: var(--brand);
   font-size: 0.76rem;
-  font-weight: 700;
+  font-weight: 800;
+  letter-spacing: 0.02em;
   padding: 7px 12px;
   white-space: nowrap;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.08);
 }
 
 /* Admin: make price input a bit wider for readability */
@@ -277,18 +289,19 @@ select:focus {
 
 .games-list {
   display: grid;
-  gap: 10px;
+  gap: 12px;
 }
 
 .game-card {
   border: 1px solid rgba(255, 255, 255, 0.06);
   border-radius: 18px;
-  background: linear-gradient(180deg, rgba(24, 31, 39, 1), rgba(16, 21, 27, 1));
+  background: linear-gradient(180deg, rgba(24, 31, 39, 1), rgba(12, 17, 23, 1));
   display: grid;
-  grid-template-columns: 120px 1fr;
+  grid-template-columns: 122px 1fr;
   overflow: hidden;
   position: relative;
   transition: transform 150ms ease, border-color 150ms ease, box-shadow 150ms ease;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.03), 0 6px 18px rgba(0, 0, 0, 0.12);
 }
 
 .game-card:hover {
@@ -303,6 +316,7 @@ select:focus {
   min-height: 120px;
   object-fit: cover;
   background: linear-gradient(135deg, #20314a, #0d1622);
+  border-left: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 .game-content {
@@ -317,6 +331,7 @@ select:focus {
   font-size: 1rem;
   line-height: 1.45;
   color: var(--ink);
+  font-weight: 800;
 }
 
 .game-meta {

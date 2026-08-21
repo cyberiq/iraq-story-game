@@ -446,16 +446,16 @@ function formatPrice(value, currency = "IQD") {
 }
 
 const companyBrandMap = {
-  activision: { icon: "🎮", accent: "#ffca7a", soft: "rgba(255, 202, 122, 0.18)" },
-  "yalla-tech": { icon: "📱", accent: "#7dd3fc", soft: "rgba(125, 211, 252, 0.18)" },
-  battlefield: { icon: "⚔️", accent: "#ff7f6b", soft: "rgba(255, 127, 107, 0.18)" },
-  "medal-of-honor": { icon: "🏅", accent: "#c4b5fd", soft: "rgba(196, 181, 253, 0.18)" },
-  "god-of-war": { icon: "🗡️", accent: "#fda4af", soft: "rgba(253, 164, 175, 0.18)" },
-  "gaming-platforms": { icon: "🕹️", accent: "#86efac", soft: "rgba(134, 239, 172, 0.18)" },
-  "ai-subscriptions": { icon: "🤖", accent: "#a5b4fc", soft: "rgba(165, 180, 252, 0.18)" },
-  riot: { icon: "🔥", accent: "#f97316", soft: "rgba(249, 115, 22, 0.18)" },
-  epic: { icon: "🚀", accent: "#22d3ee", soft: "rgba(34, 211, 238, 0.18)" },
-  default: { icon: "🎯", accent: "#f3c98b", soft: "rgba(243, 201, 139, 0.18)" }
+  activision: { icon: "🎮", accent: "#ffca7a", soft: "rgba(255, 202, 122, 0.18)", border: "rgba(255, 202, 122, 0.32)", glow: "rgba(255, 202, 122, 0.22)", panel: "linear-gradient(180deg, rgba(46, 34, 18, 0.96), rgba(19, 23, 30, 0.98))" },
+  "yalla-tech": { icon: "📱", accent: "#7dd3fc", soft: "rgba(125, 211, 252, 0.18)", border: "rgba(125, 211, 252, 0.28)", glow: "rgba(125, 211, 252, 0.20)", panel: "linear-gradient(180deg, rgba(18, 35, 47, 0.96), rgba(17, 22, 30, 0.98))" },
+  battlefield: { icon: "⚔️", accent: "#ff7f6b", soft: "rgba(255, 127, 107, 0.18)", border: "rgba(255, 127, 107, 0.28)", glow: "rgba(255, 127, 107, 0.22)", panel: "linear-gradient(180deg, rgba(52, 27, 23, 0.96), rgba(18, 22, 30, 0.98))" },
+  "medal-of-honor": { icon: "🏅", accent: "#c4b5fd", soft: "rgba(196, 181, 253, 0.18)", border: "rgba(196, 181, 253, 0.32)", glow: "rgba(196, 181, 253, 0.22)", panel: "linear-gradient(180deg, rgba(36, 30, 58, 0.96), rgba(17, 22, 31, 0.98))" },
+  "god-of-war": { icon: "🗡️", accent: "#fda4af", soft: "rgba(253, 164, 175, 0.18)", border: "rgba(253, 164, 175, 0.28)", glow: "rgba(253, 164, 175, 0.20)", panel: "linear-gradient(180deg, rgba(50, 25, 32, 0.96), rgba(17, 24, 30, 0.98))" },
+  "gaming-platforms": { icon: "🕹️", accent: "#86efac", soft: "rgba(134, 239, 172, 0.18)", border: "rgba(134, 239, 172, 0.28)", glow: "rgba(134, 239, 172, 0.22)", panel: "linear-gradient(180deg, rgba(19, 41, 28, 0.96), rgba(17, 22, 30, 0.98))" },
+  "ai-subscriptions": { icon: "🤖", accent: "#a5b4fc", soft: "rgba(165, 180, 252, 0.18)", border: "rgba(165, 180, 252, 0.28)", glow: "rgba(165, 180, 252, 0.20)", panel: "linear-gradient(180deg, rgba(23, 28, 58, 0.96), rgba(17, 22, 30, 0.98))" },
+  riot: { icon: "🔥", accent: "#f97316", soft: "rgba(249, 115, 22, 0.18)", border: "rgba(249, 115, 22, 0.32)", glow: "rgba(249, 115, 22, 0.20)", panel: "linear-gradient(180deg, rgba(51, 30, 15, 0.96), rgba(17, 23, 31, 0.98))" },
+  epic: { icon: "🚀", accent: "#22d3ee", soft: "rgba(34, 211, 238, 0.18)", border: "rgba(34, 211, 238, 0.28)", glow: "rgba(34, 211, 238, 0.20)", panel: "linear-gradient(180deg, rgba(15, 39, 47, 0.96), rgba(17, 22, 30, 0.98))" },
+  default: { icon: "🎯", accent: "#f3c98b", soft: "rgba(243, 201, 139, 0.18)", border: "rgba(243, 201, 139, 0.28)", glow: "rgba(243, 201, 139, 0.20)", panel: "linear-gradient(180deg, rgba(41, 30, 20, 0.96), rgba(17, 22, 30, 0.98))" }
 };
 
 function getCompanyBrand(company) {
@@ -500,13 +500,20 @@ function createCompanyNode(company) {
   slug.textContent = company.slug;
   icon.textContent = brand.icon;
   icon.style.background = `linear-gradient(135deg, ${brand.accent}, rgba(255,255,255,0.12))`;
+  icon.style.boxShadow = `0 12px 28px ${brand.glow}`;
+  node.style.background = brand.panel;
+  node.style.borderColor = brand.border;
+  node.style.boxShadow = `0 18px 36px ${brand.glow}`;
   badge.textContent = `${company.games.length} ألعاب`;
   badge.style.color = brand.accent;
   badge.style.borderColor = `${brand.accent}90`;
   badge.style.background = brand.soft;
 
   company.games.forEach((game) => {
-    gamesList.appendChild(createGameNode(game));
+    const gameNode = createGameNode(game);
+    gameNode.style.borderColor = `${brand.accent}33`;
+    gameNode.style.boxShadow = `inset 0 0 0 1px ${brand.soft}`;
+    gamesList.appendChild(gameNode);
   });
 
   return node;
