@@ -91,8 +91,37 @@ VALUES
 
 INSERT INTO companies (id, slug, name_ar, name_en) VALUES
   (4, 'medal-of-honor', 'ميدل أوف هونر', 'Medal of Honor'),
-  (5, 'god-of-war', 'جود أوف وور', 'God of War');
+  (5, 'god-of-war', 'جود أوف وور', 'God of War'),
+  (6, 'gaming-platforms', 'منصات الألعاب', 'Gaming Platforms'),
+  (7, 'ai-subscriptions', 'اشتراكات الذكاء الاصطناعي', 'AI Subscriptions');
 
-ALTER SEQUENCE companies_id_seq RESTART WITH 6;
+ALTER SEQUENCE companies_id_seq RESTART WITH 8;
+
+INSERT INTO games (
+  company_id,
+  product_type,
+  product_subtype,
+  name_ar,
+  name_en,
+  genre,
+  release_year,
+  price,
+  currency,
+  cover_image_url,
+  description
+)
+VALUES
+  (6, 'subscription', NULL, 'PlayStation Plus Essential', 'PlayStation Plus Essential', 'Platform', 2024, 19.99, 'USD', 'https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=800&q=80', 'اشتراك أساسي يمنح الوصول إلى الألعاب الشهرية والخصومات واللعب الجماعي على بلايستيشن.'),
+  (6, 'subscription', NULL, 'PlayStation Plus Extra', 'PlayStation Plus Extra', 'Platform', 2024, 29.99, 'USD', 'https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=800&q=80', 'يشمل مكتبة واسعة من الألعاب وفئات إضافية مع خدمات بلايستيشن Plus.'),
+  (6, 'subscription', NULL, 'PlayStation Plus Premium', 'PlayStation Plus Premium', 'Platform', 2024, 39.99, 'USD', 'https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=800&q=80', 'خطة متقدمة مع ألعاب كلاسيكية وتجارب إضافية وخصائص Premium.'),
+  (6, 'subscription', NULL, 'Xbox Game Pass Core', 'Xbox Game Pass Core', 'Platform', 2024, 9.99, 'USD', 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&w=800&q=80', 'اشتراك أساسي للعب الجماعي عبر Xbox مع بعض المزايا الأساسية.'),
+  (6, 'subscription', NULL, 'Xbox Game Pass Ultimate', 'Xbox Game Pass Ultimate', 'Platform', 2024, 19.99, 'USD', 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&w=800&q=80', 'خطة شاملة لتجربة Xbox وPC وCloud مع EA Play.'),
+  (6, 'subscription', NULL, 'Steam EA Play', 'Steam EA Play', 'Platform', 2024, 5.99, 'USD', 'https://images.unsplash.com/photo-1511512578047-dfb367046420?auto=format&fit=crop&w=800&q=80', 'اشتراك EA Play داخل Steam يمنح وصولاً إلى ألعاب EA المختارة.'),
+  (7, 'subscription', NULL, 'ChatGPT Plus', 'ChatGPT Plus', 'AI', 2024, 20, 'USD', 'https://images.unsplash.com/photo-1677442136019-21780ecad995?auto=format&fit=crop&w=800&q=80', 'خطة OpenAI التي تعطي وصولاً إلى النماذج الحديثة ومزايا إنتاجية محسّنة.'),
+  (7, 'subscription', NULL, 'Claude Pro', 'Claude Pro', 'AI', 2024, 20, 'USD', 'https://images.unsplash.com/photo-1531482615713-2afd69097998?auto=format&fit=crop&w=800&q=80', 'اشتراك Anthropic لدعم نماذج Claude مع حدود أعلى ومعالجة نصوص وطويلة.'),
+  (7, 'subscription', NULL, 'Google Gemini Advanced', 'Google Gemini Advanced', 'AI', 2024, 19.99, 'USD', 'https://images.unsplash.com/photo-1526379095098-d400fd0bf935?auto=format&fit=crop&w=800&q=80', 'اشتراك Google One AI Premium مع Gemini Advanced والتخزين والتكامل مع خدمات Google.'),
+  (7, 'subscription', NULL, 'Midjourney Basic', 'Midjourney Basic', 'AI', 2024, 10, 'USD', 'https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=800&q=80', 'خطة أساسية لإنشاء الصور بالذكاء الاصطناعي من خلال Midjourney.'),
+  (7, 'subscription', NULL, 'Midjourney Standard', 'Midjourney Standard', 'AI', 2024, 30, 'USD', 'https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=800&q=80', 'خطة قياسية مناسبة للمستخدمين المكثفين مع سعة إنتاج أعلى.'),
+  (7, 'subscription', NULL, 'Midjourney Pro', 'Midjourney Pro', 'AI', 2024, 60, 'USD', 'https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=800&q=80', 'خطة احترافية مع ميزات إنتاج أكبر وسرعة أعلى وقدرات متقدمة.');
 
 COMMIT;

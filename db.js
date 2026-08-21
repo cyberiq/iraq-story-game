@@ -465,6 +465,32 @@ const seedData = [
       { name_ar: 'جود أوف وور راجناروك', name_en: 'God of War Ragnarök', genre: 'Action RPG', release_year: 2022, price: 130, currency: 'IQD', cover_image_url: 'https://cdn.cloudflare.steamstatic.com/steam/apps/2322010/header.jpg', description: 'خاتمة الحقبة النوردية في مواجهة الآلهة ومصير العوالم التسعة.' },
       { name_ar: 'جود أوف وور راجناروك: فالهالا', name_en: 'God of War Ragnarök: Valhalla', genre: 'Action', release_year: 2023, price: 70, currency: 'IQD', cover_image_url: 'https://cdn.cloudflare.steamstatic.com/steam/apps/2518590/header.jpg', description: 'محتوى إضافي يفتح شبح الماضي ويقدم تجربة شخصية في فالهالا.' }
     ]
+  },
+  {
+    slug: 'gaming-platforms',
+    name_ar: 'منصات الألعاب',
+    name_en: 'Gaming Platforms',
+    games: [
+      { name_ar: 'PlayStation Plus Essential', name_en: 'PlayStation Plus Essential', product_type: 'subscription', genre: 'Platform', release_year: 2024, price: 19.99, currency: 'USD', cover_image_url: 'https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=800&q=80', description: 'اشتراك أساسي يمنح الوصول إلى الألعاب الشهرية والخصومات واللعب الجماعي على بلايستيشن.' },
+      { name_ar: 'PlayStation Plus Extra', name_en: 'PlayStation Plus Extra', product_type: 'subscription', genre: 'Platform', release_year: 2024, price: 29.99, currency: 'USD', cover_image_url: 'https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=800&q=80', description: 'يشمل مكتبة واسعة من الألعاب وفئات إضافية مع خدمات بلايستيشن Plus.' },
+      { name_ar: 'PlayStation Plus Premium', name_en: 'PlayStation Plus Premium', product_type: 'subscription', genre: 'Platform', release_year: 2024, price: 39.99, currency: 'USD', cover_image_url: 'https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=800&q=80', description: 'خطة متقدمة مع ألعاب كلاسيكية وتجارب إضافية وخصائص Premium.' },
+      { name_ar: 'Xbox Game Pass Core', name_en: 'Xbox Game Pass Core', product_type: 'subscription', genre: 'Platform', release_year: 2024, price: 9.99, currency: 'USD', cover_image_url: 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&w=800&q=80', description: 'اشتراك أساسي للعب الجماعي عبر Xbox مع بعض المزايا الأساسية.' },
+      { name_ar: 'Xbox Game Pass Ultimate', name_en: 'Xbox Game Pass Ultimate', product_type: 'subscription', genre: 'Platform', release_year: 2024, price: 19.99, currency: 'USD', cover_image_url: 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&w=800&q=80', description: 'خطة شاملة لتجربة Xbox وPC وCloud مع EA Play.' },
+      { name_ar: 'Steam EA Play', name_en: 'Steam EA Play', product_type: 'subscription', genre: 'Platform', release_year: 2024, price: 5.99, currency: 'USD', cover_image_url: 'https://images.unsplash.com/photo-1511512578047-dfb367046420?auto=format&fit=crop&w=800&q=80', description: 'اشتراك EA Play داخل Steam يمنح وصولاً إلى ألعاب EA المختارة.' }
+    ]
+  },
+  {
+    slug: 'ai-subscriptions',
+    name_ar: 'اشتراكات الذكاء الاصطناعي',
+    name_en: 'AI Subscriptions',
+    games: [
+      { name_ar: 'ChatGPT Plus', name_en: 'ChatGPT Plus', product_type: 'subscription', genre: 'AI', release_year: 2024, price: 20, currency: 'USD', cover_image_url: 'https://images.unsplash.com/photo-1677442136019-21780ecad995?auto=format&fit=crop&w=800&q=80', description: 'خطة OpenAI التي تعطي وصولاً إلى النماذج الحديثة ومزايا إنتاجية محسّنة.' },
+      { name_ar: 'Claude Pro', name_en: 'Claude Pro', product_type: 'subscription', genre: 'AI', release_year: 2024, price: 20, currency: 'USD', cover_image_url: 'https://images.unsplash.com/photo-1531482615713-2afd69097998?auto=format&fit=crop&w=800&q=80', description: 'اشتراك Anthropic لدعم نماذج Claude مع حدود أعلى ومعالجة نصوص وطويلة.' },
+      { name_ar: 'Google Gemini Advanced', name_en: 'Google Gemini Advanced', product_type: 'subscription', genre: 'AI', release_year: 2024, price: 19.99, currency: 'USD', cover_image_url: 'https://images.unsplash.com/photo-1526379095098-d400fd0bf935?auto=format&fit=crop&w=800&q=80', description: 'اشتراك Google One AI Premium مع Gemini Advanced والتخزين والتكامل مع خدمات Google.' },
+      { name_ar: 'Midjourney Basic', name_en: 'Midjourney Basic', product_type: 'subscription', genre: 'AI', release_year: 2024, price: 10, currency: 'USD', cover_image_url: 'https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=800&q=80', description: 'خطة أساسية لإنشاء الصور بالذكاء الاصطناعي من خلال Midjourney.' },
+      { name_ar: 'Midjourney Standard', name_en: 'Midjourney Standard', product_type: 'subscription', genre: 'AI', release_year: 2024, price: 30, currency: 'USD', cover_image_url: 'https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=800&q=80', description: 'خطة قياسية مناسبة للمستخدمين المكثفين مع سعة إنتاج أعلى.' },
+      { name_ar: 'Midjourney Pro', name_en: 'Midjourney Pro', product_type: 'subscription', genre: 'AI', release_year: 2024, price: 60, currency: 'USD', cover_image_url: 'https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=800&q=80', description: 'خطة احترافية مع ميزات إنتاج أكبر وسرعة أعلى وقدرات متقدمة.' }
+    ]
   }
 ];
 
