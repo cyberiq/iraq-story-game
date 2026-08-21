@@ -66,6 +66,33 @@ VALUES
   (3, 'game', NULL, 'باتلفيلد هارد لاين', 'Battlefield Hardline', 'Shooter', 2015, 88, 'IQD', 'https://cdn.cloudflare.steamstatic.com/steam/apps/1238820/header.jpg', 'التخلي عن الحروب العسكرية إلى صراع بين الشرطة والمجرمين مع مطاردات وسرقة بنوك ومعارك عنيفة وواقعية.'),
   (3, 'game', NULL, 'باتلفيلد 1', 'Battlefield 1', 'Shooter', 2016, 110, 'IQD', 'https://cdn.cloudflare.steamstatic.com/steam/apps/1238820/header.jpg', 'تجاوزت السلسلة عصر الحرب العالمية الأولى بخلفية إنسانية وعسكرية مفعمة بالدموع والبطولة والجو المميز.'),
   (3, 'game', NULL, 'باتلفيلد 5', 'Battlefield V', 'Shooter', 2018, 109, 'IQD', 'https://cdn.cloudflare.steamstatic.com/steam/apps/1238820/header.jpg', 'عودة للحرب العالمية الثانية مع التركيز على الجبهات الأقل شهرة وتعديلات على أسلوب البناء والتحصين.'),
-  (3, 'game', NULL, 'باتلفيلد 2042', 'Battlefield 2042', 'Shooter', 2021, 119, 'IQD', 'https://cdn.cloudflare.steamstatic.com/steam/apps/1517290/header.jpg', 'تدور في مستقبل قريب بعد الكوارث المناخية وتفكك الدول، مع خرائط ضخمة تصل لـ 128 لاعبًا وتركيز كامل على المباريات الجماعية.');
+  (3, 'game', NULL, 'باتلفيلد 2042', 'Battlefield 2042', 'Shooter', 2021, 119, 'IQD', 'https://cdn.cloudflare.steamstatic.com/steam/apps/1517290/header.jpg', 'تدور في مستقبل قريب بعد الكوارث المناخية وتفكك الدول، مع خرائط ضخمة تصل لـ 128 لاعبًا وتركيز كامل على المباريات الجماعية.'),
+  (4, 'game', NULL, 'ميدل أوف هونر', 'Medal of Honor', 'Shooter', 1999, 55, 'IQD', 'https://cdn.cloudflare.steamstatic.com/steam/apps/310/matrix.jpg', 'اللعبة التي أطلقت السلسلة وتدور أحداثها في أواخر الحرب العالمية الثانية حول مهام تجسس وتخريب خلف خطوط العدو.'),
+  (4, 'game', NULL, 'ميدل أوف هونر: أندرغراوند', 'Medal of Honor: Underground', 'Shooter', 2000, 60, 'IQD', 'https://cdn.cloudflare.steamstatic.com/steam/apps/17530/header.jpg', 'تدور القصة حول مقاومة فرنسية ضد الاحتلال النازي مع التركيز على التسلل والتخريب.'),
+  (4, 'game', NULL, 'ميدل أوف هونر: ألايد أسولت', 'Medal of Honor: Allied Assault', 'Shooter', 2002, 65, 'IQD', 'https://cdn.cloudflare.steamstatic.com/steam/apps/1530/header.jpg', 'نقطة تحول في ألعاب PC بفضل عملية إنزال نورماندي بشكل سينمائي غير مسبوق.'),
+  (4, 'game', NULL, 'ميدل أوف هونر: فرونت لاين', 'Medal of Honor: Frontline', 'Shooter', 2002, 70, 'IQD', 'https://cdn.cloudflare.steamstatic.com/steam/apps/12350/header.jpg', 'رحلة الملازم جيمي باترسون من شاطئ أوماها إلى قصف القواعد النازية السرية.'),
+  (4, 'game', NULL, 'ميدل أوف هونر: رايزينغ صان', 'Medal of Honor: Rising Sun', 'Shooter', 2003, 72, 'IQD', 'https://cdn.cloudflare.steamstatic.com/steam/apps/12340/header.jpg', 'تتحدث عن جبهة المحيط الهادئ ومنطلقها من هجوم بيرل هاربر.'),
+  (4, 'game', NULL, 'ميدل أوف هونر: باسيفيك أسولت', 'Medal of Honor: Pacific Assault', 'Shooter', 2004, 75, 'IQD', 'https://cdn.cloudflare.steamstatic.com/steam/apps/12360/header.jpg', 'تركز على المحيط الهادئ بتجربة أكثر واقعية وتكتيكاً.'),
+  (4, 'game', NULL, 'ميدل أوف هونر: يوربيان أسولت', 'Medal of Honor: European Assault', 'Shooter', 2005, 78, 'IQD', 'https://cdn.cloudflare.steamstatic.com/steam/apps/12380/header.jpg', 'تسرد معارك خطوط المواجهة في أوروبا وشمال إفريقيا مع خيارات متعددة لإكمال الأهداف.'),
+  (4, 'game', NULL, 'ميدل أوف هونر: فانغارد', 'Medal of Honor: Vanguard', 'Shooter', 2007, 80, 'IQD', 'https://cdn.cloudflare.steamstatic.com/steam/apps/12390/header.jpg', 'تدور حول فرقة المظليين الأمريكية وقفزهم بالمظلة داخل أرض المعركة.'),
+  (4, 'game', NULL, 'ميدل أوف هونر: ايربورن', 'Medal of Honor: Airborne', 'Shooter', 2007, 82, 'IQD', 'https://cdn.cloudflare.steamstatic.com/steam/apps/12370/header.jpg', 'تمنح اللاعب حرية اختيار نقطة القفز داخل الخريطة في بداية المهمة.'),
+  (4, 'game', NULL, 'ميدل أوف هونر (2010)', 'Medal of Honor (2010)', 'Shooter', 2010, 90, 'IQD', 'https://cdn.cloudflare.steamstatic.com/steam/apps/11130/header.jpg', 'إعادة توجيه السلسلة إلى العصر الحديث في أفغانستان من منظور قوات النخبة.'),
+  (4, 'game', NULL, 'ميدل أوف هونر: وارفايتر', 'Medal of Honor: Warfighter', 'Shooter', 2012, 94, 'IQD', 'https://cdn.cloudflare.steamstatic.com/steam/apps/393380/header.jpg', 'تدور حول عمليات مكافحة الإرهاب الدولية وتستخدم محرك Frostbite 2.'),
+  (4, 'game', NULL, 'ميدل أوف هونر: أبَف أند بيوند', 'Medal of Honor: Above and Beyond', 'Shooter', 2020, 96, 'IQD', 'https://cdn.cloudflare.steamstatic.com/steam/apps/1868970/header.jpg', 'عودة السلسلة إلى الحرب العالمية الثانية بصيغة الواقع الافتراضي التفاعلي.'),
+  (5, 'game', NULL, 'جود أوف وور', 'God of War', 'Action', 2005, 80, 'IQD', 'https://cdn.cloudflare.steamstatic.com/steam/apps/3910/header.jpg', 'اللعبة التي أطلقت السلسلة على PS2 وتتبع قصة كريتوس في الانتقام من آريس.'),
+  (5, 'game', NULL, 'جود أوف وور 2', 'God of War II', 'Action', 2007, 88, 'IQD', 'https://cdn.cloudflare.steamstatic.com/steam/apps/201320/header.jpg', 'استكمال مباشر يسافر فيه كريتوس لمواجهة زيوس والآلهة في أعالي الأولمب.'),
+  (5, 'game', NULL, 'جود أوف وور: سلاسل أولمبوس', 'God of War: Chains of Olympus', 'Action', 2008, 62, 'IQD', 'https://cdn.cloudflare.steamstatic.com/steam/apps/43890/header.jpg', 'تدور أحداثها قبل الجزء الأول وتستعرض خدمة كريتوس للآلهة ضد مورفيوس.'),
+  (5, 'game', NULL, 'جود أوف وور 3', 'God of War III', 'Action', 2010, 96, 'IQD', 'https://cdn.cloudflare.steamstatic.com/steam/apps/1157970/header.jpg', 'خاتمة ملحمية للحقبة الإغريقية حيث يهاجم كريتوس جبل الأولمب.'),
+  (5, 'game', NULL, 'جود أوف وور: شبح أسبرطة', 'God of War: Ghost of Sparta', 'Action', 2010, 68, 'IQD', 'https://cdn.cloudflare.steamstatic.com/steam/apps/201440/header.jpg', 'رحلة البحث عن شقيق كريتوس المفقود وكشف الأسرار العائلية في إسبارطة.'),
+  (5, 'game', NULL, 'جود أوف وور: أسيشن', 'God of War: Ascension', 'Action', 2013, 90, 'IQD', 'https://cdn.cloudflare.steamstatic.com/steam/apps/224760/header.jpg', 'يبدأ من نقطة قبل موعد الجزء الأول ويكشف قصة العهد بين كريتوس وآريس.'),
+  (5, 'game', NULL, 'جود أوف وور (2018)', 'God of War (2018)', 'Action RPG', 2018, 120, 'IQD', 'https://cdn.cloudflare.steamstatic.com/steam/apps/1593500/header.jpg', 'تحول جريء إلى الأسطورة النوردية مع كريتوس وابنه أتريوس في رحلة ملحمية.'),
+  (5, 'game', NULL, 'جود أوف وور راجناروك', 'God of War Ragnarök', 'Action RPG', 2022, 130, 'IQD', 'https://cdn.cloudflare.steamstatic.com/steam/apps/2322010/header.jpg', 'خاتمة الحقبة النوردية في مواجهة الآلهة ومصير العوالم التسعة.'),
+  (5, 'game', NULL, 'جود أوف وور راجناروك: فالهالا', 'God of War Ragnarök: Valhalla', 'Action', 2023, 70, 'IQD', 'https://cdn.cloudflare.steamstatic.com/steam/apps/2518590/header.jpg', 'محتوى إضافي يفتح شبح الماضي ويقدم تجربة شخصية في فالهالا.');
+
+INSERT INTO companies (id, slug, name_ar, name_en) VALUES
+  (4, 'medal-of-honor', 'ميدل أوف هونر', 'Medal of Honor'),
+  (5, 'god-of-war', 'جود أوف وور', 'God of War');
+
+ALTER SEQUENCE companies_id_seq RESTART WITH 6;
 
 COMMIT;

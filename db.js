@@ -430,6 +430,41 @@ const seedData = [
         description: 'تدور في مستقبل قريب بعد الكوارث المناخية وتفكك الدول، مع خرائط ضخمة تصل لـ 128 لاعبًا وتركيز كامل على المباريات الجماعية.'
       }
     ]
+  },
+  {
+    slug: 'medal-of-honor',
+    name_ar: 'ميدل أوف هونر',
+    name_en: 'Medal of Honor',
+    games: [
+      { name_ar: 'ميدل أوف هونر', name_en: 'Medal of Honor', genre: 'Shooter', release_year: 1999, price: 55, currency: 'IQD', cover_image_url: 'https://cdn.cloudflare.steamstatic.com/steam/apps/310/matrix.jpg', description: 'اللعبة التي أطلقت السلسلة وتدور أحداثها في أواخر الحرب العالمية الثانية حول مهام تجسس وتخريب خلف خطوط العدو.' },
+      { name_ar: 'ميدل أوف هونر: أندرغراوند', name_en: 'Medal of Honor: Underground', genre: 'Shooter', release_year: 2000, price: 60, currency: 'IQD', cover_image_url: 'https://cdn.cloudflare.steamstatic.com/steam/apps/17530/header.jpg', description: 'تدور القصة حول مقاومة فرنسية ضد الاحتلال النازي مع التركيز على التسلل والتخريب.' },
+      { name_ar: 'ميدل أوف هونر: ألايد أسولت', name_en: 'Medal of Honor: Allied Assault', genre: 'Shooter', release_year: 2002, price: 65, currency: 'IQD', cover_image_url: 'https://cdn.cloudflare.steamstatic.com/steam/apps/1530/header.jpg', description: 'نقطة تحول في ألعاب PC بفضل عملية إنزال نورماندي بشكل سينمائي غير مسبوق.' },
+      { name_ar: 'ميدل أوف هونر: فرونت لاين', name_en: 'Medal of Honor: Frontline', genre: 'Shooter', release_year: 2002, price: 70, currency: 'IQD', cover_image_url: 'https://cdn.cloudflare.steamstatic.com/steam/apps/12350/header.jpg', description: 'رحلة الملازم جيمي باترسون من شاطئ أوماها إلى قصف القواعد النازية السرية.' },
+      { name_ar: 'ميدل أوف هونر: رايزينغ صان', name_en: 'Medal of Honor: Rising Sun', genre: 'Shooter', release_year: 2003, price: 72, currency: 'IQD', cover_image_url: 'https://cdn.cloudflare.steamstatic.com/steam/apps/12340/header.jpg', description: 'تتحدث عن جبهة المحيط الهادئ ومنطلقها من هجوم بيرل هاربر.' },
+      { name_ar: 'ميدل أوف هونر: باسيفيك أسولت', name_en: 'Medal of Honor: Pacific Assault', genre: 'Shooter', release_year: 2004, price: 75, currency: 'IQD', cover_image_url: 'https://cdn.cloudflare.steamstatic.com/steam/apps/12360/header.jpg', description: 'تركز على المحيط الهادئ بتجربة أكثر واقعية وتكتيكاً.' },
+      { name_ar: 'ميدل أوف هونر: يوربيان أسولت', name_en: 'Medal of Honor: European Assault', genre: 'Shooter', release_year: 2005, price: 78, currency: 'IQD', cover_image_url: 'https://cdn.cloudflare.steamstatic.com/steam/apps/12380/header.jpg', description: 'تسرد معارك خطوط المواجهة في أوروبا وشمال إفريقيا مع خيارات متعددة لإكمال الأهداف.' },
+      { name_ar: 'ميدل أوف هونر: فانغارد', name_en: 'Medal of Honor: Vanguard', genre: 'Shooter', release_year: 2007, price: 80, currency: 'IQD', cover_image_url: 'https://cdn.cloudflare.steamstatic.com/steam/apps/12390/header.jpg', description: 'تدور حول فرقة المظليين الأمريكية وقفزهم بالمظلة داخل أرض المعركة.' },
+      { name_ar: 'ميدل أوف هونر: ايربورن', name_en: 'Medal of Honor: Airborne', genre: 'Shooter', release_year: 2007, price: 82, currency: 'IQD', cover_image_url: 'https://cdn.cloudflare.steamstatic.com/steam/apps/12370/header.jpg', description: 'تمنح اللاعب حرية اختيار نقطة القفز داخل الخريطة في بداية المهمة.' },
+      { name_ar: 'ميدل أوف هونر (2010)', name_en: 'Medal of Honor (2010)', genre: 'Shooter', release_year: 2010, price: 90, currency: 'IQD', cover_image_url: 'https://cdn.cloudflare.steamstatic.com/steam/apps/11130/header.jpg', description: 'إعادة توجيه السلسلة إلى العصر الحديث في أفغانستان من منظور قوات النخبة.' },
+      { name_ar: 'ميدل أوف هونر: وارفايتر', name_en: 'Medal of Honor: Warfighter', genre: 'Shooter', release_year: 2012, price: 94, currency: 'IQD', cover_image_url: 'https://cdn.cloudflare.steamstatic.com/steam/apps/393380/header.jpg', description: 'تدور حول عمليات مكافحة الإرهاب الدولية وتستخدم محرك Frostbite 2.' },
+      { name_ar: 'ميدل أوف هونر: أبَف أند بيوند', name_en: 'Medal of Honor: Above and Beyond', genre: 'Shooter', release_year: 2020, price: 96, currency: 'IQD', cover_image_url: 'https://cdn.cloudflare.steamstatic.com/steam/apps/1868970/header.jpg', description: 'عودة السلسلة إلى الحرب العالمية الثانية بصيغة الواقع الافتراضي التفاعلي.' }
+    ]
+  },
+  {
+    slug: 'god-of-war',
+    name_ar: 'جود أوف وور',
+    name_en: 'God of War',
+    games: [
+      { name_ar: 'جود أوف وور', name_en: 'God of War', genre: 'Action', release_year: 2005, price: 80, currency: 'IQD', cover_image_url: 'https://cdn.cloudflare.steamstatic.com/steam/apps/3910/header.jpg', description: 'اللعبة التي أطلقت السلسلة على PS2 وتتبع قصة كريتوس في الانتقام من آريس.' },
+      { name_ar: 'جود أوف وور 2', name_en: 'God of War II', genre: 'Action', release_year: 2007, price: 88, currency: 'IQD', cover_image_url: 'https://cdn.cloudflare.steamstatic.com/steam/apps/201320/header.jpg', description: 'استكمال مباشر يسافر فيه كريتوس لمواجهة زيوس والآلهة في أعالي الأولمب.' },
+      { name_ar: 'جود أوف وور: سلاسل أولمبوس', name_en: 'God of War: Chains of Olympus', genre: 'Action', release_year: 2008, price: 62, currency: 'IQD', cover_image_url: 'https://cdn.cloudflare.steamstatic.com/steam/apps/43890/header.jpg', description: 'تدور أحداثها قبل الجزء الأول وتستعرض خدمة كريتوس للآلهة ضد مورفيوس.' },
+      { name_ar: 'جود أوف وور 3', name_en: 'God of War III', genre: 'Action', release_year: 2010, price: 96, currency: 'IQD', cover_image_url: 'https://cdn.cloudflare.steamstatic.com/steam/apps/1157970/header.jpg', description: 'خاتمة ملحمية للحقبة الإغريقية حيث يهاجم كريتوس جبل الأولمب.' },
+      { name_ar: 'جود أوف وور: شبح أسبرطة', name_en: 'God of War: Ghost of Sparta', genre: 'Action', release_year: 2010, price: 68, currency: 'IQD', cover_image_url: 'https://cdn.cloudflare.steamstatic.com/steam/apps/201440/header.jpg', description: 'رحلة البحث عن شقيق كريتوس المفقود وكشف الأسرار العائلية في إسبارطة.' },
+      { name_ar: 'جود أوف وور: أسيشن', name_en: 'God of War: Ascension', genre: 'Action', release_year: 2013, price: 90, currency: 'IQD', cover_image_url: 'https://cdn.cloudflare.steamstatic.com/steam/apps/224760/header.jpg', description: 'يبدأ من نقطة قبل موعد الجزء الأول ويكشف قصة العهد بين كريتوس وآريس.' },
+      { name_ar: 'جود أوف وور (2018)', name_en: 'God of War (2018)', genre: 'Action RPG', release_year: 2018, price: 120, currency: 'IQD', cover_image_url: 'https://cdn.cloudflare.steamstatic.com/steam/apps/1593500/header.jpg', description: 'تحول جريء إلى الأسطورة النوردية مع كريتوس وابنه أتريوس في رحلة ملحمية.' },
+      { name_ar: 'جود أوف وور راجناروك', name_en: 'God of War Ragnarök', genre: 'Action RPG', release_year: 2022, price: 130, currency: 'IQD', cover_image_url: 'https://cdn.cloudflare.steamstatic.com/steam/apps/2322010/header.jpg', description: 'خاتمة الحقبة النوردية في مواجهة الآلهة ومصير العوالم التسعة.' },
+      { name_ar: 'جود أوف وور راجناروك: فالهالا', name_en: 'God of War Ragnarök: Valhalla', genre: 'Action', release_year: 2023, price: 70, currency: 'IQD', cover_image_url: 'https://cdn.cloudflare.steamstatic.com/steam/apps/2518590/header.jpg', description: 'محتوى إضافي يفتح شبح الماضي ويقدم تجربة شخصية في فالهالا.' }
+    ]
   }
 ];
 
