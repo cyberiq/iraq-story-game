@@ -7,6 +7,7 @@
     "start": "node server.js",
     "dev": "node server.js",
     "migrate:sqlite-to-postgres": "node scripts/migrate-sqlite-to-postgres.js",
+    "seed:postgres": "node scripts/seed-postgres.js",
     "cap:sync": "npx cap sync",
     "cap:open:android": "npx cap open android",
     "cap:open:ios": "npx cap open ios"
