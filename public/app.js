@@ -445,6 +445,26 @@ function formatPrice(value, currency = "IQD") {
   return `${numericValue.toLocaleString('en-US')} ${label}`;
 }
 
+const companyBrandMap = {
+  activision: { icon: "🎮", accent: "#ffca7a", soft: "rgba(255, 202, 122, 0.18)" },
+  "yalla-tech": { icon: "📱", accent: "#7dd3fc", soft: "rgba(125, 211, 252, 0.18)" },
+  battlefield: { icon: "⚔️", accent: "#ff7f6b", soft: "rgba(255, 127, 107, 0.18)" },
+  "medal-of-honor": { icon: "🏅", accent: "#c4b5fd", soft: "rgba(196, 181, 253, 0.18)" },
+  "god-of-war": { icon: "🗡️", accent: "#fda4af", soft: "rgba(253, 164, 175, 0.18)" },
+  "gaming-platforms": { icon: "🕹️", accent: "#86efac", soft: "rgba(134, 239, 172, 0.18)" },
+  "ai-subscriptions": { icon: "🤖", accent: "#a5b4fc", soft: "rgba(165, 180, 252, 0.18)" },
+  riot: { icon: "🔥", accent: "#f97316", soft: "rgba(249, 115, 22, 0.18)" },
+  epic: { icon: "🚀", accent: "#22d3ee", soft: "rgba(34, 211, 238, 0.18)" },
+  default: { icon: "🎯", accent: "#f3c98b", soft: "rgba(243, 201, 139, 0.18)" }
+};
+
+function getCompanyBrand(company) {
+  const key = String(company?.slug || "").toLowerCase();
+  const fallbackKey = String(company?.name_en || "").toLowerCase();
+  const brand = companyBrandMap[key] || companyBrandMap[fallbackKey] || companyBrandMap.default;
+  return brand;
+}
+
 function createGameNode(game) {
   const node = gameTemplate.content.firstElementChild.cloneNode(true);
   const gameCover = node.querySelector(".game-cover");
@@ -471,10 +491,19 @@ function createCompanyNode(company) {
   const node = companyTemplate.content.firstElementChild.cloneNode(true);
   const name = node.querySelector(".company-name");
   const slug = node.querySelector(".company-slug");
+  const icon = node.querySelector(".company-icon");
+  const badge = node.querySelector(".company-pill");
   const gamesList = node.querySelector(".games-list");
+  const brand = getCompanyBrand(company);
 
   name.textContent = `${company.name_ar} / ${company.name_en}`;
   slug.textContent = company.slug;
+  icon.textContent = brand.icon;
+  icon.style.background = `linear-gradient(135deg, ${brand.accent}, rgba(255,255,255,0.12))`;
+  badge.textContent = `${company.games.length} ألعاب`;
+  badge.style.color = brand.accent;
+  badge.style.borderColor = `${brand.accent}90`;
+  badge.style.background = brand.soft;
 
   company.games.forEach((game) => {
     gamesList.appendChild(createGameNode(game));
