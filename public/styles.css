@@ -604,65 +604,8 @@ select:focus {
   display: none;
 }
 
-.cart-header-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  margin-bottom: 12px;
-}
-
-.cart-header-row h3 {
-  margin: 0;
-}
-
-.clear-cart-btn {
-  border: 1px solid rgba(255, 127, 107, 0.28);
-  background: rgba(255, 127, 107, 0.08);
-  color: #ffb4a6;
-  border-radius: 10px;
-  padding: 7px 10px;
-  font: inherit;
-  font-weight: 700;
-  cursor: pointer;
-}
-
-.coupon-box {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  gap: 8px;
-  margin: 12px 0 10px;
-}
-
-.coupon-box input {
-  min-height: 40px;
-  height: 40px;
-}
-
-.coupon-box button {
-  min-height: 40px;
-}
-
-.cart-summary {
-  margin-top: 12px;
-  border-top: 1px solid rgba(148, 163, 184, 0.12);
-  padding-top: 12px;
-  display: grid;
-  gap: 8px;
-}
-
-.summary-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  color: var(--muted);
-}
-
-.summary-row.total {
-  color: var(--ink);
-  font-weight: 800;
-  font-size: 1.02rem;
+.cart-panel h3 {
+  margin: 0 0 12px;
 }
 
 .cart-item {

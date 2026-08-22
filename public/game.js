@@ -109,7 +109,7 @@ async function loadGameDetails() {
       }
     });
 
-    buyBtn.addEventListener('click', async () => {
+    buyBtn.addEventListener('click', () => {
       if (!currentGame) return;
       const code = (couponInput.value || '').trim();
       const priceValue = Number(currentGame.price || 0);
@@ -120,17 +120,10 @@ async function loadGameDetails() {
 
       const displayPrice = formatPrice(finalPrice, currentGame.currency || 'IQD');
       const message = `أرغب بشراء: ${currentGame.name_ar} / ${currentGame.name_en} (ID:${currentGame.id})‎\nالسعر: ${displayPrice}\nرمز الكوبون: ${code || 'لا يوجد'}`;
-      try {
-        const response = await fetch('/api/contact-settings');
-        const payload = await response.json().catch(() => ({ whatsapp_number: '77133777783' }));
-        const waNumber = String(payload.whatsapp_number || '77133777783').replace(/\D/g, '') || '77133777783';
-        const waUrl = `https://wa.me/${waNumber}?text=${encodeURIComponent(message)}`;
-        window.location.href = waUrl;
-      } catch (error) {
-        console.error(error);
-        const waUrl = `https://wa.me/77133777783?text=${encodeURIComponent(message)}`;
-        window.location.href = waUrl;
-      }
+      // WhatsApp number provided by user
+      const waNumber = '7713377783';
+      const waUrl = `https://wa.me/${waNumber}?text=${encodeURIComponent(message)}`;
+      window.location.href = waUrl;
     });
 
     cardNode.classList.remove("hidden");

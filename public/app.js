@@ -14,7 +14,6 @@ const gameTemplate = document.getElementById("gameTemplate");
 let debounceTimer;
 let activeCategory = 'all';
 let cart = JSON.parse(localStorage.getItem('iraqGameCart') || '[]');
-let cartCoupon = JSON.parse(localStorage.getItem('iraqGameCoupon') || 'null');
 let language = localStorage.getItem('iraqGameLang') || 'ar';
 
 const localFallbackCompanies = [
@@ -754,125 +753,6 @@ async function fetchSuggestions() {
   }
 }
 
-function getCartSubtotal() {
-  return cart.reduce((sum, item) => sum + Number(item.qty || 0) * Number(item.price || 0), 0);
-}
-
-function getCartDiscountValue() {
-  const percent = Number(cartCoupon?.percent || 0);
-  return percent > 0 ? (getCartSubtotal() * percent) / 100 : 0;
-}
-
-function getCartTotal() {
-  return Math.max(0, getCartSubtotal() - getCartDiscountValue());
-}
-
-function buildCheckoutMessage(customerName = '', customerPhone = '') {
-  const subtotal = getCartSubtotal();
-  const discount = getCartDiscountValue();
-  const total = getCartTotal();
-  const couponText = cartCoupon?.code ? `رمز الكوبون: ${cartCoupon.code} (${Number(cartCoupon.percent || 0)}%)` : 'رمز الكوبون: لا يوجد';
-  const itemsText = cart.map((item) => `${item.name} × ${item.qty} = ${formatPrice(Number(item.qty || 0) * Number(item.price || 0), 'IQD')}`).join('\n');
-
-  const customerText = customerName || customerPhone
-    ? [
-        `اسم العميل: ${customerName || 'غير محدد'}`,
-        `رقم الهاتف: ${customerPhone || 'غير محدد'}`,
-        ''
-      ].join('\n')
-    : '';
-
-  return [
-    'أرغب بإتمام الطلب التالي:',
-    '',
-    customerText,
-    itemsText,
-    '',
-    `المجموع قبل الخصم: ${formatPrice(subtotal, 'IQD')}`,
-    `الخصم: ${formatPrice(discount, 'IQD')}`,
-    couponText,
-    `المجموع النهائي: ${formatPrice(total, 'IQD')}`,
-    '',
-    'يرجى تأكيد الطلب والشراء عبر واتساب.'
-  ].filter(Boolean).join('\n');
-}
-
-async function getContactWhatsAppNumber() {
-  try {
-    const response = await fetch('/api/contact-settings');
-    if (!response.ok) {
-      return '77133777783';
-    }
-    const payload = await response.json();
-    return String(payload.whatsapp_number || '77133777783').replace(/\D/g, '') || '77133777783';
-  } catch (error) {
-    console.error(error);
-    return '77133777783';
-  }
-}
-
-async function checkoutCart() {
-  if (!cart.length) {
-    setStatus(language === 'en' ? 'Your cart is empty.' : 'السلة فارغة، أضف منتجًا أولاً.');
-    return;
-  }
-
-  const cartPayload = {
-    items: [...cart],
-    coupon: cartCoupon,
-    subtotal: getCartSubtotal(),
-    discount: getCartDiscountValue(),
-    total: getCartTotal(),
-    createdAt: new Date().toISOString()
-  };
-
-  localStorage.setItem('iraqGameCheckoutReview', JSON.stringify(cartPayload));
-  window.location.href = '/checkout-review';
-}
-
-function clearCart() {
-  cart = [];
-  cartCoupon = null;
-  localStorage.setItem('iraqGameCart', JSON.stringify(cart));
-  localStorage.removeItem('iraqGameCoupon');
-  renderCart();
-  setStatus(language === 'en' ? 'Cart emptied successfully.' : 'تم إفراغ السلة بنجاح.');
-}
-
-async function applyCouponToCart() {
-  const couponInput = document.getElementById('couponCodeInput');
-  if (!couponInput) return;
-
-  const code = String(couponInput.value || '').trim();
-  if (!code) {
-    setStatus(language === 'en' ? 'Enter a coupon code.' : 'أدخل رمز الكوبون.');
-    return;
-  }
-
-  try {
-    const response = await fetch('/api/coupons/validate', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ code })
-    });
-
-    const payload = await response.json();
-    if (!response.ok) {
-      throw new Error(payload.error || (language === 'en' ? 'Coupon invalid.' : 'الكوبون غير صالح.'));
-    }
-
-    cartCoupon = { code, percent: Number(payload.percent || 0) };
-    localStorage.setItem('iraqGameCoupon', JSON.stringify(cartCoupon));
-    renderCart();
-    setStatus(language === 'en' ? `Coupon applied: ${code}` : `تم تطبيق الكوبون: ${code}`);
-  } catch (error) {
-    cartCoupon = null;
-    localStorage.removeItem('iraqGameCoupon');
-    renderCart();
-    setStatus(error.message || (language === 'en' ? 'Coupon could not be validated.' : 'تعذر التحقق من الكوبون.'));
-  }
-}
-
 function renderCart() {
   const count = cart.reduce((sum, item) => sum + Number(item.qty || 0), 0);
   if (cartCount) cartCount.textContent = String(count);
@@ -882,105 +762,25 @@ function renderCart() {
     const panel = document.createElement('div');
     panel.id = 'cartPanel';
     panel.className = 'cart-panel hidden';
-    panel.innerHTML = `
-      <div class="cart-header-row">
-        <h3>${language === 'en' ? 'Cart' : 'السلة'}</h3>
-        <button type="button" class="clear-cart-btn">${language === 'en' ? 'Clear' : 'إفراغ'}</button>
-      </div>
-      <div class="cart-items"></div>
-      <div class="coupon-box">
-        <input id="couponCodeInput" type="text" placeholder="${language === 'en' ? 'Coupon code' : 'رمز الكوبون'}" />
-        <button type="button" id="applyCouponBtn" class="btn-secondary">${language === 'en' ? 'Apply' : 'تطبيق'}</button>
-      </div>
-      <div class="cart-summary"></div>
-      <button type="button" id="checkoutCartBtn" class="details-link" style="width:100%;margin-top:10px;">${language === 'en' ? 'Checkout' : 'إتمام الطلب'}</button>
-    `;
+    panel.innerHTML = '<h3>السلة</h3><div class="cart-items"></div><button type="button" class="details-link" style="width:100%;margin-top:10px;">إتمام الطلب</button>';
     document.body.appendChild(panel);
   }
 
   const panel = document.getElementById('cartPanel');
-  const panelTitle = panel.querySelector('.cart-header-row h3');
   const itemsWrap = panel.querySelector('.cart-items');
-  const summaryWrap = panel.querySelector('.cart-summary');
-  const clearBtn = panel.querySelector('.clear-cart-btn');
-  const applyBtn = panel.querySelector('#applyCouponBtn');
-  const couponInput = panel.querySelector('#couponCodeInput');
-  const checkoutBtn = panel.querySelector('#checkoutCartBtn');
-
-  if (panelTitle) {
-    panelTitle.textContent = language === 'en' ? 'Cart' : 'السلة';
-  }
-
-  if (clearBtn) {
-    clearBtn.textContent = language === 'en' ? 'Clear' : 'إفراغ';
-    clearBtn.addEventListener('click', clearCart);
-  }
-
-  if (applyBtn) {
-    applyBtn.textContent = language === 'en' ? 'Apply' : 'تطبيق';
-    applyBtn.addEventListener('click', applyCouponToCart);
-  }
-
-  if (checkoutBtn) {
-    checkoutBtn.textContent = language === 'en' ? 'Checkout' : 'إتمام الطلب';
-    checkoutBtn.addEventListener('click', checkoutCart);
-  }
-
-  if (couponInput) {
-    couponInput.placeholder = language === 'en' ? 'Coupon code' : 'رمز الكوبون';
-    couponInput.value = cartCoupon?.code || '';
-    couponInput.addEventListener('keydown', (event) => {
-      if (event.key === 'Enter') {
-        event.preventDefault();
-        applyCouponToCart();
-      }
-    });
-  }
-
-  if (!itemsWrap || !summaryWrap) return;
+  if (!itemsWrap) return;
 
   if (!cart.length) {
-    itemsWrap.innerHTML = `<p>${language === 'en' ? 'Your cart is empty.' : 'سلة التسوق فارغة'}</p>`;
-    summaryWrap.innerHTML = `
-      <div class="summary-row"><span>${language === 'en' ? 'Subtotal' : 'المجموع'}</span><strong>${formatPrice(0, 'IQD')}</strong></div>
-      <div class="summary-row total"><span>${language === 'en' ? 'Total' : 'الإجمالي'}</span><strong>${formatPrice(0, 'IQD')}</strong></div>
-    `;
+    itemsWrap.innerHTML = '<p>سلة التسوق فارغة</p>';
     return;
   }
 
-  const subtotal = getCartSubtotal();
-  const discount = getCartDiscountValue();
-  const total = getCartTotal();
-
   itemsWrap.innerHTML = cart.map((item) => `
     <div class="cart-item">
-      <div class="cart-item-main">
-        <span>${item.name}</span>
-        <span>${item.qty} × ${Number(item.price || 0).toLocaleString('en-US')}</span>
-      </div>
-      <button type="button" class="remove-cart-item" data-remove-id="${item.id}" aria-label="${language === 'en' ? 'Remove item' : 'حذف المنتج'}">${language === 'en' ? 'Delete' : 'حذف'}</button>
+      <span>${item.name}</span>
+      <span>${item.qty} × ${Number(item.price || 0).toLocaleString('en-US')}</span>
     </div>
   `).join('');
-
-  panel.querySelectorAll('.remove-cart-item').forEach((button) => {
-    button.addEventListener('click', () => {
-      const itemId = Number(button.getAttribute('data-remove-id'));
-      cart = cart.filter((item) => Number(item.id) !== itemId);
-      if (cartCoupon && !cart.length) {
-        cartCoupon = null;
-        localStorage.removeItem('iraqGameCoupon');
-      }
-      localStorage.setItem('iraqGameCart', JSON.stringify(cart));
-      renderCart();
-      setStatus(language === 'en' ? 'Item removed from cart.' : 'تم حذف المنتج من السلة.');
-    });
-  });
-
-  summaryWrap.innerHTML = `
-    <div class="summary-row"><span>${language === 'en' ? 'Subtotal' : 'المجموع الفرعي'}</span><strong>${formatPrice(subtotal, 'IQD')}</strong></div>
-    <div class="summary-row"><span>${language === 'en' ? 'Discount' : 'الخصم'}</span><strong>${discount > 0 ? `-${formatPrice(discount, 'IQD')}` : formatPrice(0, 'IQD')}</strong></div>
-    <div class="summary-row total"><span>${language === 'en' ? 'Total' : 'الإجمالي'}</span><strong>${formatPrice(total, 'IQD')}</strong></div>
-  `;
 }
 
 function toggleCart() {
@@ -997,18 +797,13 @@ async function fetchTodayOffers() {
     const offers = payload.offers || [];
     if (!offersStrip) return;
     if (!offers.length) {
-      offersStrip.innerHTML = `<span class="offer-pill">${language === 'en' ? 'Best offers' : 'أفضل العروض'}</span>`;
+      offersStrip.innerHTML = '<span class="offer-pill">أفضل العروض</span>';
       return;
     }
 
     offersStrip.innerHTML = offers.slice(0, 5).map((offer) => {
-      const title = offer.title || (language === 'en' ? 'Today offer' : 'عرض اليوم');
-      const percentValue = Number(offer.percent || 0);
-      const detail = percentValue > 0
-        ? (language === 'en' ? `${percentValue}% discount` : `${percentValue}% خصم`)
-        : (language === 'en'
-          ? `${Number(offer.price || 0).toLocaleString('en-US')} IQD`
-          : `${Number(offer.price || 0).toLocaleString('en-US')} د.ع`);
+      const title = offer.title || 'عرض اليوم';
+      const detail = offer.percent ? `${offer.percent}% خصم` : `${Number(offer.price || 0).toLocaleString('en-US')} د.ع`;
       return `<span class="offer-pill">${title}: ${detail}</span>`;
     }).join('');
   } catch (error) {
@@ -1043,8 +838,7 @@ function applyLanguage() {
 
   if (document.querySelector('.cart-button')) {
     const cartText = isEnglish ? 'Cart' : 'السلة';
-    const cartButtonEl = document.querySelector('.cart-button');
-    cartButtonEl.innerHTML = `${cartText} <span id="cartCount">${cart.reduce((sum, item) => sum + Number(item.qty || 0), 0)}</span>`;
+    document.querySelector('.cart-button').innerHTML = `${cartText} <span id="cartCount">${cart.reduce((sum, item) => sum + Number(item.qty || 0), 0)}</span>`;
   }
 
   const heroKicker = document.querySelector('.hero-kicker');
@@ -1062,7 +856,6 @@ languageToggle.addEventListener('click', () => {
   localStorage.setItem('iraqGameLang', language);
   applyLanguage();
   fetchCatalog();
-  fetchTodayOffers();
 });
 
 cartButton.addEventListener('click', toggleCart);
