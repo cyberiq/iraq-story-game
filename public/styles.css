@@ -194,29 +194,28 @@ select:focus {
 
 .company-card {
   position: relative;
-  background: linear-gradient(180deg, rgba(17, 22, 31, 0.96), rgba(11, 16, 23, 0.98));
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 28px;
-  padding: 18px 18px 16px;
-  box-shadow: 0 22px 44px rgba(0, 0, 0, 0.28);
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  padding: 0 0 18px;
+  box-shadow: none;
   animation: rise 450ms ease both;
-  transition: transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
-  overflow: hidden;
+  transition: none;
+  overflow: visible;
 }
 
 .company-card::before {
   content: "";
   position: absolute;
-  inset: 0 auto auto 0;
-  width: 100%;
-  height: 3px;
-  background: linear-gradient(90deg, rgba(255,255,255,0), rgba(255,255,255,0.42), rgba(255,255,255,0));
+  inset: auto 0 0 0;
+  height: 1px;
+  background: linear-gradient(90deg, rgba(255,255,255,0), rgba(255,255,255,0.12), rgba(255,255,255,0));
 }
 
 .company-card:hover {
-  transform: translateY(-4px);
-  border-color: rgba(243, 201, 139, 0.38);
-  box-shadow: 0 24px 55px rgba(0, 0, 0, 0.28);
+  transform: none;
+  border-color: transparent;
+  box-shadow: none;
 }
 
 .company-header {
@@ -224,9 +223,9 @@ select:focus {
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  margin-bottom: 16px;
-  padding: 8px 0 14px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  margin-bottom: 14px;
+  padding: 10px 0 0;
+  border-bottom: none;
 }
 
 .company-brand {
@@ -270,15 +269,15 @@ select:focus {
   align-items: center;
   justify-content: center;
   border-radius: 999px;
-  border: 1px solid rgba(243, 201, 139, 0.2);
-  background: rgba(243, 201, 139, 0.08);
+  border: 1px solid rgba(243, 201, 139, 0.16);
+  background: rgba(243, 201, 139, 0.05);
   color: var(--brand);
-  font-size: 0.76rem;
-  font-weight: 800;
+  font-size: 0.72rem;
+  font-weight: 700;
   letter-spacing: 0.02em;
-  padding: 7px 12px;
+  padding: 6px 10px;
   white-space: nowrap;
-  box-shadow: inset 0 1px 0 rgba(255,255,255,0.08);
+  box-shadow: none;
 }
 
 /* Admin: make price input a bit wider for readability */
@@ -293,21 +292,21 @@ select:focus {
 }
 
 .game-card {
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  border-radius: 18px;
-  background: linear-gradient(180deg, rgba(24, 31, 39, 1), rgba(12, 17, 23, 1));
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 16px;
+  background: rgba(20, 27, 35, 0.96);
   display: grid;
-  grid-template-columns: 122px 1fr;
+  grid-template-columns: 118px 1fr;
   overflow: hidden;
   position: relative;
   transition: transform 150ms ease, border-color 150ms ease, box-shadow 150ms ease;
-  box-shadow: inset 0 1px 0 rgba(255,255,255,0.03), 0 6px 18px rgba(0, 0, 0, 0.12);
+  box-shadow: none;
 }
 
 .game-card:hover {
   transform: translateY(-1px);
-  border-color: rgba(243, 201, 139, 0.2);
-  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.14);
+  border-color: rgba(243, 201, 139, 0.15);
+  box-shadow: none;
 }
 
 .game-cover {
