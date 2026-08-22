@@ -2,11 +2,13 @@ const searchInput = document.getElementById("searchInput");
 const searchSuggestions = document.getElementById('searchSuggestions');
 const catalogContainer = document.getElementById("catalog");
 const statusNode = document.getElementById("status");
+const categoryButtons = document.querySelectorAll('.category-pill');
 
 const companyTemplate = document.getElementById("companyTemplate");
 const gameTemplate = document.getElementById("gameTemplate");
 
 let debounceTimer;
+let activeCategory = 'all';
 
 const localFallbackCompanies = [
   {
@@ -520,19 +522,61 @@ function createCompanyNode(company) {
   return node;
 }
 
+function getCategoryMatches(game, company, category) {
+  const combinedText = `${game.name_ar || ''} ${game.name_en || ''} ${company?.name_ar || ''} ${company?.name_en || ''} ${company?.slug || ''}`.toLowerCase();
+  const productType = String(game.product_type || '').toLowerCase();
+  const genre = String(game.genre || '').toLowerCase();
+
+  switch (category) {
+    case 'games':
+      return (!productType || productType === 'game') && !combinedText.includes('playstation') && !combinedText.includes('xbox') && !combinedText.includes('plus') && !combinedText.includes('gemini') && !combinedText.includes('chatgpt') && !combinedText.includes('claude') && !combinedText.includes('midjourney');
+    case 'subscriptions':
+      return productType.includes('subscription') || combinedText.includes('plus') || combinedText.includes('game pass') || combinedText.includes('gemini') || combinedText.includes('claude') || combinedText.includes('midjourney') || combinedText.includes('ai') || combinedText.includes('subscription') || combinedText.includes('playstation plus') || combinedText.includes('xbox game pass');
+    case 'playstation':
+      return combinedText.includes('playstation') || combinedText.includes('ps ') || combinedText.includes('sony');
+    case 'xbox':
+      return combinedText.includes('xbox') || combinedText.includes('game pass');
+    case 'deals':
+      return Number(game.price ?? 0) > 0 && (Number(game.price) < 80 || productType.includes('subscription') || combinedText.includes('plus'));
+    default:
+      return true;
+  }
+}
+
+function filterCompaniesByCategory(companies, category) {
+  if (!category || category === 'all') {
+    return companies;
+  }
+
+  const source = Array.isArray(companies) && companies.length ? companies : localFallbackCompanies;
+
+  return source
+    .map((company) => ({
+      ...company,
+      games: (company.games || []).filter((game) => getCategoryMatches(game, company, category))
+    }))
+    .filter((company) => company.games.length > 0);
+}
+
 function renderCatalog(companies) {
   catalogContainer.innerHTML = "";
 
-  if (!companies.length) {
+  let filteredCompanies = filterCompaniesByCategory(companies, activeCategory);
+
+  if (!filteredCompanies.length && activeCategory !== 'all') {
+    filteredCompanies = filterCompaniesByCategory(localFallbackCompanies, activeCategory);
+  }
+
+  if (!filteredCompanies.length) {
     const empty = document.createElement("div");
     empty.className = "empty-state";
-    empty.textContent = "لا توجد نتائج. جرب كلمة بحث أخرى.";
+    empty.textContent = "لا توجد نتائج في هذا التصنيف. جرب تصنيفًا آخر.";
     catalogContainer.appendChild(empty);
     return;
   }
 
   const fragment = document.createDocumentFragment();
-  companies.forEach((company) => fragment.appendChild(createCompanyNode(company)));
+  filteredCompanies.forEach((company) => fragment.appendChild(createCompanyNode(company)));
   catalogContainer.appendChild(fragment);
 }
 
@@ -642,6 +686,21 @@ function onSearchInput() {
     fetchSuggestions();
   }, 260);
 }
+
+function updateCategoryButtons() {
+  categoryButtons.forEach((button) => {
+    const isActive = button.dataset.filter === activeCategory;
+    button.classList.toggle('active', isActive);
+  });
+}
+
+categoryButtons.forEach((button) => {
+  button.addEventListener('click', () => {
+    activeCategory = button.dataset.filter || 'all';
+    updateCategoryButtons();
+    fetchCatalog();
+  });
+});
 
 searchInput.addEventListener("input", onSearchInput);
 
