@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>iraq story game</title>
+    <title>Iraq Game Store</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -16,34 +16,53 @@
     <div class="bg-shape bg-shape-a"></div>
     <div class="bg-shape bg-shape-b"></div>
 
-    <header class="hero">
-      <p class="hero-kicker">Game Directory</p>
-      <h1>iraq story game</h1>
-      <p class="hero-subtitle">
-        تصفح شركات الألعاب مع تجربة لحسابات مدفوعة و بأسعار تنافسية و عروض الطلب المسبق
+    <header class="store-header">
+      <div class="header-bar">
+        <div class="brand-wrap">
+          <div class="brand-mark">IQ</div>
+          <div class="brand-copy">
+            <strong>Iraq Game</strong>
+            <span>store hub</span>
+          </div>
+        </div>
 
-      <div class="controls">
-        <label class="control-field">
-          <span>بحث</span>
+        <label class="search-shell" aria-label="بحث">
+          <span class="search-icon">⌕</span>
           <input
             id="searchInput"
             type="search"
-            placeholder="ابحث باسم شركة أو لعبة..."
+            placeholder="ابحث عن لعبة أو شركة..."
             autocomplete="off"
             list="searchSuggestions"
           />
           <datalist id="searchSuggestions"></datalist>
         </label>
 
-        <!-- فرز أُلغِي حسب طلب المستخدم -->
-        <!-- product type filter removed per request -->
+        <div class="header-actions">
+          <a href="#" class="header-link muted">AR</a>
+          <button class="cart-button" type="button">السلة <span>0</span></button>
+        </div>
       </div>
 
-
-     
+      <nav class="category-bar" aria-label="التصنيفات">
+        <a href="#">ألعاب جديدة</a>
+        <a href="#">اشتراكات</a>
+        <a href="#">بطاقات شحن</a>
+        <a href="#">بلايستيشن</a>
+        <a href="#">إكس بوكس</a>
+        <a href="#">عروض اليوم</a>
+      </nav>
     </header>
 
-    <main>
+    <main class="market-main">
+      <section class="market-hero">
+        <p class="hero-kicker">أفضل العروض</p>
+        <h1>متجر ألعاب عراقي بتصميم عصري</h1>
+        <p class="hero-subtitle">
+          اكتشف شركات الألعاب والاشتراكات بأسعار مناسبة، تجربة احترافية، وتجربة شراء سريعة وواضحة.
+        </p>
+      </section>
+
       <section id="status" class="status" aria-live="polite"></section>
       <section id="catalog" class="company-grid"></section>
     </main>
@@ -77,12 +96,7 @@
         </div>
       </article>
     </template>
-      <div class="hero-actions">
-        <a class="btn-primary" href="/contact">تواصل مع المدير</a>
-        <!-- Admin link intentionally hidden from UI. Accessible by direct path if known. -->
-      </div>
 
-      <!-- Contact manager button -->
     <script src="/app.js" defer></script>
   </body>
 </html>
