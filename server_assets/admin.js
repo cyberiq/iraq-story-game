@@ -31,6 +31,12 @@ const couponForm = document.getElementById('couponForm');
 const couponCode = document.getElementById('couponCode');
 const couponPercent = document.getElementById('couponPercent');
 const couponList = document.getElementById('couponList');
+const todayOffersForm = document.getElementById('todayOffersForm');
+const offerGameSelect = document.getElementById('offerGameSelect');
+const offerTitle = document.getElementById('offerTitle');
+const offerPrice = document.getElementById('offerPrice');
+const offerPercent = document.getElementById('offerPercent');
+const todayOffersList = document.getElementById('todayOffersList');
 
 const fallbackAdminCompanies = [
   {
@@ -148,6 +154,16 @@ function fillCompaniesSelect(companies) {
     option.textContent = `${company.name_ar} / ${company.name_en}`;
     gameCompany.appendChild(option);
   });
+
+  if (offerGameSelect) {
+    offerGameSelect.innerHTML = '<option value="">-- اختر لعبة --</option>';
+    companies.forEach((company) => {
+      const option = document.createElement('option');
+      option.value = company.id;
+      option.textContent = `${company.name_ar} / ${company.name_en}`;
+      offerGameSelect.appendChild(option);
+    });
+  }
 }
 
 // Helper: format price for display according to currency
@@ -332,6 +348,7 @@ async function loadData() {
 
     setStatus("تم تحميل البيانات.");
     await loadCoupons();
+    await loadTodayOffers();
   } catch (error) {
     console.error(error);
 
@@ -409,6 +426,84 @@ couponForm && couponForm.addEventListener('submit', async (e) => {
     setStatus(`خطأ: ${err.message}`);
   }
 });
+
+async function loadTodayOffers() {
+  try {
+    const payload = await fetchJson('/api/today-offers');
+    const offers = payload.offers || [];
+    if (!todayOffersList) return;
+    todayOffersList.innerHTML = '';
+
+    if (!offers.length) {
+      todayOffersList.textContent = 'لا توجد عروض اليوم.';
+      return;
+    }
+
+    offers.forEach((offer) => {
+      const row = document.createElement('div');
+      row.className = 'coupon-row';
+      const strong = document.createElement('strong');
+      strong.textContent = offer.title || 'عرض اليوم';
+      const text = document.createTextNode(` — ${offer.percent ? `${offer.percent}% خصم` : `${Number(offer.price || 0).toLocaleString('en-US')} د.ع`} `);
+      const delBtn = document.createElement('button');
+      delBtn.className = 'btn-danger';
+      delBtn.setAttribute('data-delete-offer', String(offer.id));
+      delBtn.textContent = 'حذف';
+      row.appendChild(strong);
+      row.appendChild(text);
+      row.appendChild(delBtn);
+      todayOffersList.appendChild(row);
+    });
+
+    todayOffersList.querySelectorAll('[data-delete-offer]').forEach((btn) => {
+      btn.addEventListener('click', async () => {
+        const id = Number(btn.getAttribute('data-delete-offer'));
+        if (!confirm('حذف العرض؟')) return;
+        try {
+          await fetchJson(`/api/today-offers/${id}`, { method: 'DELETE' });
+          setStatus('تم حذف العرض.');
+          await loadTodayOffers();
+        } catch (err) {
+          setStatus(`خطأ: ${err.message}`);
+        }
+      });
+    });
+  } catch (err) {
+    console.error(err);
+    if (todayOffersList) todayOffersList.textContent = 'خطأ في تحميل العروض.';
+  }
+}
+
+if (todayOffersForm) {
+  todayOffersForm.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const gameId = Number(offerGameSelect.value || 0);
+    const price = Number(offerPrice.value || 0);
+    const percent = Number(offerPercent.value || 0);
+    if (!gameId || (!price && !percent)) {
+      setStatus('اختر لعبة وادخل سعر العرض أو نسبة الخصم.');
+      return;
+    }
+
+    try {
+      const payload = {
+        game_id: gameId,
+        title: offerTitle.value.trim() || 'عرض اليوم',
+        price,
+        percent
+      };
+      await fetchJson('/api/today-offers', { method: 'POST', body: JSON.stringify(payload) });
+      setStatus('تم حفظ العرض بنجاح.');
+      offerTitle.value = '';
+      offerPrice.value = '';
+      offerPercent.value = '';
+      if (offerGameSelect) offerGameSelect.value = '';
+      await loadTodayOffers();
+    } catch (err) {
+      setStatus(`خطأ: ${err.message}`);
+    }
+  });
+}
 
 function bindEditButtons(companies, catalogCompanies) {
   const companyButtons = document.querySelectorAll("[data-edit-company]");

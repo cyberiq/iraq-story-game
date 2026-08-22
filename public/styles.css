@@ -173,6 +173,27 @@ body {
   transition: transform 150ms ease, box-shadow 150ms ease;
 }
 
+.offers-strip {
+  width: min(1180px, 92vw);
+  margin: 18px auto 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.offer-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid rgba(255, 179, 71, 0.22);
+  background: rgba(255, 179, 71, 0.08);
+  color: #ffd99a;
+  border-radius: 999px;
+  padding: 8px 14px;
+  font-weight: 800;
+  font-size: 0.82rem;
+}
+
 .header-link.muted {
   background: rgba(255, 255, 255, 0.02);
   color: var(--muted);
@@ -522,6 +543,23 @@ select:focus {
   padding-top: 6px;
 }
 
+.card-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.add-to-cart {
+  border: 0;
+  background: rgba(134, 239, 172, 0.12);
+  color: #baf7d0;
+  border-radius: 10px;
+  padding: 8px 10px;
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+}
+
 .game-price {
   display: inline-flex;
   align-items: center;
@@ -547,6 +585,93 @@ select:focus {
   text-decoration: none;
   font-size: 0.78rem;
   box-shadow: 0 10px 18px rgba(242, 139, 29, 0.22);
+}
+
+.cart-panel {
+  position: fixed;
+  right: 20px;
+  bottom: 20px;
+  width: min(360px, calc(100vw - 24px));
+  padding: 16px;
+  border-radius: 18px;
+  background: rgba(12, 17, 24, 0.96);
+  border: 1px solid rgba(148, 163, 184, 0.14);
+  box-shadow: var(--shadow);
+  z-index: 50;
+}
+
+.cart-panel.hidden {
+  display: none;
+}
+
+.cart-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.cart-header-row h3 {
+  margin: 0;
+}
+
+.clear-cart-btn {
+  border: 1px solid rgba(255, 127, 107, 0.28);
+  background: rgba(255, 127, 107, 0.08);
+  color: #ffb4a6;
+  border-radius: 10px;
+  padding: 7px 10px;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.coupon-box {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+  margin: 12px 0 10px;
+}
+
+.coupon-box input {
+  min-height: 40px;
+  height: 40px;
+}
+
+.coupon-box button {
+  min-height: 40px;
+}
+
+.cart-summary {
+  margin-top: 12px;
+  border-top: 1px solid rgba(148, 163, 184, 0.12);
+  padding-top: 12px;
+  display: grid;
+  gap: 8px;
+}
+
+.summary-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  color: var(--muted);
+}
+
+.summary-row.total {
+  color: var(--ink);
+  font-weight: 800;
+  font-size: 1.02rem;
+}
+
+.cart-item {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.12);
+  padding-bottom: 8px;
+  margin-bottom: 8px;
 }
 
 .details-link:hover {

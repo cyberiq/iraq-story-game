@@ -30,6 +30,7 @@ const SESSION_SECRET = process.env.SESSION_SECRET || "iraq-story-game-session-se
 const fallbackDataPath = path.join(__dirname, "data", "fallback-data.json");
 const adminSettingsPath = path.join(__dirname, "data", "admin-settings.json");
 const couponsPath = path.join(__dirname, "data", "coupons.json");
+const todayOffersPath = path.join(__dirname, "data", "today-offers.json");
 let databaseReady = false;
 
 function ensureDataFiles() {
@@ -62,6 +63,10 @@ function ensureDataFiles() {
   if (!fs.existsSync(couponsPath)) {
     fs.writeFileSync(couponsPath, JSON.stringify([], null, 2));
   }
+
+  if (!fs.existsSync(todayOffersPath)) {
+    fs.writeFileSync(todayOffersPath, JSON.stringify([], null, 2));
+  }
 }
 
 function readJsonFile(filePath, fallbackValue) {
@@ -87,9 +92,14 @@ function saveAdminSettings() {
 }
 
 let runtimeCoupons = readJsonFile(couponsPath, []);
+let runtimeTodayOffers = readJsonFile(todayOffersPath, []);
 
 function saveCouponsFile() {
   writeJsonFile(couponsPath, runtimeCoupons);
+}
+
+function saveTodayOffersFile() {
+  writeJsonFile(todayOffersPath, runtimeTodayOffers);
 }
 
 const uploadsDir = path.join(__dirname, "public", "uploads");
@@ -501,6 +511,53 @@ app.post('/api/coupons/validate', async (req, res) => {
     console.error('Failed to validate coupon', error);
     res.status(500).json({ error: 'Internal server error' });
   }
+});
+
+app.get('/api/today-offers', async (req, res) => {
+  try {
+    res.json({ offers: runtimeTodayOffers });
+  } catch (error) {
+    console.error('Failed to read today offers', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+app.post('/api/today-offers', requireAdmin, async (req, res) => {
+  const { game_id, price, percent, title } = req.body || {};
+  const gameId = Number(game_id ?? 0);
+  const offerPrice = Number(price ?? 0);
+  const offerPercent = Number(percent ?? 0);
+
+  if (!gameId || (!offerPrice && !offerPercent)) {
+    return res.status(400).json({ error: 'game_id و price أو percent مطلوبان' });
+  }
+
+  const offer = {
+    id: Date.now(),
+    game_id: gameId,
+    title: String(title || 'عرض اليوم').trim(),
+    price: Number.isFinite(offerPrice) ? offerPrice : 0,
+    percent: Number.isFinite(offerPercent) ? offerPercent : 0,
+    active: true
+  };
+
+  runtimeTodayOffers = [offer, ...runtimeTodayOffers.filter((entry) => Number(entry.game_id) !== gameId)];
+  saveTodayOffersFile();
+  return res.status(201).json({ offer });
+});
+
+app.delete('/api/today-offers/:id', requireAdmin, async (req, res) => {
+  const id = Number(req.params.id ?? 0);
+  if (!id) return res.status(400).json({ error: 'Invalid offer id' });
+
+  const before = runtimeTodayOffers.length;
+  runtimeTodayOffers = runtimeTodayOffers.filter((entry) => Number(entry.id) !== id);
+  if (runtimeTodayOffers.length === before) {
+    return res.status(404).json({ error: 'Offer not found' });
+  }
+
+  saveTodayOffersFile();
+  return res.json({ deleted: true });
 });
 
 app.get("/api/catalog", async (req, res) => {

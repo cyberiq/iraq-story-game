@@ -3,12 +3,19 @@ const searchSuggestions = document.getElementById('searchSuggestions');
 const catalogContainer = document.getElementById("catalog");
 const statusNode = document.getElementById("status");
 const categoryButtons = document.querySelectorAll('.category-pill');
+const offersStrip = document.getElementById('todayOffers');
+const languageToggle = document.getElementById('languageToggle');
+const cartButton = document.getElementById('cartButton');
+const cartCount = document.getElementById('cartCount');
 
 const companyTemplate = document.getElementById("companyTemplate");
 const gameTemplate = document.getElementById("gameTemplate");
 
 let debounceTimer;
 let activeCategory = 'all';
+let cart = JSON.parse(localStorage.getItem('iraqGameCart') || '[]');
+let cartCoupon = JSON.parse(localStorage.getItem('iraqGameCoupon') || 'null');
+let language = localStorage.getItem('iraqGameLang') || 'ar';
 
 const localFallbackCompanies = [
   {
@@ -474,7 +481,9 @@ function createGameNode(game) {
   const gameMeta = node.querySelector(".game-meta");
   const gamePrice = node.querySelector(".game-price");
   const detailsLink = node.querySelector(".details-link");
+  const addToCartBtn = node.querySelector(".add-to-cart");
 
+  node.dataset.gameId = String(game.id);
   gameCover.src = game.cover_image_url || fallbackImage(game.name_en);
   gameCover.alt = `${game.name_ar} / ${game.name_en}`;
   gameCover.addEventListener("error", () => {
@@ -484,8 +493,21 @@ function createGameNode(game) {
   gameName.textContent = `${game.name_ar} / ${game.name_en}`;
   gameMeta.textContent = `${game.genre} - ${game.release_year}`;
   gamePrice.textContent = formatPrice(game.price ?? game.price_num ?? 0, game.currency || "IQD");
-  detailsLink.textContent = "اشتر الآن";
+  detailsLink.textContent = language === 'en' ? 'Buy now' : 'اشتر الآن';
   detailsLink.href = `/game?id=${game.id}`;
+  addToCartBtn.textContent = language === 'en' ? 'Add to cart' : 'إضافة للسلة';
+  addToCartBtn.addEventListener('click', () => {
+    const nextCart = [...cart];
+    const index = nextCart.findIndex((item) => Number(item.id) === Number(game.id));
+    if (index >= 0) {
+      nextCart[index].qty += 1;
+    } else {
+      nextCart.push({ id: game.id, qty: 1, name: `${game.name_ar} / ${game.name_en}`, price: Number(game.price || 0) });
+    }
+    cart = nextCart;
+    localStorage.setItem('iraqGameCart', JSON.stringify(cart));
+    renderCart();
+  });
 
   return node;
 }
@@ -732,4 +754,230 @@ async function fetchSuggestions() {
   }
 }
 
-document.addEventListener("DOMContentLoaded", fetchCatalog);
+function getCartSubtotal() {
+  return cart.reduce((sum, item) => sum + Number(item.qty || 0) * Number(item.price || 0), 0);
+}
+
+function getCartDiscountValue() {
+  const percent = Number(cartCoupon?.percent || 0);
+  return percent > 0 ? (getCartSubtotal() * percent) / 100 : 0;
+}
+
+function getCartTotal() {
+  return Math.max(0, getCartSubtotal() - getCartDiscountValue());
+}
+
+function clearCart() {
+  cart = [];
+  cartCoupon = null;
+  localStorage.setItem('iraqGameCart', JSON.stringify(cart));
+  localStorage.removeItem('iraqGameCoupon');
+  renderCart();
+  setStatus(language === 'en' ? 'Cart emptied successfully.' : 'تم إفراغ السلة بنجاح.');
+}
+
+async function applyCouponToCart() {
+  const couponInput = document.getElementById('couponCodeInput');
+  if (!couponInput) return;
+
+  const code = String(couponInput.value || '').trim();
+  if (!code) {
+    setStatus(language === 'en' ? 'Enter a coupon code.' : 'أدخل رمز الكوبون.');
+    return;
+  }
+
+  try {
+    const response = await fetch('/api/coupons/validate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ code })
+    });
+
+    const payload = await response.json();
+    if (!response.ok) {
+      throw new Error(payload.error || (language === 'en' ? 'Coupon invalid.' : 'الكوبون غير صالح.'));
+    }
+
+    cartCoupon = { code, percent: Number(payload.percent || 0) };
+    localStorage.setItem('iraqGameCoupon', JSON.stringify(cartCoupon));
+    renderCart();
+    setStatus(language === 'en' ? `Coupon applied: ${code}` : `تم تطبيق الكوبون: ${code}`);
+  } catch (error) {
+    cartCoupon = null;
+    localStorage.removeItem('iraqGameCoupon');
+    renderCart();
+    setStatus(error.message || (language === 'en' ? 'Coupon could not be validated.' : 'تعذر التحقق من الكوبون.'));
+  }
+}
+
+function renderCart() {
+  const count = cart.reduce((sum, item) => sum + Number(item.qty || 0), 0);
+  if (cartCount) cartCount.textContent = String(count);
+
+  const cartPanel = document.getElementById('cartPanel');
+  if (!cartPanel) {
+    const panel = document.createElement('div');
+    panel.id = 'cartPanel';
+    panel.className = 'cart-panel hidden';
+    panel.innerHTML = `
+      <div class="cart-header-row">
+        <h3>${language === 'en' ? 'Cart' : 'السلة'}</h3>
+        <button type="button" class="clear-cart-btn">${language === 'en' ? 'Clear' : 'إفراغ'}</button>
+      </div>
+      <div class="cart-items"></div>
+      <div class="coupon-box">
+        <input id="couponCodeInput" type="text" placeholder="${language === 'en' ? 'Coupon code' : 'رمز الكوبون'}" />
+        <button type="button" id="applyCouponBtn" class="btn-secondary">${language === 'en' ? 'Apply' : 'تطبيق'}</button>
+      </div>
+      <div class="cart-summary"></div>
+      <button type="button" class="details-link" style="width:100%;margin-top:10px;">${language === 'en' ? 'Checkout' : 'إتمام الطلب'}</button>
+    `;
+    document.body.appendChild(panel);
+  }
+
+  const panel = document.getElementById('cartPanel');
+  const itemsWrap = panel.querySelector('.cart-items');
+  const summaryWrap = panel.querySelector('.cart-summary');
+  const clearBtn = panel.querySelector('.clear-cart-btn');
+  const applyBtn = panel.querySelector('#applyCouponBtn');
+  const couponInput = panel.querySelector('#couponCodeInput');
+
+  if (clearBtn) {
+    clearBtn.addEventListener('click', clearCart);
+  }
+
+  if (applyBtn) {
+    applyBtn.addEventListener('click', applyCouponToCart);
+  }
+
+  if (couponInput) {
+    couponInput.value = cartCoupon?.code || '';
+    couponInput.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter') {
+        event.preventDefault();
+        applyCouponToCart();
+      }
+    });
+  }
+
+  if (!itemsWrap || !summaryWrap) return;
+
+  if (!cart.length) {
+    itemsWrap.innerHTML = `<p>${language === 'en' ? 'Your cart is empty.' : 'سلة التسوق فارغة'}</p>`;
+    summaryWrap.innerHTML = `
+      <div class="summary-row"><span>${language === 'en' ? 'Subtotal' : 'المجموع'}</span><strong>${formatPrice(0, 'IQD')}</strong></div>
+      <div class="summary-row total"><span>${language === 'en' ? 'Total' : 'الإجمالي'}</span><strong>${formatPrice(0, 'IQD')}</strong></div>
+    `;
+    return;
+  }
+
+  const subtotal = getCartSubtotal();
+  const discount = getCartDiscountValue();
+  const total = getCartTotal();
+
+  itemsWrap.innerHTML = cart.map((item) => `
+    <div class="cart-item">
+      <span>${item.name}</span>
+      <span>${item.qty} × ${Number(item.price || 0).toLocaleString('en-US')}</span>
+    </div>
+  `).join('');
+
+  summaryWrap.innerHTML = `
+    <div class="summary-row"><span>${language === 'en' ? 'Subtotal' : 'المجموع الفرعي'}</span><strong>${formatPrice(subtotal, 'IQD')}</strong></div>
+    <div class="summary-row"><span>${language === 'en' ? 'Discount' : 'الخصم'}</span><strong>${discount > 0 ? `-${formatPrice(discount, 'IQD')}` : formatPrice(0, 'IQD')}</strong></div>
+    <div class="summary-row total"><span>${language === 'en' ? 'Total' : 'الإجمالي'}</span><strong>${formatPrice(total, 'IQD')}</strong></div>
+  `;
+}
+
+function toggleCart() {
+  const panel = document.getElementById('cartPanel');
+  if (!panel) return;
+  panel.classList.toggle('hidden');
+}
+
+async function fetchTodayOffers() {
+  try {
+    const response = await fetch('/api/today-offers');
+    if (!response.ok) return;
+    const payload = await response.json();
+    const offers = payload.offers || [];
+    if (!offersStrip) return;
+    if (!offers.length) {
+      offersStrip.innerHTML = '<span class="offer-pill">أفضل العروض</span>';
+      return;
+    }
+
+    offersStrip.innerHTML = offers.slice(0, 5).map((offer) => {
+      const title = offer.title || 'عرض اليوم';
+      const detail = offer.percent ? `${offer.percent}% خصم` : `${Number(offer.price || 0).toLocaleString('en-US')} د.ع`;
+      return `<span class="offer-pill">${title}: ${detail}</span>`;
+    }).join('');
+  } catch (error) {
+    console.error(error);
+  }
+}
+
+function applyLanguage() {
+  const isEnglish = language === 'en';
+  document.documentElement.lang = isEnglish ? 'en' : 'ar';
+  document.documentElement.dir = isEnglish ? 'ltr' : 'rtl';
+  languageToggle.textContent = isEnglish ? 'EN / AR' : 'AR / EN';
+  document.querySelector('.brand-copy strong').textContent = isEnglish ? 'Iraq Game' : 'متجر العراق';
+  document.querySelector('.brand-copy span').textContent = isEnglish ? 'store hub' : 'مركز المتجر';
+  const searchPlaceholder = isEnglish ? 'Search for a game or company...' : 'ابحث عن لعبة أو شركة...';
+  const searchInputEl = document.getElementById('searchInput');
+  if (searchInputEl) searchInputEl.placeholder = searchPlaceholder;
+
+  const categoryLabels = {
+    all: isEnglish ? 'All games' : 'كل الألعاب',
+    games: isEnglish ? 'Games' : 'ألعاب',
+    subscriptions: isEnglish ? 'Subscriptions' : 'اشتراكات',
+    playstation: isEnglish ? 'PlayStation' : 'بلايستيشن',
+    xbox: isEnglish ? 'Xbox' : 'إكس بوكس',
+    deals: isEnglish ? 'Today deals' : 'عروض اليوم'
+  };
+
+  categoryButtons.forEach((button) => {
+    const key = button.dataset.filter || 'all';
+    button.textContent = categoryLabels[key] || button.textContent;
+  });
+
+  if (document.querySelector('.cart-button')) {
+    const cartText = isEnglish ? 'Cart' : 'السلة';
+    document.querySelector('.cart-button').innerHTML = `${cartText} <span id="cartCount">${cart.reduce((sum, item) => sum + Number(item.qty || 0), 0)}</span>`;
+  }
+
+  const heroKicker = document.querySelector('.hero-kicker');
+  if (heroKicker) heroKicker.textContent = isEnglish ? 'Best offers' : 'أفضل العروض';
+  const heroTitle = document.querySelector('.market-hero h1');
+  if (heroTitle) heroTitle.textContent = isEnglish ? 'Iraq Game Store' : 'متجر ألعاب عراقي بتصميم عصري';
+  const heroSubtitle = document.querySelector('.hero-subtitle');
+  if (heroSubtitle) heroSubtitle.textContent = isEnglish ? 'Discover game studios and subscriptions at great prices with a smooth and professional shopping experience.' : 'اكتشف شركات الألعاب والاشتراكات بأسعار مناسبة، تجربة احترافية، وتجربة شراء سريعة وواضحة.';
+
+  renderCart();
+}
+
+languageToggle.addEventListener('click', () => {
+  language = language === 'ar' ? 'en' : 'ar';
+  localStorage.setItem('iraqGameLang', language);
+  applyLanguage();
+  fetchCatalog();
+});
+
+cartButton.addEventListener('click', toggleCart);
+
+window.addEventListener('click', (event) => {
+  const panel = document.getElementById('cartPanel');
+  if (!panel) return;
+  if (panel.classList.contains('hidden')) return;
+  if (!panel.contains(event.target) && event.target !== cartButton) {
+    panel.classList.add('hidden');
+  }
+});
+
+document.addEventListener("DOMContentLoaded", async () => {
+  renderCart();
+  applyLanguage();
+  await fetchTodayOffers();
+  fetchCatalog();
+});

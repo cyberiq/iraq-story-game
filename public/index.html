@@ -39,8 +39,8 @@
         </label>
 
         <div class="header-actions">
-          <a href="#" class="header-link muted">AR</a>
-          <button class="cart-button" type="button">السلة <span>0</span></button>
+          <button id="languageToggle" class="header-link muted" type="button" aria-label="تبديل اللغة">AR / EN</button>
+          <button id="cartButton" class="cart-button" type="button">السلة <span id="cartCount">0</span></button>
         </div>
       </div>
 
@@ -64,6 +64,7 @@
       </section>
 
       <section id="status" class="status" aria-live="polite"></section>
+      <section id="todayOffers" class="offers-strip" aria-live="polite"></section>
       <section id="catalog" class="company-grid"></section>
     </main>
 
@@ -84,14 +85,17 @@
     </template>
 
     <template id="gameTemplate">
-      <article class="game-card">
+      <article class="game-card" data-game-id="">
         <img class="game-cover" alt="صورة اللعبة" loading="lazy" />
         <div class="game-content">
           <h3 class="game-name"></h3>
           <p class="game-meta"></p>
           <div class="game-price-row">
             <span class="game-price">₪0</span>
-            <a class="details-link" href="#">تفاصيل اللعبة</a>
+            <div class="card-actions">
+              <button class="add-to-cart" type="button">إضافة للسلة</button>
+              <a class="details-link" href="#">تفاصيل اللعبة</a>
+            </div>
           </div>
         </div>
       </article>
