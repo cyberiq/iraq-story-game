@@ -482,6 +482,7 @@ function createGameNode(game) {
   gameName.textContent = `${game.name_ar} / ${game.name_en}`;
   gameMeta.textContent = `${game.genre} - ${game.release_year}`;
   gamePrice.textContent = formatPrice(game.price ?? game.price_num ?? 0, game.currency || "IQD");
+  detailsLink.textContent = "اشتر الآن";
   detailsLink.href = `/game?id=${game.id}`;
 
   return node;
