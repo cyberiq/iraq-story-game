@@ -150,11 +150,31 @@
       </section>
 
       <section class="admin-card">
+        <h2>إعدادات واتساب</h2>
+        <form id="whatsappSettingsForm" class="form-grid">
+          <label>
+            <span>رقم واتساب</span>
+            <input id="whatsappNumberInput" type="tel" placeholder="966500000000" />
+          </label>
+          <div class="form-actions">
+            <button type="submit" class="btn-primary">حفظ رقم الواتساب</button>
+          </div>
+        </form>
+      </section>
+
+      <section class="admin-card">
         <h2>عروض اليوم</h2>
         <form id="todayOffersForm" class="form-grid">
+          <input id="offerEditId" type="hidden" />
           <label>
-            <span>اختيار اللعبة</span>
-            <select id="offerGameSelect"></select>
+            <span>اسم المنتج / المتجر</span>
+            <input id="offerProductName" placeholder="اكتب اسم المنتج أو المتجر يدوياً" />
+          </label>
+          <label>
+            <span>اختيار منتج سابق (اختياري)</span>
+            <select id="offerGameSelect">
+              <option value="">-- لا تستخدم اختياري --</option>
+            </select>
           </label>
           <label>
             <span>اسم العرض</span>
@@ -170,6 +190,7 @@
           </label>
           <div class="form-actions">
             <button type="submit" class="btn-primary">حفظ العرض</button>
+            <button type="button" class="btn-secondary" id="resetOfferFormBtn">إلغاء التعديل</button>
           </div>
         </form>
         <div id="todayOffersList" class="coupon-list"></div>

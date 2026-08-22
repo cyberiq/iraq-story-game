@@ -33,10 +33,15 @@ const couponPercent = document.getElementById('couponPercent');
 const couponList = document.getElementById('couponList');
 const todayOffersForm = document.getElementById('todayOffersForm');
 const offerGameSelect = document.getElementById('offerGameSelect');
+const offerProductName = document.getElementById('offerProductName');
+const offerEditId = document.getElementById('offerEditId');
 const offerTitle = document.getElementById('offerTitle');
 const offerPrice = document.getElementById('offerPrice');
 const offerPercent = document.getElementById('offerPercent');
+const resetOfferFormBtn = document.getElementById('resetOfferFormBtn');
 const todayOffersList = document.getElementById('todayOffersList');
+const whatsappSettingsForm = document.getElementById('whatsappSettingsForm');
+const whatsappNumberInput = document.getElementById('whatsappNumberInput');
 
 const fallbackAdminCompanies = [
   {
@@ -156,12 +161,17 @@ function fillCompaniesSelect(companies) {
   });
 
   if (offerGameSelect) {
-    offerGameSelect.innerHTML = '<option value="">-- اختر لعبة --</option>';
+    offerGameSelect.innerHTML = '<option value="">-- اختر منتج / متجر --</option>';
     companies.forEach((company) => {
-      const option = document.createElement('option');
-      option.value = company.id;
-      option.textContent = `${company.name_ar} / ${company.name_en}`;
-      offerGameSelect.appendChild(option);
+      const group = document.createElement('optgroup');
+      group.label = `${company.name_ar} / ${company.name_en}`;
+      (company.games || []).forEach((game) => {
+        const option = document.createElement('option');
+        option.value = `game:${game.id}`;
+        option.textContent = `${game.name_ar} / ${game.name_en}`;
+        group.appendChild(option);
+      });
+      offerGameSelect.appendChild(group);
     });
   }
 }
@@ -332,6 +342,17 @@ function renderAdminCatalog(companies) {
   });
 }
 
+async function loadWhatsappSettings() {
+  try {
+    const payload = await fetchJson('/api/admin/settings');
+    if (whatsappNumberInput) {
+      whatsappNumberInput.value = String(payload.whatsapp_number || '').replace(/\D/g, '');
+    }
+  } catch (error) {
+    console.error(error);
+  }
+}
+
 async function loadData() {
   setStatus("جاري تحميل بيانات الإدارة...");
 
@@ -347,8 +368,7 @@ async function loadData() {
     bindEditButtons(companies, catalogPayload.companies || []);
 
     setStatus("تم تحميل البيانات.");
-    await loadCoupons();
-    await loadTodayOffers();
+    await Promise.all([loadCoupons(), loadTodayOffers(), loadWhatsappSettings()]);
   } catch (error) {
     console.error(error);
 
@@ -427,6 +447,35 @@ couponForm && couponForm.addEventListener('submit', async (e) => {
   }
 });
 
+whatsappSettingsForm && whatsappSettingsForm.addEventListener('submit', async (event) => {
+  event.preventDefault();
+  const number = String(whatsappNumberInput.value || '').replace(/\D/g, '');
+
+  if (!number) {
+    setStatus('أدخل رقم واتساب صحيحًا.');
+    return;
+  }
+
+  try {
+    await fetchJson('/api/admin/settings', {
+      method: 'POST',
+      body: JSON.stringify({ whatsapp_number: number })
+    });
+    setStatus('تم حفظ رقم واتساب بنجاح.');
+  } catch (err) {
+    setStatus(`خطأ: ${err.message}`);
+  }
+});
+
+function resetOfferForm() {
+  if (offerEditId) offerEditId.value = '';
+  if (offerProductName) offerProductName.value = '';
+  if (offerTitle) offerTitle.value = '';
+  if (offerPrice) offerPrice.value = '';
+  if (offerPercent) offerPercent.value = '';
+  if (offerGameSelect) offerGameSelect.value = '';
+}
+
 async function loadTodayOffers() {
   try {
     const payload = await fetchJson('/api/today-offers');
@@ -442,16 +491,35 @@ async function loadTodayOffers() {
     offers.forEach((offer) => {
       const row = document.createElement('div');
       row.className = 'coupon-row';
+
       const strong = document.createElement('strong');
-      strong.textContent = offer.title || 'عرض اليوم';
+      strong.textContent = offer.title || offer.product_name || 'عرض اليوم';
+
+      const meta = document.createElement('small');
+      meta.textContent = ` • ID: ${offer.id} • ${offer.product_name || offer.title || 'منتج'} `;
+
       const text = document.createTextNode(` — ${offer.percent ? `${offer.percent}% خصم` : `${Number(offer.price || 0).toLocaleString('en-US')} د.ع`} `);
+
+      const actions = document.createElement('div');
+      actions.className = 'inline-actions';
+
+      const editBtn = document.createElement('button');
+      editBtn.className = 'btn-secondary';
+      editBtn.setAttribute('data-edit-offer', String(offer.id));
+      editBtn.textContent = 'تعديل';
+
       const delBtn = document.createElement('button');
       delBtn.className = 'btn-danger';
       delBtn.setAttribute('data-delete-offer', String(offer.id));
       delBtn.textContent = 'حذف';
+
+      actions.appendChild(editBtn);
+      actions.appendChild(delBtn);
+
       row.appendChild(strong);
+      row.appendChild(meta);
       row.appendChild(text);
-      row.appendChild(delBtn);
+      row.appendChild(actions);
       todayOffersList.appendChild(row);
     });
 
@@ -462,10 +530,29 @@ async function loadTodayOffers() {
         try {
           await fetchJson(`/api/today-offers/${id}`, { method: 'DELETE' });
           setStatus('تم حذف العرض.');
+          resetOfferForm();
           await loadTodayOffers();
         } catch (err) {
           setStatus(`خطأ: ${err.message}`);
         }
+      });
+    });
+
+    todayOffersList.querySelectorAll('[data-edit-offer]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const id = Number(btn.getAttribute('data-edit-offer'));
+        const offer = (payload.offers || []).find((entry) => Number(entry.id) === id);
+        if (!offer) return;
+
+        if (offerEditId) offerEditId.value = String(offer.id);
+        if (offerProductName) offerProductName.value = offer.product_name || offer.title || '';
+        if (offerTitle) offerTitle.value = offer.title || '';
+        if (offerPrice) offerPrice.value = String(offer.price || '');
+        if (offerPercent) offerPercent.value = String(offer.percent || '');
+        if (offerGameSelect) offerGameSelect.value = '';
+
+        setStatus(`وضع تعديل العرض: ${offer.title || offer.product_name || 'عرض اليوم'}`);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
       });
     });
   } catch (err) {
@@ -474,30 +561,43 @@ async function loadTodayOffers() {
   }
 }
 
+if (resetOfferFormBtn) {
+  resetOfferFormBtn.addEventListener('click', resetOfferForm);
+}
+
 if (todayOffersForm) {
   todayOffersForm.addEventListener('submit', async (event) => {
     event.preventDefault();
-    const gameId = Number(offerGameSelect.value || 0);
+    const selectedValue = String(offerGameSelect?.value || '').trim();
+    const selectedGameId = selectedValue.startsWith('game:') ? Number(selectedValue.split(':')[1]) : 0;
     const price = Number(offerPrice.value || 0);
     const percent = Number(offerPercent.value || 0);
-    if (!gameId || (!price && !percent)) {
-      setStatus('اختر لعبة وادخل سعر العرض أو نسبة الخصم.');
+    const manualProductName = String(offerProductName?.value || '').trim();
+    const customTitle = String(offerTitle.value || '').trim();
+    const editId = Number(offerEditId?.value || 0);
+
+    if ((!selectedGameId && !manualProductName && !customTitle) || (!price && !percent)) {
+      setStatus('اكتب اسم المنتج أو اختر منتج، ثم أدخل سعر العرض أو نسبة الخصم.');
       return;
     }
 
     try {
       const payload = {
-        game_id: gameId,
-        title: offerTitle.value.trim() || 'عرض اليوم',
+        id: editId || undefined,
+        game_id: selectedGameId || null,
+        title: customTitle || manualProductName || 'عرض اليوم',
         price,
-        percent
+        percent,
+        product_name: manualProductName || (selectedGameId ? (offerGameSelect?.selectedOptions?.[0]?.text || '') : '') || customTitle || 'عرض اليوم'
       };
-      await fetchJson('/api/today-offers', { method: 'POST', body: JSON.stringify(payload) });
-      setStatus('تم حفظ العرض بنجاح.');
-      offerTitle.value = '';
-      offerPrice.value = '';
-      offerPercent.value = '';
-      if (offerGameSelect) offerGameSelect.value = '';
+
+      await fetchJson('/api/today-offers', {
+        method: 'POST',
+        body: JSON.stringify(payload)
+      });
+
+      setStatus(editId ? 'تم تحديث العرض بنجاح.' : 'تم حفظ العرض بنجاح.');
+      resetOfferForm();
       await loadTodayOffers();
     } catch (err) {
       setStatus(`خطأ: ${err.message}`);

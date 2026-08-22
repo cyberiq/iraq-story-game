@@ -20,7 +20,7 @@
         <p class="hint-text">يمكنك التواصل مع المدير عبر أحد القنوات التالية. سيتم فتح تطبيق واتساب عند الضغط على زر الواتساب.</p>
 
         <div style="display:flex;flex-direction:column;gap:12px;margin-top:18px;">
-          <a class="btn-primary" href="https://wa.me/7713377783" target="_blank" rel="noopener noreferrer">
+          <a id="contactWhatsAppLink" class="btn-primary" href="https://wa.me/77133777783" target="_blank" rel="noopener noreferrer">
             <img src="https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/whatsapp.svg" alt="whatsapp" style="width:18px;height:18px;margin-left:8px;" />
             تواصل عبر واتساب
           </a>
@@ -28,12 +28,52 @@
           <a class="btn-secondary" href="mailto:admin@example.com">أرسل بريدًا إلكترونيًا</a>
 
           <div style="background:rgba(0,0,0,0.06);padding:12px;border-radius:8px;">
-            <strong>هاتف:</strong> 07713377783<br />
+            <strong>هاتف:</strong> <span id="contactPhoneNumber">07713377783</span><br />
             <strong>ملاحظات:</strong> أذكر اسم اللعبة أو الشركة وسأرد عليك في أسرع وقت.
           </div>
         </div>
       </section>
 
     </main>
+    <script>
+      async function loadContactSettings() {
+        try {
+          const response = await fetch('/api/contact-settings');
+          if (!response.ok) return;
+          const payload = await response.json();
+          const waNumber = String(payload.whatsapp_number || '77133777783').replace(/\D/g, '');
+          const link = document.getElementById('contactWhatsAppLink');
+          const phoneEl = document.getElementById('contactPhoneNumber');
+          if (link) {
+            link.href = `https://wa.me/${waNumber}`;
+          }
+          if (phoneEl) {
+            phoneEl.textContent = waNumber;
+          }
+
+          const customer = JSON.parse(localStorage.getItem('iraqGameCustomerData') || '{}');
+          const order = JSON.parse(localStorage.getItem('iraqGameCheckoutReview') || '{}');
+          if (!customer.name && !customer.phone && !order.total && !order.items) {
+            return;
+          }
+
+          const itemsText = (order.items || []).map((item) => `${item.name} × ${item.qty}`).join(', ');
+          const message = [
+            'طلب جديد من متجر العراق',
+            `اسم العميل: ${customer.name || 'غير محدد'}`,
+            `رقم الهاتف: ${customer.phone || 'غير محدد'}`,
+            `العناصر: ${itemsText || 'لا توجد عناصر'}`,
+            `المجموع النهائي: ${Number(order.total || 0).toLocaleString('en-US')} د.ع`,
+            `كوبون: ${order.coupon ? order.coupon.code : 'لا يوجد'}`
+          ].join('\n');
+          if (link) {
+            link.href = `https://wa.me/${waNumber}?text=${encodeURIComponent(message)}`;
+          }
+        } catch (error) {
+          console.error(error);
+        }
+      }
+      window.addEventListener('DOMContentLoaded', loadContactSettings);
+    </script>
   </body>
 </html>

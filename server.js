@@ -82,10 +82,23 @@ function writeJsonFile(filePath, value) {
   fs.writeFileSync(filePath, JSON.stringify(value, null, 2));
 }
 
-let runtimeAdminSettings = readJsonFile(adminSettingsPath, {
-  username: ADMIN_USERNAME,
-  password: ADMIN_PASSWORD
-});
+let runtimeAdminSettings = {
+  ...{
+    username: ADMIN_USERNAME,
+    password: ADMIN_PASSWORD,
+    whatsapp_number: '77133777783'
+  },
+  ...readJsonFile(adminSettingsPath, {
+    username: ADMIN_USERNAME,
+    password: ADMIN_PASSWORD,
+    whatsapp_number: '77133777783'
+  })
+};
+
+if (!runtimeAdminSettings.whatsapp_number) {
+  runtimeAdminSettings.whatsapp_number = '77133777783';
+  saveAdminSettings();
+}
 
 function saveAdminSettings() {
   writeJsonFile(adminSettingsPath, runtimeAdminSettings);
@@ -433,6 +446,31 @@ app.post("/api/auth/logout", (req, res) => {
   });
 });
 
+app.get('/api/contact-settings', (req, res) => {
+  const whatsappNumber = String(runtimeAdminSettings.whatsapp_number || '77133777783').replace(/\D/g, '');
+  return res.json({ whatsapp_number: whatsappNumber });
+});
+
+app.get('/api/admin/settings', requireAdmin, (req, res) => {
+  return res.json({
+    username: runtimeAdminSettings.username,
+    whatsapp_number: String(runtimeAdminSettings.whatsapp_number || '77133777783').replace(/\D/g, '')
+  });
+});
+
+app.post('/api/admin/settings', requireAdmin, (req, res) => {
+  const { whatsapp_number } = req.body || {};
+  const cleaned = String(whatsapp_number || '').replace(/\D/g, '');
+
+  if (!cleaned) {
+    return res.status(400).json({ error: 'رقم الواتساب مطلوب.' });
+  }
+
+  runtimeAdminSettings.whatsapp_number = cleaned;
+  saveAdminSettings();
+  return res.json({ ok: true, whatsapp_number: cleaned });
+});
+
 // Coupons - admin management
 app.get('/api/coupons', requireAdmin, async (req, res) => {
   if (!databaseReady) {
@@ -523,25 +561,52 @@ app.get('/api/today-offers', async (req, res) => {
 });
 
 app.post('/api/today-offers', requireAdmin, async (req, res) => {
-  const { game_id, price, percent, title } = req.body || {};
+  const { id, game_id, price, percent, title, product_name } = req.body || {};
+  const editId = Number(id ?? 0);
   const gameId = Number(game_id ?? 0);
   const offerPrice = Number(price ?? 0);
   const offerPercent = Number(percent ?? 0);
+  const payloadTitle = String(title || product_name || 'عرض اليوم').trim();
+  const payloadProductName = String(product_name || '').trim();
 
-  if (!gameId || (!offerPrice && !offerPercent)) {
-    return res.status(400).json({ error: 'game_id و price أو percent مطلوبان' });
+  if ((!gameId && !payloadProductName && !payloadTitle) || (!offerPrice && !offerPercent)) {
+    return res.status(400).json({ error: 'اكتب اسم المنتج أو اختر منتج ثم أدخل سعر العرض أو نسبة الخصم.' });
+  }
+
+  const normalizedTitle = payloadTitle || payloadProductName || 'عرض اليوم';
+  const normalizedProductName = payloadProductName || normalizedTitle;
+
+  if (editId) {
+    const existingIndex = runtimeTodayOffers.findIndex((entry) => Number(entry.id) === editId);
+    if (existingIndex === -1) {
+      return res.status(404).json({ error: 'Offer not found' });
+    }
+
+    runtimeTodayOffers[existingIndex] = {
+      ...runtimeTodayOffers[existingIndex],
+      game_id: gameId || runtimeTodayOffers[existingIndex].game_id || null,
+      title: normalizedTitle,
+      product_name: normalizedProductName,
+      price: Number.isFinite(offerPrice) ? offerPrice : runtimeTodayOffers[existingIndex].price || 0,
+      percent: Number.isFinite(offerPercent) ? offerPercent : runtimeTodayOffers[existingIndex].percent || 0,
+      active: true
+    };
+
+    saveTodayOffersFile();
+    return res.json({ offer: runtimeTodayOffers[existingIndex] });
   }
 
   const offer = {
     id: Date.now(),
-    game_id: gameId,
-    title: String(title || 'عرض اليوم').trim(),
+    game_id: gameId || null,
+    title: normalizedTitle,
+    product_name: normalizedProductName,
     price: Number.isFinite(offerPrice) ? offerPrice : 0,
     percent: Number.isFinite(offerPercent) ? offerPercent : 0,
     active: true
   };
 
-  runtimeTodayOffers = [offer, ...runtimeTodayOffers.filter((entry) => Number(entry.game_id) !== gameId)];
+  runtimeTodayOffers = [offer, ...runtimeTodayOffers.filter((entry) => Number(entry.game_id || 0) !== gameId)];
   saveTodayOffersFile();
   return res.status(201).json({ offer });
 });
@@ -1022,6 +1087,10 @@ app.get("/game", (req, res) => {
 
 app.get("/contact", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "contact.html"));
+});
+
+app.get('/checkout-review', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'checkout-review.html'));
 });
 
 app.use((req, res, next) => {
