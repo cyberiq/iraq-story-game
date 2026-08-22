@@ -522,22 +522,22 @@ function createCompanyNode(company) {
   return node;
 }
 
-function getCategoryMatches(game, company, category) {
-  const combinedText = `${game.name_ar || ''} ${game.name_en || ''} ${company?.name_ar || ''} ${company?.name_en || ''} ${company?.slug || ''}`.toLowerCase();
+function getCategoryMatches(game, category) {
+  const name = `${game.name_ar || ''} ${game.name_en || ''}`.toLowerCase();
   const productType = String(game.product_type || '').toLowerCase();
   const genre = String(game.genre || '').toLowerCase();
 
   switch (category) {
     case 'games':
-      return (!productType || productType === 'game') && !combinedText.includes('playstation') && !combinedText.includes('xbox') && !combinedText.includes('plus') && !combinedText.includes('gemini') && !combinedText.includes('chatgpt') && !combinedText.includes('claude') && !combinedText.includes('midjourney');
+      return !productType || productType === 'game';
     case 'subscriptions':
-      return productType.includes('subscription') || combinedText.includes('plus') || combinedText.includes('game pass') || combinedText.includes('gemini') || combinedText.includes('claude') || combinedText.includes('midjourney') || combinedText.includes('ai') || combinedText.includes('subscription') || combinedText.includes('playstation plus') || combinedText.includes('xbox game pass');
+      return productType.includes('subscription') || productType.includes('sub') || genre.includes('ai') || genre.includes('platform');
     case 'playstation':
-      return combinedText.includes('playstation') || combinedText.includes('ps ') || combinedText.includes('sony');
+      return name.includes('playstation') || name.includes('ps ') || name.includes('sony');
     case 'xbox':
-      return combinedText.includes('xbox') || combinedText.includes('game pass');
+      return name.includes('xbox') || name.includes('game pass') || name.includes('xbox game');
     case 'deals':
-      return Number(game.price ?? 0) > 0 && (Number(game.price) < 80 || productType.includes('subscription') || combinedText.includes('plus'));
+      return Number(game.price ?? 0) > 0 && (Number(game.price) < 80 || productType.includes('subscription'));
     default:
       return true;
   }
@@ -548,12 +548,10 @@ function filterCompaniesByCategory(companies, category) {
     return companies;
   }
 
-  const source = Array.isArray(companies) && companies.length ? companies : localFallbackCompanies;
-
-  return source
+  return companies
     .map((company) => ({
       ...company,
-      games: (company.games || []).filter((game) => getCategoryMatches(game, company, category))
+      games: (company.games || []).filter((game) => getCategoryMatches(game, category))
     }))
     .filter((company) => company.games.length > 0);
 }
@@ -561,11 +559,7 @@ function filterCompaniesByCategory(companies, category) {
 function renderCatalog(companies) {
   catalogContainer.innerHTML = "";
 
-  let filteredCompanies = filterCompaniesByCategory(companies, activeCategory);
-
-  if (!filteredCompanies.length && activeCategory !== 'all') {
-    filteredCompanies = filterCompaniesByCategory(localFallbackCompanies, activeCategory);
-  }
+  const filteredCompanies = filterCompaniesByCategory(companies, activeCategory);
 
   if (!filteredCompanies.length) {
     const empty = document.createElement("div");
