@@ -208,16 +208,20 @@
       }
 
       let html = `<div class="review-header"><h1>${l.reviewTitle}</h1></div>`;
-      html += `<div class="order-items"><h3>${l.itemsHeader}</h3>`;
+      html += `<div class="order-items" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;"><h3 style="margin: 0;">${l.itemsHeader}</h3><button id="clearReviewCartBtn" type="button" style="background: #ff6b6b; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; font-size: 13px; font-weight: bold;">${language === 'ar' ? 'إفراغ السلة' : 'Clear Cart'}</button></div>`;
+      html += `<div class="order-items">`;
 
       let subtotal = 0;
-      cart.forEach((item) => {
+      cart.forEach((item, idx) => {
         const itemTotal = Number(item.price || 0) * Number(item.qty || 0);
         subtotal += itemTotal;
         html += `
-          <div class="order-item">
-            <span>${item.name}</span>
-            <span>${item.qty} × ${formatPrice(item.price)} = ${formatPrice(itemTotal)}</span>
+          <div class="order-item" style="display: flex; justify-content: space-between; align-items: center;">
+            <div style="flex: 1;">
+              <span>${item.name}</span><br>
+              <span style="font-size: 14px;">${item.qty} × ${formatPrice(item.price)} = ${formatPrice(itemTotal)}</span>
+            </div>
+            <button type="button" class="delete-review-item-btn" data-index="${idx}" style="background: #ff6b6b; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 12px; margin-right: 10px;">${language === 'ar' ? 'حذف' : 'Delete'}</button>
           </div>
         `;
       });
@@ -276,6 +280,28 @@
       document.getElementById('backBtn').addEventListener('click', () => {
         window.history.back();
       });
+
+      // Delete item buttons
+      document.querySelectorAll('.delete-review-item-btn').forEach((btn) => {
+        btn.addEventListener('click', (e) => {
+          const idx = Number(e.target.dataset.index);
+          const updatedCart = cart.filter((_, i) => i !== idx);
+          localStorage.setItem('iraqGameCart', JSON.stringify(updatedCart));
+          location.reload();
+        });
+      });
+
+      // Clear cart button
+      const clearBtn = document.getElementById('clearReviewCartBtn');
+      if (clearBtn) {
+        clearBtn.addEventListener('click', () => {
+          const confirmMsg = language === 'ar' ? 'هل أنت متأكد من حذف جميع العناصر من السلة؟' : 'Are you sure you want to clear all items from cart?';
+          if (confirm(confirmMsg)) {
+            localStorage.setItem('iraqGameCart', JSON.stringify([]));
+            location.reload();
+          }
+        });
+      }
     }
 
     async function completeOrder() {
