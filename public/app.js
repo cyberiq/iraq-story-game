@@ -762,8 +762,18 @@ function renderCart() {
     const panel = document.createElement('div');
     panel.id = 'cartPanel';
     panel.className = 'cart-panel hidden';
-    panel.innerHTML = '<h3>السلة</h3><div class="cart-items"></div><button type="button" id="completeOrderBtn" class="details-link" style="width:100%;margin-top:10px;">إتمام الطلب</button>';
+    panel.innerHTML = `
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+        <h3 style="margin: 0;">السلة</h3>
+        <button type="button" id="clearCartBtn" style="background: #ff6b6b; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 12px;">إفراغ السلة</button>
+      </div>
+      <div class="cart-items"></div>
+      <div style="display: flex; gap: 10px; margin-top: 15px;">
+        <button type="button" id="completeOrderBtn" class="details-link" style="flex: 1; width: auto;">إتمام الطلب</button>
+      </div>
+    `;
     document.body.appendChild(panel);
+    
     document.getElementById('completeOrderBtn').addEventListener('click', () => {
       if (cart.length === 0) {
         alert(language === 'en' ? 'Your cart is empty!' : 'السلة فارغة!');
@@ -779,6 +789,18 @@ function renderCart() {
       }));
       window.location.href = '/checkout-review.html';
     });
+
+    document.getElementById('clearCartBtn').addEventListener('click', () => {
+      if (cart.length === 0) {
+        alert(language === 'en' ? 'Your cart is already empty!' : 'السلة فارغة بالفعل!');
+        return;
+      }
+      if (confirm(language === 'en' ? 'Are you sure you want to clear the cart?' : 'هل تأكد من إفراغ السلة؟')) {
+        cart = [];
+        localStorage.setItem('iraqGameCart', JSON.stringify(cart));
+        renderCart();
+      }
+    });
   }
 
   const panel = document.getElementById('cartPanel');
@@ -786,16 +808,29 @@ function renderCart() {
   if (!itemsWrap) return;
 
   if (!cart.length) {
-    itemsWrap.innerHTML = '<p>سلة التسوق فارغة</p>';
+    itemsWrap.innerHTML = '<p style="text-align: center; color: #999;">سلة التسوق فارغة</p>';
     return;
   }
 
-  itemsWrap.innerHTML = cart.map((item) => `
-    <div class="cart-item">
-      <span>${item.name}</span>
-      <span>${item.qty} × ${Number(item.price || 0).toLocaleString('en-US')}</span>
+  itemsWrap.innerHTML = cart.map((item, idx) => `
+    <div class="cart-item" style="display: flex; justify-content: space-between; align-items: center; padding: 12px; background: #16213e; margin-bottom: 10px; border-radius: 8px;">
+      <div style="flex: 1;">
+        <div style="font-weight: bold; margin-bottom: 5px;">${item.name}</div>
+        <div style="font-size: 14px; color: #00d4ff;">${item.qty} × ${Number(item.price || 0).toLocaleString('en-US')}</div>
+      </div>
+      <button type="button" class="delete-item-btn" data-index="${idx}" style="background: #ff6b6b; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 12px; margin-right: 10px;">حذف</button>
     </div>
   `).join('');
+
+  // Add delete handlers for each item
+  panel.querySelectorAll('.delete-item-btn').forEach((btn) => {
+    btn.addEventListener('click', (e) => {
+      const idx = Number(e.target.dataset.index);
+      cart = cart.filter((_, i) => i !== idx);
+      localStorage.setItem('iraqGameCart', JSON.stringify(cart));
+      renderCart();
+    });
+  });
 }
 
 function toggleCart() {
