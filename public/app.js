@@ -762,8 +762,23 @@ function renderCart() {
     const panel = document.createElement('div');
     panel.id = 'cartPanel';
     panel.className = 'cart-panel hidden';
-    panel.innerHTML = '<h3>السلة</h3><div class="cart-items"></div><button type="button" class="details-link" style="width:100%;margin-top:10px;">إتمام الطلب</button>';
+    panel.innerHTML = '<h3>السلة</h3><div class="cart-items"></div><button type="button" id="completeOrderBtn" class="details-link" style="width:100%;margin-top:10px;">إتمام الطلب</button>';
     document.body.appendChild(panel);
+    document.getElementById('completeOrderBtn').addEventListener('click', () => {
+      if (cart.length === 0) {
+        alert(language === 'en' ? 'Your cart is empty!' : 'السلة فارغة!');
+        return;
+      }
+      localStorage.setItem('iraqGameCheckoutReview', JSON.stringify({ 
+        name: '', 
+        phone: '', 
+        email: '', 
+        notes: '',
+        coupon: localStorage.getItem('iraqGameCoupon') || '',
+        discountPercent: Number(localStorage.getItem('iraqGameDiscountPercent') || 0)
+      }));
+      window.location.href = '/checkout-review.html';
+    });
   }
 
   const panel = document.getElementById('cartPanel');
