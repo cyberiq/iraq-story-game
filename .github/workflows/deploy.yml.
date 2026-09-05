@@ -21,3 +21,4 @@ jobs:
           script: |
             cd /var/www/iraqstorycard.tech
             git pull origin main
+ 
