@@ -1,34 +1,54 @@
-<!doctype html>
-<html lang="ar" dir="rtl">
+<!DOCTYPE html>
+<html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>لم يتم العثور على الصفحة — 404</title>
-  <link href="https://fonts.googleapis.com/css?family=Arvo&display=swap" rel="stylesheet">
-  <style>
-    body{font-family: 'Tajawal', sans-serif;background:#0f1724;color:#e6eef8;margin:0;padding:0;display:flex;align-items:center;justify-content:center;height:100vh}
-    .page_404{ padding:40px 20px;background:transparent; width:100%;max-width:980px }
-    .four_zero_four_bg{ background-image: url('https://cdn.dribbble.com/users/285475/screenshots/2083086/dribbble_1.gif'); height:320px; background-position:center; background-repeat:no-repeat; background-size:contain; }
-    .four_zero_four_bg h1{ font-size:96px; margin:0; color:#fff }
-    .contant_box_404{ text-align:center; margin-top: -30px }
-    .contant_box_404 h3{ font-size:28px; color:#fff; margin:6px 0 }
-    .contant_box_404 p{ color:#b6c6d6 }
-    .link_404{ color:#fff!important; padding:10px 22px; background:#ff8a65; margin:20px 0; display:inline-block; border-radius:8px; text-decoration:none }
-    @media (max-width:600px){ .four_zero_four_bg{ height:200px } .four_zero_four_bg h1{ font-size:56px } }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>404 — Page Not Found</title>
+    <!-- Use remote style from the source site to keep the same look -->
+    <link rel="stylesheet" href="https://mjavadh.github.io/4X4-Collection/Fantasy/Black%20Box/assets/style.css">
+    <style>
+      /* minimal overrides to ensure readability on our site */
+      body { background: #07070a; color: #fff; font-family: 'Tajawal', sans-serif; }
+      a.back-btn { display:inline-block; margin-top:18px; padding:10px 18px; background:#ff6b6b; color:#fff; border-radius:8px; text-decoration:none }
+      main { max-width:1100px; margin:60px auto; padding:20px }
+      .image img { max-width:360px; width:100%; height:auto }
+    </style>
 </head>
 <body>
-  <section class="page_404">
-    <div class="container">
-      <div class="four_zero_four_bg">
-        <h1 class="text-center">404</h1>
-      </div>
-      <div class="contant_box_404">
-        <h3 class="h2">يبدو أنك ضائعًا</h3>
-        <p>الصفحة التي تبحث عنها غير متوفرة.</p>
-        <a href="/" class="link_404">العودة للرئيسية</a>
-      </div>
+<main id="main" class="main">
+    <div class="menu">
+        <a href="/">
+            <h1 class="Logo">Iraq Game</h1>
+        </a>
     </div>
-  </section>
+
+    <div class="text-404">
+        <h1>4 X 4</h1>
+        <p>Page not found!</p>
+        <a class="back-btn" href="/">Back To Home</a>
+    </div>
+
+    <div class="image"><img id="big_image" src="https://mjavadh.github.io/4X4-Collection/Fantasy/Black%20Box/assets/astronaut.png" alt="astronaut"></div>
+</main>
+
+<!-- optional image gallery box (kept simple) -->
+<div id="image-box" class="image-box" style="display:none">
+    <div id="close_ImageBox">X</div>
+    <img class="small_image active" src="https://mjavadh.github.io/4X4-Collection/Fantasy/Black%20Box/assets/astronaut.png" style="max-width:50%" alt="astronaut">
+    <img class="small_image" src="https://mjavadh.github.io/4X4-Collection/Fantasy/Black%20Box/assets/cute-ghost.png" style="max-width:80%" alt="ghost">
+</div>
+
+<script>
+    // small interaction: toggle image-box when clicking big image
+    const bigImage = document.getElementById('big_image');
+    const imageBox = document.getElementById('image-box');
+    const closeBtn = document.getElementById('close_ImageBox');
+    if (bigImage && imageBox) {
+      bigImage.style.cursor = 'pointer';
+      bigImage.addEventListener('click', () => imageBox.style.display = 'block');
+    }
+    if (closeBtn && imageBox) closeBtn.addEventListener('click', () => imageBox.style.display = 'none');
+</script>
+
 </body>
 </html>
