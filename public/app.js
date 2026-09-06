@@ -598,10 +598,21 @@ function renderCatalog(companies) {
   const filteredCompanies = filterCompaniesByCategory(companies, activeCategory);
 
   if (!filteredCompanies.length) {
-    const empty = document.createElement("div");
-    empty.className = "empty-state";
-    empty.textContent = "لا توجد نتائج في هذا التصنيف. جرب تصنيفًا آخر.";
-    catalogContainer.appendChild(empty);
+    // render a full-page friendly no-results state using the 404 style
+    catalogContainer.innerHTML = `
+      <section class="page_404">
+        <div class="container">
+          <div class="four_zero_four_bg">
+            <h1 class="text-center">لا توجد نتائج</h1>
+          </div>
+          <div class="contant_box_404">
+            <h3 class="h2">لم يتم العثور على عناصر مطابقة</h3>
+            <p>حاول تغيير مصطلح البحث أو اختيار تصنيف آخر.</p>
+            <a href="/" class="link_404">العودة للرئيسية</a>
+          </div>
+        </div>
+      </section>
+    `;
     return;
   }
 

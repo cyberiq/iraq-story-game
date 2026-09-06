@@ -1024,16 +1024,31 @@ app.get("/contact", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "contact.html"));
 });
 
+// Serve API 404s specially
 app.use((req, res, next) => {
   if (req.path.startsWith("/api/")) {
     return res.status(404).json({ error: "API route not found" });
   }
 
+  // If request targets a static asset (contains dot) but not found, show 404 static
   if (req.path.includes(".")) {
-    return res.status(404).send("Not Found");
+    return res.status(404).sendFile(path.join(__dirname, 'public', '404.html'));
   }
 
+  // For other non-API paths, serve the SPA index so client-side routing can run
   return res.sendFile(path.join(__dirname, "public", "index.html"));
+});
+
+// Fallback error handler to serve 403/404 pages where appropriate
+app.use((err, req, res, next) => {
+  if (res.headersSent) return next(err);
+  if (err && err.status === 403) {
+    return res.status(403).sendFile(path.join(__dirname, 'public', '403.html'));
+  }
+  if (err && err.status === 404) {
+    return res.status(404).sendFile(path.join(__dirname, 'public', '404.html'));
+  }
+  return res.status(500).json({ error: 'Internal server error' });
 });
 
 (async () => {
