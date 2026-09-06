@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<title>أنيميشن إضافة إلى السلة</title>
+<style>
+  :root{
+    --primary:#6c5ce7;
+    --accent:#00d2d3;
+    --bg:#f5f6fa;
+  }
+  *{box-sizing:border-box;}
+  body{
+    font-family: 'Segoe UI', Tahoma, sans-serif;
+    background:var(--bg);
+    margin:0;
+    padding:40px 20px;
+  }
+
+  /* شريط علوي يحتوي على أيقونة السلة */
+  .navbar{
+    display:flex;
+    justify-content:flex-end;
+    align-items:center;
+    max-width:900px;
+    margin:0 auto 40px;
+  }
+  .cart-wrapper{
+    position:relative;
+    width:55px;
+    height:55px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:#fff;
+    border-radius:50%;
+    box-shadow:0 4px 15px rgba(0,0,0,.08);
+    cursor:pointer;
+  }
+  .cart-wrapper svg{
+    width:26px;
+    height:26px;
+    fill:var(--primary);
+    transition:transform .3s;
+  }
+  .cart-badge{
+    position:absolute;
+    top:-4px;
+    left:-4px;
+    background:linear-gradient(135deg,#ff6b6b,#ee5253);
+    color:#fff;
+    font-size:12px;
+    font-weight:bold;
+    width:20px;
+    height:20px;
+    border-radius:50%;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    transform:scale(0);
+    transition:transform .25s cubic-bezier(.34,1.56,.64,1);
+  }
+  .cart-badge.show{transform:scale(1);}
+
+  .cart-wrapper.shake svg{
+    animation:cartShake .45s ease;
+  }
+  @keyframes cartShake{
+    0%,100%{transform:rotate(0);}
+    20%{transform:rotate(-15deg);}
+    40%{transform:rotate(12deg);}
+    60%{transform:rotate(-8deg);}
+    80%{transform:rotate(5deg);}
+  }
+
+  /* شبكة المنتجات */
+  .products{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+    gap:25px;
+    max-width:900px;
+    margin:0 auto;
+  }
+  .card{
+    background:#fff;
+    border-radius:16px;
+    padding:18px;
+    text-align:center;
+    box-shadow:0 6px 20px rgba(0,0,0,.06);
+    position:relative;
+    overflow:hidden;
+  }
+  .card img{
+    width:100%;
+    height:140px;
+    object-fit:contain;
+    margin-bottom:12px;
+  }
+  .card h3{margin:8px 0 4px;font-size:16px;color:#2d3436;}
+  .card .price{color:var(--primary);font-weight:bold;margin-bottom:14px;}
+
+  .add-btn{
+    position:relative;
+    border:none;
+    outline:none;
+    padding:10px 22px;
+    border-radius:30px;
+    background:linear-gradient(135deg,var(--primary),#8e7bff);
+    color:#fff;
+    font-weight:600;
+    cursor:pointer;
+    overflow:hidden;
+    transition:transform .15s;
+  }
+  .add-btn:active{transform:scale(.94);}
+  .add-btn.success{
+    background:linear-gradient(135deg,#00b894,#00cec9);
+  }
+  .add-btn .check{
+    display:inline-block;
+    opacity:0;
+    transform:scale(.5);
+    transition:.25s;
+  }
+  .add-btn.success .default-text{display:none;}
+  .add-btn.success .check{opacity:1;transform:scale(1);}
+
+  /* العنصر الطائر */
+  .flying-img{
+    position:fixed;
+    width:50px;
+    height:50px;
+    object-fit:contain;
+    border-radius:8px;
+    z-index:999;
+    pointer-events:none;
+    box-shadow:0 6px 18px rgba(0,0,0,.2);
+  }
+
+  /* تأثير الجزيئات عند الوصول */
+  .particle{
+    position:fixed;
+    width:6px;
+    height:6px;
+    border-radius:50%;
+    background:var(--accent);
+    pointer-events:none;
+    z-index:998;
+  }
+</style>
+</head>
+<body>
+
+<div class="navbar">
+  <div class="cart-wrapper" id="cartIcon">
+    <svg viewBox="0 0 24 24"><path d="M7 4h-2l-1 2h2l3.6 7.59-1.35 2.44c-.16.28-.25.61-.25.97 0 1.1.9 2 2 2h12v-2h-11.42c-.14 0-.25-.11-.25-.25l.03-.12.9-1.63h7.45c.75 0 1.41-.41 1.75-1.03l3.58-6.49c.08-.14.12-.31.12-.48 0-.55-.45-1-1-1h-14.32l-.94-2zm2 15c-1.1 0-1.99.9-1.99 2s.89 2 1.99 2 2-.9 2-2-.9-2-2-2zm10 0c-1.1 0-1.99.9-1.99 2s.89 2 1.99 2 2-.9 2-2-.9-2-2-2z"/></svg>
+    <div class="cart-badge" id="cartBadge">0</div>
+  </div>
+</div>
+
+<div class="products" id="productsGrid">
+  <!-- سيتم إدخال المنتجات عبر JS -->
+</div>
+
+<script>
+/* ============ بيانات تجريبية للمنتجات ============ */
+const products = [
+  { id:1, name:'سماعة لاسلكية', price:'149 ر.س', img:'https://cdn-icons-png.flaticon.com/512/2971/2971624.png' },
+  { id:2, name:'ساعة ذكية', price:'349 ر.س', img:'https://cdn-icons-png.flaticon.com/512/565/565547.png' },
+  { id:3, name:'حقيبة ظهر', price:'99 ر.س', img:'https://cdn-icons-png.flaticon.com/512/2553/2553691.png' },
+];
+
+const grid = document.getElementById('productsGrid');
+const cartIcon = document.getElementById('cartIcon');
+const cartBadge = document.getElementById('cartBadge');
+let cartCount = 0;
+
+products.forEach(p => {
+  const card = document.createElement('div');
+  card.className = 'card';
+  card.innerHTML = `
+    <img src="${p.img}" alt="${p.name}" class="product-image">
+    <h3>${p.name}</h3>
+    <div class="price">${p.price}</div>
+    <button class="add-btn">
+      <span class="default-text">أضف إلى السلة</span>
+      <span class="check">✓ أُضيف</span>
+    </button>
+  `;
+  grid.appendChild(card);
+
+  const btn = card.querySelector('.add-btn');
+  const img = card.querySelector('.product-image');
+
+  btn.addEventListener('click', () => addToCart(img, btn));
+});
+
+/* ============ دالة إضافة المنتج مع الأنيميشن ============ */
+function addToCart(imgEl, btnEl){
+  // منع الضغط المتكرر أثناء التشغيل
+  if(btnEl.disabled) return;
+  btnEl.disabled = true;
+
+  const imgRect = imgEl.getBoundingClientRect();
+  const cartRect = cartIcon.getBoundingClientRect();
+
+  // إنشاء نسخة طائرة من صورة المنتج
+  const flyImg = imgEl.cloneNode(true);
+  flyImg.classList.add('flying-img');
+  flyImg.style.left = imgRect.left + 'px';
+  flyImg.style.top = imgRect.top + 'px';
+  flyImg.style.width = imgRect.width + 'px';
+  flyImg.style.height = imgRect.height + 'px';
+  document.body.appendChild(flyImg);
+
+  // نقطة تحكم لمسار منحني (Bezier) لإعطاء حركة طبيعية غير مستقيمة
+  const midX = (imgRect.left + cartRect.left) / 2;
+  const midY = Math.min(imgRect.top, cartRect.top) - 150;
+
+  const startTime = performance.now();
+  const duration = 700;
+
+  function animateFly(now){
+    let t = (now - startTime) / duration;
+    if(t > 1) t = 1;
+
+    // منحنى بيزييه تربيعي بين نقطة البداية والوسط والنهاية
+    const x = bezier(t, imgRect.left, midX, cartRect.left);
+    const y = bezier(t, imgRect.top, midY, cartRect.top);
+
+    const scale = 1 - t * 0.7;      // يصغر تدريجياً
+    const opacity = 1 - t * 0.3;
+
+    flyImg.style.transform = `translate(${x - imgRect.left}px, ${y - imgRect.top}px) scale(${scale})`;
+    flyImg.style.opacity = opacity;
+
+    if(t < 1){
+      requestAnimationFrame(animateFly);
+    } else {
+      flyImg.remove();
+      onArriveAtCart();
+    }
+  }
+  requestAnimationFrame(animateFly);
+
+  // تأثير النجاح على الزر
+  btnEl.classList.add('success');
+  setTimeout(() => {
+    btnEl.classList.remove('success');
+    btnEl.disabled = false;
+  }, 1400);
+}
+
+// دالة بيزييه تربيعية (نقطة بداية - نقطة تحكم - نقطة نهاية)
+function bezier(t, p0, p1, p2){
+  return (1 - t) * (1 - t) * p0 + 2 * (1 - t) * t * p1 + t * t * p2;
+}
+
+/* عند وصول العنصر إلى السلة: اهتزاز + تحديث العداد + جزيئات */
+function onArriveAtCart(){
+  cartCount++;
+  cartBadge.textContent = cartCount;
+  cartBadge.classList.add('show');
+
+  cartIcon.classList.remove('shake');
+  void cartIcon.offsetWidth; // إعادة تشغيل الأنيميشن
+  cartIcon.classList.add('shake');
+
+  spawnParticles();
+}
+
+/* جزيئات صغيرة متطايرة حول أيقونة السلة عند الوصول */
+function spawnParticles(){
+  const rect = cartIcon.getBoundingClientRect();
+  const centerX = rect.left + rect.width / 2;
+  const centerY = rect.top + rect.height / 2;
+
+  for(let i = 0; i < 8; i++){
+    const p = document.createElement('div');
+    p.className = 'particle';
+    p.style.left = centerX + 'px';
+    p.style.top = centerY + 'px';
+    document.body.appendChild(p);
+
+    const angle = (Math.PI * 2 * i) / 8;
+    const dist = 30 + Math.random() * 20;
+    const dx = Math.cos(angle) * dist;
+    const dy = Math.sin(angle) * dist;
+
+    p.animate([
+      { transform:'translate(0,0)', opacity:1 },
+      { transform:`translate(${dx}px, ${dy}px)`, opacity:0 }
+    ], { duration:500, easing:'ease-out' }).onfinish = () => p.remove();
+  }
+}
+</script>
+</body>
+</html>
