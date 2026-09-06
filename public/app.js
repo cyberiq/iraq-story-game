@@ -501,11 +501,22 @@ function createGameNode(game) {
     if (index >= 0) {
       nextCart[index].qty += 1;
     } else {
-      nextCart.push({ id: game.id, qty: 1, name: `${game.name_ar} / ${game.name_en}`, price: Number(game.price || 0) });
+      nextCart.push({
+        id: game.id,
+        qty: 1,
+        name: `${game.name_ar} / ${game.name_en}`,
+        price: Number(game.price || 0),
+        product_type: String(game.product_type || 'game'),
+        product_subtype: String(game.product_subtype || ''),
+        company: game.company || null,
+        cover_image_url: game.cover_image_url || ''
+      });
     }
     cart = nextCart;
     localStorage.setItem('iraqGameCart', JSON.stringify(cart));
     renderCart();
+    // immediately show cart panel so user sees feedback
+    showCart();
   });
 
   return node;
@@ -534,6 +545,8 @@ function createCompanyNode(company) {
   badge.style.background = brand.soft;
 
   company.games.forEach((game) => {
+    // attach parent company info to game so cart items include company/product_type
+    game.company = { id: company.id, slug: company.slug, name_ar: company.name_ar, name_en: company.name_en };
     const gameNode = createGameNode(game);
     gameNode.style.borderColor = `${brand.accent}33`;
     gameNode.style.boxShadow = `inset 0 0 0 1px ${brand.soft}`;
@@ -837,6 +850,18 @@ function toggleCart() {
   const panel = document.getElementById('cartPanel');
   if (!panel) return;
   panel.classList.toggle('hidden');
+}
+
+// Show cart panel (used to give instant feedback when adding an item)
+function showCart() {
+  const panel = document.getElementById('cartPanel');
+  if (!panel) return;
+  panel.classList.remove('hidden');
+  panel.style.transition = 'transform 0.18s ease, box-shadow 0.18s ease';
+  panel.style.transform = 'translateY(-6px)';
+  setTimeout(() => {
+    panel.style.transform = '';
+  }, 220);
 }
 
 async function fetchTodayOffers() {

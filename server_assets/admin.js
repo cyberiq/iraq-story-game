@@ -685,6 +685,19 @@ gameReset.addEventListener("click", () => {
 if (gameImage) {
   gameImage.addEventListener('change', () => {
     const f = gameImage.files && gameImage.files[0];
+    if (f) {
+      // client-side file size check (match server limit 5MB)
+      const maxBytes = 5 * 1024 * 1024;
+      if (f.size > maxBytes) {
+        setStatus('حجم الصورة أكبر من 5 ميغابايت، يرجى اختيار صورة أصغر.');
+        gameImage.value = '';
+        if (gameImagePreview) {
+          gameImagePreview.src = '';
+          gameImagePreview.style.display = 'none';
+        }
+        return;
+      }
+    }
     if (f && gameImagePreview) {
       const reader = new FileReader();
       reader.onload = (e) => {

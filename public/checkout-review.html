@@ -249,14 +249,15 @@
       html += `<div class="customer-form">`;
       html += `
         <div class="form-group">
-          <label>${l.customerName}</label>
+          <label>${l.customerName} <small style="color:#ccc; font-weight:normal;">(اختياري)</small></label>
           <input type="text" id="customerName" value="${checkoutReview.name || ''}" placeholder="${l.customerName}">
         </div>
         <div class="form-group">
           <label>${l.phoneNumber}</label>
           <input type="tel" id="customerPhone" value="${checkoutReview.phone || ''}" placeholder="${l.phoneNumber}">
         </div>
-        <div class="form-group">
+        <!-- Email removed as required field; optional input retained but not sent if empty -->
+        <div class="form-group" style="display:none;">
           <label>${l.email}</label>
           <input type="email" id="customerEmail" value="${checkoutReview.email || ''}" placeholder="${l.email}">
         </div>
@@ -310,15 +311,34 @@
       const email = document.getElementById('customerEmail').value.trim();
       const notes = document.getElementById('customerNotes').value.trim();
 
-      if (!name || !phone) {
-        alert(language === 'ar' ? 'يرجى ملء الاسم ورقم الهاتف' : 'Please fill in name and phone number');
+      if (!phone) {
+        alert(language === 'ar' ? 'يرجى ملء رقم الهاتف' : 'Please fill in phone number');
         return;
       }
 
       try {
-        const response = await fetch('/api/admin/settings');
-        const settings = await response.json();
-        const whatsappNumber = settings.whatsappNumber || '+9647xxxxx';
+          const response = await fetch('/api/admin/settings');
+          const settings = await response.json();
+          const whatsappNumber = settings.whatsappNumber || '+9647xxxxx';
+
+          // If a coupon code exists, validate it on the server before proceeding
+          const couponCode = checkoutReview.coupon || '';
+          if (couponCode) {
+            const valRes = await fetch('/api/coupons/validate', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ code: couponCode })
+            });
+
+            if (!valRes.ok) {
+              const payload = await valRes.json().catch(() => ({}));
+              alert(language === 'ar' ? `الكوبون غير صالح: ${payload.error || ''}` : `Coupon invalid: ${payload.error || ''}`);
+              return;
+            }
+            const vp = await valRes.json();
+            // ensure discount percent matches server
+            checkoutReview.discountPercent = Number(vp.percent || checkoutReview.discountPercent || 0);
+          }
 
         const subtotal = cart.reduce((sum, item) => sum + Number(item.price || 0) * Number(item.qty || 0), 0);
         const discountPercent = checkoutReview.discountPercent || 0;
@@ -328,12 +348,11 @@
         const message = `
 *${language === 'ar' ? 'طلب شراء جديد' : 'New Purchase Order'}*
 
-${language === 'ar' ? 'الاسم' : 'Name'}: ${name}
-${language === 'ar' ? 'الهاتف' : 'Phone'}: ${phone}
-${language === 'ar' ? 'البريد' : 'Email'}: ${email}
+${name ? `${language === 'ar' ? 'الاسم' : 'Name'}: ${name}\n` : ''}${language === 'ar' ? 'الهاتف' : 'Phone'}: ${phone}
+${email ? `${language === 'ar' ? 'البريد' : 'Email'}: ${email}\n` : ''}
 
 *${language === 'ar' ? 'الألعاب والمنتجات' : 'Items'}:*
-${cart.map(item => `• ${item.name} (${item.qty}x ${item.price})`).join('\n')}
+      ${cart.map(item => `• ${item.product_type || 'product'}${item.product_subtype ? ' / ' + item.product_subtype : ''} — ${item.company && (item.company.name_ar || item.company.name_en) ? (item.company.name_ar || item.company.name_en) : (item.company && item.company.slug ? item.company.slug : '')} — ${item.qty}x ${item.price}`).join('\n')}
 
 ${language === 'ar' ? 'الإجمالي الأساسي' : 'Subtotal'}: ${subtotal}
 ${checkoutReview.coupon ? `${language === 'ar' ? 'الكوبون' : 'Coupon'}: ${checkoutReview.coupon}` : ''}
