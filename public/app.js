@@ -515,6 +515,8 @@ function createGameNode(game) {
     cart = nextCart;
     localStorage.setItem('iraqGameCart', JSON.stringify(cart));
     renderCart();
+    // animate a flying image to the cart if widget is available
+    try { if (window.animateAddToCart) window.animateAddToCart(gameCover); } catch (e) {}
     // immediately show cart panel so user sees feedback
     showCart();
   });
