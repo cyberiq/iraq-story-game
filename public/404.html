@@ -11,7 +11,7 @@
       body { background: #07070a; color: #fff; font-family: 'Tajawal', sans-serif; }
       a.back-btn { display:inline-block; margin-top:18px; padding:10px 18px; background:#ff6b6b; color:#fff; border-radius:8px; text-decoration:none }
       main { max-width:1100px; margin:60px auto; padding:20px }
-      .image img { max-width:360px; width:100%; height:auto }
+            /* image removed per request */
     </style>
 </head>
 <body>
@@ -28,27 +28,8 @@
         <a class="back-btn" href="/">Back To Home</a>
     </div>
 
-    <div class="image"><img id="big_image" src="https://mjavadh.github.io/4X4-Collection/Fantasy/Black%20Box/assets/astronaut.png" alt="astronaut"></div>
 </main>
-
-<!-- optional image gallery box (kept simple) -->
-<div id="image-box" class="image-box" style="display:none">
-    <div id="close_ImageBox">X</div>
-    <img class="small_image active" src="https://mjavadh.github.io/4X4-Collection/Fantasy/Black%20Box/assets/astronaut.png" style="max-width:50%" alt="astronaut">
-    <img class="small_image" src="https://mjavadh.github.io/4X4-Collection/Fantasy/Black%20Box/assets/cute-ghost.png" style="max-width:80%" alt="ghost">
-</div>
-
-<script>
-    // small interaction: toggle image-box when clicking big image
-    const bigImage = document.getElementById('big_image');
-    const imageBox = document.getElementById('image-box');
-    const closeBtn = document.getElementById('close_ImageBox');
-    if (bigImage && imageBox) {
-      bigImage.style.cursor = 'pointer';
-      bigImage.addEventListener('click', () => imageBox.style.display = 'block');
-    }
-    if (closeBtn && imageBox) closeBtn.addEventListener('click', () => imageBox.style.display = 'none');
-</script>
+<!-- image removed -->
 
 </body>
 </html>
