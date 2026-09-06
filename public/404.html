@@ -8,28 +8,57 @@
     <link rel="stylesheet" href="/assets/blackbox-style.css">
     <style>
       /* minimal overrides to ensure readability on our site */
-      body { background: #07070a; color: #fff; font-family: 'Tajawal', sans-serif; }
+          body { margin:0; background: #07070a; color: #fff; font-family: 'Tajawal', sans-serif; }
       a.back-btn { display:inline-block; margin-top:18px; padding:10px 18px; background:#ff6b6b; color:#fff; border-radius:8px; text-decoration:none }
-      main { max-width:1100px; margin:60px auto; padding:20px }
-            /* image removed per request */
+          .overlay{ position:fixed; inset:0; display:flex; align-items:center; justify-content:center; }
+          .overlay .content{ text-align:center; padding:18px 28px; background:rgba(0,0,0,0.4); border-radius:10px }
+          .overlay h1{ font-size:36px; margin:0 0 8px }
+          .overlay p{ margin:0 0 12px; color:#cbd5e1 }
+          canvas{ position:fixed; inset:0; width:100%; height:100%; display:block }
     </style>
 </head>
 <body>
 <main id="main" class="main">
     <div class="menu">
-        <a href="/">
-            <h1 class="Logo">Iraq Game</h1>
-        </a>
+<canvas id="canvas"></canvas>
+<div class="overlay">
+    <div class="content">
+        <h1>لم يتم العثور على شيء</h1>
+        <p>الصفحة أو العنصر الذي تبحث عنه غير متوفر.</p>
+        <a class="back-btn" href="/">العودة للرئيسية</a>
     </div>
+</div>
 
-    <div class="text-404">
-        <h1>4 X 4</h1>
-        <p>Page not found!</p>
-        <a class="back-btn" href="/">Back To Home</a>
-    </div>
+<script>
+    // TV noise canvas adapted from the referenced template
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
 
-</main>
-<!-- image removed -->
+    function resize() {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+    }
+
+    function draw() {
+        ctx.fillStyle = '#000';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const data = imageData.data;
+        for (let i = 0; i < data.length; i += 4) {
+            const color = Math.floor(Math.random() * 255);
+            data[i] = color;
+            data[i + 1] = color;
+            data[i + 2] = color;
+            data[i + 3] = 255;
+        }
+        ctx.putImageData(imageData, 0, 0);
+        requestAnimationFrame(draw);
+    }
+
+    resize();
+    draw();
+    window.addEventListener('resize', resize);
+</script>
 
 </body>
 </html>
