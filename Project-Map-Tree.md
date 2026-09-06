@@ -270,6 +270,44 @@ User enters coupon code in cart
                └─ 'iraqGameDiscountPercent' = percent
                    │
                    └─ Checkout review shows discount
+
+          ---
+
+          ## 🔁 Data Synchronization & Persistence Modes
+
+          There are two runtime persistence modes the server can run in:
+
+          - **Database mode (recommended for production):** `server.js` attempts to initialize the SQLite/Postgres database via `initDatabase()` from `db.js`. When this succeeds `databaseReady` becomes `true` and all catalog/coupons/companies are read from the database tables.
+          - **Fallback (file) mode:** If the DB init fails or if you explicitly set `SKIP_DB=true` in the environment, the server runs in fallback mode and reads/writes runtime state to JSON files under the `data/` folder (e.g. `data/fallback-data.json`, `data/coupons.json`).
+
+          Why you see different companies/records at times:
+
+          - If the server is running in **database mode**, it will not read from `data/fallback-data.json` at runtime — it queries the DB instead. Any edits made via the admin UI that write to the JSON files will not appear until that JSON data is imported into the DB or the server is restarted in fallback mode.
+          - If the server is running in **fallback mode**, edits to the JSON files are authoritative and immediately visible.
+
+          Recommended workflows to avoid confusion:
+
+          1. If you want the DB to be the single source of truth, import the JSON fallback data into the DB. A helper script exists at `scripts/import-fallback-to-db.js` to copy `data/fallback-data.json` into the `data/database.sqlite` (or to Postgres via `db.js` functions). Run it from the project root:
+
+          ```bash
+          # from project root
+          node scripts/import-fallback-to-db.js
+          ```
+
+          2. If you prefer to work with JSON files during development, set `SKIP_DB=true` when starting the server so runtime will use `data/*.json` directly:
+
+          ```bash
+          SKIP_DB=true node server.js
+          ```
+
+          3. After any import or DB update, restart the server so `databaseReady` and the connection reflect the new state.
+
+          Files/locations to check when a mismatch occurs:
+          - `data/fallback-data.json` — fallback catalog used in file mode
+          - `data/database.sqlite` — local SQLite DB used in DB mode
+          - `scripts/import-fallback-to-db.js` — import tool that copies fallback JSON into DB
+
+          Record the chosen workflow in `Decisions.md` so all contributors follow the same steps.
 ```
 
 ---

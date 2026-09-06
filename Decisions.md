@@ -256,6 +256,29 @@ This document defines all key decisions made in the Iraq Game Store project. **D
 - `data/fallback-data.json` - Offline catalog (auto-generated)
 - `data/coupons.json` - Coupon list
 
+### Persistence Mode & Sync (Important)
+
+- The server can run in two modes: **database mode** (preferred for production) and **fallback (JSON) mode** used for development or when the DB isn't available.
+- Control mode with environment variable: `SKIP_DB=true` forces fallback (JSON) mode. When `SKIP_DB` is not set, `server.js` attempts to initialize the DB via `initDatabase()` and sets `databaseReady=true` on success.
+- If the server is in database mode, it will serve data from the DB and ignore live changes in `data/fallback-data.json`. This causes the appearance of different companies when the admin edits JSON files but the server is running against the DB.
+
+Recommendation / Workflow:
+
+1. Decide which runtime you'll use consistently (DB or JSON). Document that decision in this file and in `Project-Map-Tree.md`.
+2. To make JSON edits visible in DB mode, run the import script `node scripts/import-fallback-to-db.js` to copy `data/fallback-data.json` into the DB, then restart the server.
+3. For quick development edits, start the server with `SKIP_DB=true`:
+
+```bash
+SKIP_DB=true node server.js
+```
+
+4. After any import or DB migration, restart the server to pick up the updated DB content.
+
+Utility script:
+- `scripts/import-fallback-to-db.js` — imports `data/fallback-data.json` into the configured DB (SQLite by default). Use it when you want the DB to reflect the JSON edits.
+
+This section explains the cause of mismatched data and the safe steps to keep DB and JSON in sync.
+
 ---
 
 ## 🚫 REJECTED / NOT IMPLEMENTED
