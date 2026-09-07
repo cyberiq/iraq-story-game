@@ -52,21 +52,24 @@ function ensureDataFiles() {
       name_en: company.name_en,
 
   // During startup we will migrate plain-text password to a bcrypt hash if needed
-  async function ensureAdminPasswordMigration() {
-    try {
-      if (runtimeAdminSettings && runtimeAdminSettings.password && !runtimeAdminSettings.passwordHash) {
-        const plain = String(runtimeAdminSettings.password || '');
-        if (plain) {
-          const hash = await bcrypt.hash(plain, 12);
-          runtimeAdminSettings.passwordHash = hash;
-          delete runtimeAdminSettings.password;
-          saveAdminSettings();
-          console.log('Admin password migrated to bcrypt hash');
-        }
-      }
-    } catch (err) {
-      console.error('Failed to migrate admin password', err);
+  function ensureAdminPasswordMigration() {
+    if (!(runtimeAdminSettings && runtimeAdminSettings.password && !runtimeAdminSettings.passwordHash)) {
+      return Promise.resolve();
     }
+
+    const plain = String(runtimeAdminSettings.password || '');
+    if (!plain) return Promise.resolve();
+
+    return bcrypt.hash(plain, 12)
+      .then((hash) => {
+        runtimeAdminSettings.passwordHash = hash;
+        delete runtimeAdminSettings.password;
+        saveAdminSettings();
+        console.log('Admin password migrated to bcrypt hash');
+      })
+      .catch((err) => {
+        console.error('Failed to migrate admin password', err);
+      });
   }
       games: company.games.map((game, gameIndex) => ({
         id: (companyIndex + 1) * 100 + gameIndex + 1,
