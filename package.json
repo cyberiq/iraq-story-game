@@ -19,9 +19,12 @@
   "dependencies": {
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
+    "bcrypt": "^5.1.0",
     "express": "^5.2.1",
     "express-session": "^1.19.0",
     "multer": "^2.2.0",
+    "file-type": "^18.0.0",
+    "helmet": "^7.0.0",
     "pg": "^8.11.0",
     "sql.js": "^1.8.0"
   },

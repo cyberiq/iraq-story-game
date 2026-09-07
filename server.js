@@ -33,18 +33,41 @@ const couponsPath = path.join(__dirname, "data", "coupons.json");
 const todayOffersPath = path.join(__dirname, "data", "today-offers.json");
 let databaseReady = false;
 
+
+  const bcrypt = require('bcrypt');
+  const FileType = require('file-type');
+  const helmet = require('helmet');
 function ensureDataFiles() {
   const dataDir = path.dirname(fallbackDataPath);
+  app.use(helmet());
   if (!fs.existsSync(dataDir)) {
     fs.mkdirSync(dataDir, { recursive: true });
   }
 
-  if (!fs.existsSync(fallbackDataPath)) {
+    password: ADMIN_PASSWORD
     fs.writeFileSync(fallbackDataPath, JSON.stringify(seedData.map((company, companyIndex) => ({
       id: companyIndex + 1,
       slug: company.slug,
       name_ar: company.name_ar,
       name_en: company.name_en,
+
+  // During startup we will migrate plain-text password to a bcrypt hash if needed
+  async function ensureAdminPasswordMigration() {
+    try {
+      if (runtimeAdminSettings && runtimeAdminSettings.password && !runtimeAdminSettings.passwordHash) {
+        const plain = String(runtimeAdminSettings.password || '');
+        if (plain) {
+          const hash = await bcrypt.hash(plain, 12);
+          runtimeAdminSettings.passwordHash = hash;
+          delete runtimeAdminSettings.password;
+          saveAdminSettings();
+          console.log('Admin password migrated to bcrypt hash');
+        }
+      }
+    } catch (err) {
+      console.error('Failed to migrate admin password', err);
+    }
+  }
       games: company.games.map((game, gameIndex) => ({
         id: (companyIndex + 1) * 100 + gameIndex + 1,
           ...game,
@@ -66,7 +89,39 @@ function ensureDataFiles() {
 
   if (!fs.existsSync(todayOffersPath)) {
     fs.writeFileSync(todayOffersPath, JSON.stringify([], null, 2));
-  }
+    if (normalizedUsername === runtimeAdminSettings.username) {
+      try {
+        let match = false;
+        if (runtimeAdminSettings.passwordHash) {
+          match = await bcrypt.compare(normalizedPassword, runtimeAdminSettings.passwordHash);
+        } else if (runtimeAdminSettings.password) {
+          // legacy fallback (should be migrated during startup)
+          match = normalizedPassword === runtimeAdminSettings.password;
+          // on successful legacy match, migrate to hash
+          if (match) {
+            try {
+              const h = await bcrypt.hash(normalizedPassword, 12);
+              runtimeAdminSettings.passwordHash = h;
+              delete runtimeAdminSettings.password;
+              saveAdminSettings();
+              console.log('Migrated admin password to bcrypt on login');
+            } catch (e) {
+              console.error('Failed to migrate admin password on login', e);
+            }
+          }
+        }
+
+        if (match) {
+          req.session.isAdmin = true;
+          record.attempts = 0;
+          record.lockUntil = 0;
+          return res.json({ ok: true });
+        }
+      } catch (err) {
+        console.error('Login check failed', err);
+        return res.status(500).json({ error: 'Internal server error' });
+      }
+    }
 }
 
 function readJsonFile(filePath, fallbackValue) {
@@ -74,7 +129,27 @@ function readJsonFile(filePath, fallbackValue) {
     const content = fs.readFileSync(filePath, "utf8");
     return content ? JSON.parse(content) : fallbackValue;
   } catch (error) {
-    return fallbackValue;
+    (async () => {
+      try {
+        let ok = false;
+        if (runtimeAdminSettings.passwordHash) {
+          ok = await bcrypt.compare(current, runtimeAdminSettings.passwordHash);
+        } else if (runtimeAdminSettings.password) {
+          ok = current === runtimeAdminSettings.password;
+        }
+
+        if (!ok) return res.status(400).json({ error: "كلمة المرور الحالية غير صحيحة." });
+
+        const newHash = await bcrypt.hash(next, 12);
+        runtimeAdminSettings.passwordHash = newHash;
+        delete runtimeAdminSettings.password;
+        saveAdminSettings();
+        return res.json({ ok: true, message: "تم تحديث كلمة المرور بنجاح." });
+      } catch (err) {
+        console.error('Failed to change password', err);
+        return res.status(500).json({ error: 'Internal server error' });
+      }
+    })();
   }
 }
 
@@ -791,6 +866,21 @@ app.post("/api/games", requireAdmin, upload.single("image"), async (req, res) =>
     }
   }
 
+  // If a file was uploaded, validate its real file-type (magic-bytes) and reject non-images
+  if (req.file) {
+    const uploadedPath = path.join(uploadsDir, req.file.filename);
+    try {
+      const ft = await FileType.fromFile(uploadedPath);
+      if (!ft || !String(ft.mime || '').startsWith('image/')) {
+        try { fs.unlinkSync(uploadedPath); } catch (e) {}
+        return res.status(400).json({ error: 'Please upload a valid image file' });
+      }
+    } catch (err) {
+      try { fs.unlinkSync(uploadedPath); } catch (e) {}
+      return res.status(400).json({ error: 'Invalid image file' });
+    }
+  }
+
   if (!company_id || !name_ar || !name_en || !genre || !Number.isInteger(year)) {
     return res.status(400).json({
       error: "company_id, name_ar, name_en, genre, release_year are required"
@@ -859,6 +949,21 @@ app.put("/api/games/:id", requireAdmin, upload.single("image"), async (req, res)
       }
     } catch (err) {
       return res.status(400).json({ error: 'رابط الصورة غير صالح أو لا يشير لصيغة صورة مدعومة.' });
+    }
+  }
+
+  // If a file was uploaded, validate its real file-type (magic-bytes) and reject non-images
+  if (req.file) {
+    const uploadedPath = path.join(uploadsDir, req.file.filename);
+    try {
+      const ft = await FileType.fromFile(uploadedPath);
+      if (!ft || !String(ft.mime || '').startsWith('image/')) {
+        try { fs.unlinkSync(uploadedPath); } catch (e) {}
+        return res.status(400).json({ error: 'Please upload a valid image file' });
+      }
+    } catch (err) {
+      try { fs.unlinkSync(uploadedPath); } catch (e) {}
+      return res.status(400).json({ error: 'Invalid image file' });
     }
   }
 
@@ -1068,6 +1173,7 @@ app.use((err, req, res, next) => {
   }
 
   ensureDataFiles();
+  await ensureAdminPasswordMigration();
   app.listen(PORT, () => {
     console.log(`Server running on http://localhost:${PORT}`);
   });
