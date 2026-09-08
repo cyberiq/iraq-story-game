@@ -246,6 +246,12 @@
         border-radius: 18px;
         overflow: hidden;
         padding: 14px;
+        transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+      }
+
+      .company-card:hover {
+        transform: translateY(-4px);
+        border-color: rgba(139, 92, 246, 0.45);
         box-shadow: 0 16px 34px -18px rgba(139, 92, 246, 0.55);
       }
 
@@ -255,8 +261,6 @@
         align-items: center;
         gap: 12px;
         margin-bottom: 14px;
-        padding-bottom: 12px;
-        border-bottom: 1px solid rgba(255,255,255,0.08);
       }
 
       .company-brand {
@@ -272,8 +276,8 @@
         display: grid;
         place-items: center;
         font-size: 22px;
-        background: linear-gradient(135deg, rgba(139,92,246,0.15), rgba(51,224,200,0.10));
-        border: 1px solid rgba(255,255,255,0.08);
+        background: rgba(255,255,255,0.06);
+        box-shadow: inset 0 1px 0 rgba(255,255,255,0.15);
       }
 
       .company-name {
@@ -291,7 +295,7 @@
         border-radius: 999px;
         padding: 5px 10px;
         font-size: 11px;
-        color: var(--muted);
+        white-space: nowrap;
       }
 
       .games-list {
@@ -306,21 +310,21 @@
         overflow: hidden;
         display: flex;
         flex-direction: column;
-        transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
+        transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
       }
 
       .game-card:hover {
-        transform: translateY(-4px);
-        border-color: rgba(139, 92, 246, 0.45);
-        box-shadow: 0 18px 30px -20px rgba(139, 92, 246, 0.6);
+        transform: translateY(-3px);
+        border-color: rgba(139, 92, 246, 0.42);
+        box-shadow: 0 14px 26px -18px rgba(139, 92, 246, 0.5);
       }
 
       .game-cover {
         width: 100%;
-        height: 140px;
+        height: 132px;
         object-fit: cover;
         display: block;
-        background: linear-gradient(135deg, rgba(139,92,246,0.55), rgba(51,224,200,0.35));
+        background: linear-gradient(135deg, rgba(139, 92, 246, 0.6), rgba(51, 224, 200, 0.6));
       }
 
       .game-content {
@@ -338,7 +342,6 @@
       }
 
       .game-meta {
-        margin-top: 0;
         color: var(--muted);
         font-size: 12px;
       }
@@ -349,7 +352,6 @@
         justify-content: space-between;
         gap: 8px;
         margin-top: auto;
-        padding-top: 6px;
       }
 
       .game-price {
@@ -362,6 +364,7 @@
         display: flex;
         align-items: center;
         gap: 8px;
+        width: 100%;
       }
 
       .add-to-cart,
@@ -376,9 +379,9 @@
       }
 
       .add-to-cart {
+        flex: 1;
         background: linear-gradient(135deg, var(--purple), #6d3fd4);
         border-color: transparent;
-        min-width: 104px;
       }
 
       .add-to-cart:hover {
@@ -427,37 +430,23 @@
       }
 
       @media (max-width: 980px) {
-        .company-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        .company-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
       }
 
       @media (max-width: 720px) {
-        .header-bar {
-          flex-wrap: wrap;
-          justify-content: center;
-          padding-inline: 12px;
-        }
-        .brand-wrap {
-          margin-inline-start: 0;
-          order: 2;
-        }
-        .search-shell {
-          order: 3;
-          width: 100%;
-          max-width: none;
-        }
-        .company-grid { grid-template-columns: 1fr; }
-        .game-card { border-radius: 12px; }
-        .game-cover { height: 120px; }
+        .company-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
       }
 
-      @media (max-width: 420px) {
-        .market-main { padding: 0 12px; }
-        .market-hero { padding: 20px 16px; border-radius: 20px; }
-        .hero-subtitle { font-size: 14px; }
-        .company-grid { gap: 12px; }
+      @media (max-width: 460px) {
+        .company-grid { grid-template-columns: 1fr 1fr; gap: 12px; }
         .company-card { padding: 10px; }
+        .company-name { font-size: 13px; }
+        .company-pill { font-size: 10px; padding: 4px 8px; }
+        .game-cover { height: 116px; }
         .game-content { padding: 10px; }
-        .card-actions { gap: 6px; }
+        .game-name { font-size: 13px; }
+        .game-meta { font-size: 11px; }
+        .game-price { font-size: 13px; }
         .add-to-cart, .details-link { padding: 7px 8px; font-size: 11px; }
       }
     </style>
