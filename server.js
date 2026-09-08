@@ -191,41 +191,42 @@ if (String(process.env.NODE_ENV || '').toLowerCase() === 'production') {
   app.set('trust proxy', 1);
 }
 
+function requireAdminPage(req, res, next) {
+  if (req.session && req.session.isAdmin === true) {
+    return next();
+  }
+
+  return res.status(404).sendFile(path.join(__dirname, 'public', '404.html'));
+}
+
 // Protect sensitive admin static files: only allow when session is admin
-// Serve admin assets through guarded routes to prevent accidental public access or cache bypass
-app.get('/admin', (req, res) => {
-  if (!req.session || req.session.isAdmin !== true) return res.redirect('/login');
+// Unauthenticated access to admin pages/assets should appear as a 404 instead of exposing the path.
+app.get('/admin', requireAdminPage, (req, res) => {
   return res.sendFile(path.join(__dirname, 'public', 'admin.html'));
 });
 
-app.get('/admin.html', (req, res) => {
-  if (!req.session || req.session.isAdmin !== true) return res.redirect('/login');
+app.get('/admin.html', requireAdminPage, (req, res) => {
   return res.sendFile(path.join(__dirname, 'public', 'admin.html'));
 });
 
-app.get('/admin.js', (req, res) => {
-  if (!req.session || req.session.isAdmin !== true) return res.status(401).json({ error: 'Unauthorized' });
+app.get('/admin.js', requireAdminPage, (req, res) => {
   return res.sendFile(path.join(__dirname, 'server_assets', 'admin.js'));
 });
 
 // new secured path for admin JS assets
-app.get('/admin-assets/admin.js', (req, res) => {
-  if (!req.session || req.session.isAdmin !== true) return res.status(401).json({ error: 'Unauthorized' });
+app.get('/admin-assets/admin.js', requireAdminPage, (req, res) => {
   return res.sendFile(path.join(__dirname, 'server_assets', 'admin.js'));
 });
 
-app.get('/change-password.html', (req, res) => {
-  if (!req.session || req.session.isAdmin !== true) return res.redirect('/login');
+app.get('/change-password.html', requireAdminPage, (req, res) => {
   return res.sendFile(path.join(__dirname, 'public', 'change-password.html'));
 });
 
-app.get('/change-password.js', (req, res) => {
-  if (!req.session || req.session.isAdmin !== true) return res.status(401).json({ error: 'Unauthorized' });
+app.get('/change-password.js', requireAdminPage, (req, res) => {
   return res.sendFile(path.join(__dirname, 'public', 'change-password.js'));
 });
 // Friendly admin password URL
-app.get('/admin/password', (req, res) => {
-  if (!req.session || req.session.isAdmin !== true) return res.redirect('/login');
+app.get('/admin/password', requireAdminPage, (req, res) => {
   return res.sendFile(path.join(__dirname, 'public', 'change-password.html'));
 });
 // Serve login page (friendly URL without .html)
