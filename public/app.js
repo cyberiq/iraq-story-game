@@ -619,7 +619,18 @@ function renderCatalog(companies) {
   }
 
   const fragment = document.createDocumentFragment();
-  filteredCompanies.forEach((company) => fragment.appendChild(createCompanyNode(company)));
+  filteredCompanies.forEach((company) => {
+    company.games.forEach((game) => {
+      const node = createGameNode(game);
+      const meta = node.querySelector('.game-meta');
+      if (meta) {
+        const companyLabel = company.name_ar || company.name_en || 'Game';
+        const genreLabel = game.genre || 'Game';
+        meta.textContent = `${companyLabel} · ${genreLabel}`;
+      }
+      fragment.appendChild(node);
+    });
+  });
   catalogContainer.appendChild(fragment);
 }
 
