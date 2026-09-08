@@ -882,7 +882,8 @@ async function fetchTodayOffers() {
     const response = await fetch('/api/today-offers');
     if (!response.ok) return;
     const payload = await response.json();
-    const offers = payload.offers || [];
+    const offers = (payload.offers || []).filter((offer) => offer.active !== false);
+
     if (!offersStrip) return;
     if (!offers.length) {
       offersStrip.innerHTML = '<span class="offer-pill">أفضل العروض</span>';
@@ -891,7 +892,9 @@ async function fetchTodayOffers() {
 
     offersStrip.innerHTML = offers.slice(0, 5).map((offer) => {
       const title = offer.title || 'عرض اليوم';
-      const detail = offer.percent ? `${offer.percent}% خصم` : `${Number(offer.price || 0).toLocaleString('en-US')} د.ع`;
+      const detail = Number(offer.percent || 0)
+        ? `${Number(offer.percent)}% خصم`
+        : `${Number(offer.price || 0).toLocaleString('en-US')} د.ع`;
       return `<span class="offer-pill">${title}: ${detail}</span>`;
     }).join('');
   } catch (error) {

@@ -132,6 +132,42 @@
         <div id="adminCatalog" class="admin-catalog"></div>
       </section>
       <section class="admin-card">
+        <h2>إدارة عروض اليوم</h2>
+        <form id="offerForm" class="form-grid">
+          <input id="offerId" type="hidden" />
+          <label>
+            <span>عنوان العرض</span>
+            <input id="offerTitle" required placeholder="عرض اليوم" />
+          </label>
+          <label>
+            <span>نوع المنتج</span>
+            <select id="offerProductType">
+              <option value="game">لعبة</option>
+              <option value="subscription">اشتراك</option>
+              <option value="account">حساب</option>
+            </select>
+          </label>
+          <label>
+            <span>نسبة الخصم (%)</span>
+            <input id="offerPercent" type="number" min="0" max="100" value="20" />
+          </label>
+          <label>
+            <span>سعر العرض (د.ع)</span>
+            <input id="offerPrice" type="number" min="0" step="1" value="0" />
+          </label>
+          <label>
+            <span>نشر العرض</span>
+            <input id="offerActive" type="checkbox" checked />
+          </label>
+          <div class="form-actions">
+            <button type="submit" class="btn-primary">حفظ العرض</button>
+            <button type="button" id="offerReset" class="btn-secondary">تفريغ</button>
+          </div>
+        </form>
+        <div id="offerList" class="coupon-list"></div>
+      </section>
+
+      <section class="admin-card">
         <h2>إدارة كوبونات التخفيض</h2>
         <form id="couponForm" class="form-grid">
           <label>

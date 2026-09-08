@@ -32,6 +32,16 @@ const couponCode = document.getElementById('couponCode');
 const couponPercent = document.getElementById('couponPercent');
 const couponList = document.getElementById('couponList');
 
+const offerForm = document.getElementById('offerForm');
+const offerId = document.getElementById('offerId');
+const offerTitle = document.getElementById('offerTitle');
+const offerProductType = document.getElementById('offerProductType');
+const offerPercent = document.getElementById('offerPercent');
+const offerPrice = document.getElementById('offerPrice');
+const offerActive = document.getElementById('offerActive');
+const offerReset = document.getElementById('offerReset');
+const offerList = document.getElementById('offerList');
+
 const fallbackAdminCompanies = [
   {
     id: 1,
@@ -332,6 +342,7 @@ async function loadData() {
 
     setStatus("تم تحميل البيانات.");
     await loadCoupons();
+    await loadOffers();
   } catch (error) {
     console.error(error);
 
@@ -395,6 +406,101 @@ async function loadCoupons() {
     couponList.textContent = 'خطأ في تحميل الكوبونات.';
   }
 }
+
+async function loadOffers() {
+  try {
+    const payload = await fetchJson('/api/today-offers?admin=1');
+    const offers = Array.isArray(payload.offers) ? payload.offers : [];
+    offerList.innerHTML = '';
+
+    if (!offers.length) {
+      offerList.textContent = 'لا توجد عروض اليوم.';
+      return;
+    }
+
+    offers.forEach((offer) => {
+      const row = document.createElement('div');
+      row.className = 'coupon-row';
+
+      const strong = document.createElement('strong');
+      strong.textContent = `${offer.title} ${offer.active !== false ? '• منشور' : '• غير منشور'}`;
+
+      const summary = document.createTextNode(` — ${Number(offer.percent || 0)}% / ${Number(offer.price || 0).toLocaleString('en-US')} د.ع`);
+
+      const editBtn = document.createElement('button');
+      editBtn.className = 'btn-secondary';
+      editBtn.textContent = 'تعديل';
+      editBtn.addEventListener('click', () => {
+        offerId.value = offer.id || '';
+        offerTitle.value = offer.title || '';
+        offerProductType.value = offer.product_type || 'game';
+        offerPercent.value = Number(offer.percent || 0);
+        offerPrice.value = Number(offer.price || 0);
+        offerActive.checked = offer.active !== false;
+        setStatus('تم تجهيز هذا العرض للتعديل.');
+      });
+
+      const delBtn = document.createElement('button');
+      delBtn.className = 'btn-danger';
+      delBtn.textContent = 'حذف';
+      delBtn.addEventListener('click', async () => {
+        if (!confirm('حذف هذا العرض؟')) return;
+        try {
+          await fetchJson(`/api/today-offers/${encodeURIComponent(offer.id)}`, { method: 'DELETE' });
+          setStatus('تم حذف العرض.');
+          await loadOffers();
+        } catch (err) {
+          setStatus(`خطأ: ${err.message}`);
+        }
+      });
+
+      row.appendChild(strong);
+      row.appendChild(summary);
+      row.appendChild(editBtn);
+      row.appendChild(delBtn);
+      offerList.appendChild(row);
+    });
+  } catch (err) {
+    console.error(err);
+    offerList.textContent = 'خطأ في تحميل عروض اليوم.';
+  }
+}
+
+offerForm && offerForm.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  try {
+    const payload = {
+      id: offerId.value || undefined,
+      title: offerTitle.value.trim(),
+      product_type: offerProductType.value,
+      percent: Number(offerPercent.value || 0),
+      price: Number(offerPrice.value || 0),
+      active: offerActive.checked
+    };
+
+    await fetchJson('/api/today-offers', {
+      method: 'POST',
+      body: JSON.stringify(payload)
+    });
+
+    offerForm.reset();
+    offerActive.checked = true;
+    offerPercent.value = '20';
+    offerPrice.value = '0';
+    setStatus('تم حفظ عرض اليوم.');
+    await loadOffers();
+  } catch (err) {
+    setStatus(`خطأ: ${err.message}`);
+  }
+});
+
+offerReset && offerReset.addEventListener('click', () => {
+  offerForm.reset();
+  offerActive.checked = true;
+  offerPercent.value = '20';
+  offerPrice.value = '0';
+  offerId.value = '';
+});
 
 couponForm && couponForm.addEventListener('submit', async (e) => {
   e.preventDefault();

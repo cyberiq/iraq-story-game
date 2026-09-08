@@ -380,6 +380,11 @@
     <div class="step"><span class="dot"></span>الدفع</div>
   </div>
 
+  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:22px; gap:12px; flex-wrap:wrap;">
+    <a href="/" style="display:inline-flex; align-items:center; justify-content:center; padding:10px 16px; border-radius:12px; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.1); color:#fff; text-decoration:none; font-weight:600;">← العودة إلى القائمة الرئيسية</a>
+    <a href="/cart" style="display:inline-flex; align-items:center; justify-content:center; padding:10px 16px; border-radius:12px; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.1); color:#fff; text-decoration:none; font-weight:600;">السلة</a>
+  </div>
+
   <h1>راجع طلبك قبل الإطلاق</h1>
   <p class="page-sub">تأكد من التفاصيل، ثم اضغط تأكيد الطلب لإتمام العملية</p>
 
@@ -387,62 +392,34 @@
     <div class="col-main">
       <div class="card">
         <div class="card-head">
-          <h2>المنتجات (٣)</h2>
-          <a href="#" class="edit-link">تعديل السلة</a>
+          <h2 id="itemsTitle">المنتجات</h2>
+          <a href="/cart" class="edit-link">تعديل السلة</a>
         </div>
 
-        <div class="item-row" style="animation-delay:.05s; --thumb-a:#3fa0d6; --thumb-b:#7d2fae;">
-          <div class="thumb"></div>
-          <div class="item-info">
-            <div class="item-name">خوذة استكشاف طراز نوفا</div>
-            <div class="item-meta">مقاس: متوسط · اللون: ذهبي</div>
-          </div>
-          <div class="item-qty">١</div>
-          <div class="item-price">٤٨٩ ر.س</div>
-        </div>
-
-        <div class="item-row" style="animation-delay:.15s; --thumb-a:#e7b23c; --thumb-b:#c94b3f;">
-          <div class="thumb"></div>
-          <div class="item-info">
-            <div class="item-name">بدلة رحلات خفيفة</div>
-            <div class="item-meta">مقاس: L · اللون: عاجي</div>
-          </div>
-          <div class="item-qty">١</div>
-          <div class="item-price">٧٤٠ ر.س</div>
-        </div>
-
-        <div class="item-row" style="animation-delay:.25s; --thumb-a:#7fe0d0; --thumb-b:#1c7e77;">
-          <div class="thumb"></div>
-          <div class="item-info">
-            <div class="item-name">حقيبة أدوات مدارية</div>
-            <div class="item-meta">حجم واحد</div>
-          </div>
-          <div class="item-qty">٢</div>
-          <div class="item-price">٢١٠ ر.س</div>
-        </div>
+        <div id="checkoutItems"></div>
       </div>
 
       <div class="card">
         <div class="card-head">
           <h2>عنوان الشحن</h2>
-          <a href="#" class="edit-link">تعديل</a>
+          <a href="/contact" class="edit-link">تعديل</a>
         </div>
         <div class="info-grid">
           <div class="info-line">
             <span class="label">الاسم</span>
-            سارة العتيبي
+            إسمك هنا
           </div>
           <div class="info-line">
             <span class="label">العنوان</span>
-            الرياض، حي النرجس، شارع ١٥
+            بغداد / العراق
           </div>
           <div class="info-line">
             <span class="label">الهاتف</span>
-            ٠٥٥ ٩١٢ ٣٤٥٦
+            07713377783
           </div>
           <div class="info-line">
             <span class="label">طريقة الشحن</span>
-            توصيل سريع · يصل خلال يومين
+            توصيل سريع · يوصل خلال 24-48 ساعة
           </div>
         </div>
       </div>
@@ -450,11 +427,11 @@
       <div class="card">
         <div class="card-head">
           <h2>طريقة الدفع</h2>
-          <a href="#" class="edit-link">تعديل</a>
+          <a href="/contact" class="edit-link">تعديل</a>
         </div>
         <div class="pay-method">
           <div class="card-chip"></div>
-          <span>بطاقة تنتهي بـ ٤٤١٧ · تُشحن عند التأكيد</span>
+          <span>الدفع عبر واتساب عند تأكيد الطلب</span>
         </div>
       </div>
     </div>
@@ -465,14 +442,14 @@
           <h2>ملخص الطلب</h2>
         </div>
 
-        <div class="summary-row"><span>المجموع الفرعي</span><span>١٬٤٤٩ ر.س</span></div>
-        <div class="summary-row"><span>الشحن</span><span>٣٥ ر.س</span></div>
-        <div class="summary-row"><span>الضريبة</span><span>٢٢٣ ر.س</span></div>
-        <div class="summary-row total"><span>الإجمالي</span><span>١٬٧٠٧ ر.س</span></div>
+        <div class="summary-row"><span>المجموع الفرعي</span><span id="subtotalValue">0 د.ع</span></div>
+        <div class="summary-row"><span>الشحن</span><span id="shippingValue">0 د.ع</span></div>
+        <div class="summary-row"><span>الخصم</span><span id="discountValue">0 د.ع</span></div>
+        <div class="summary-row total"><span>الإجمالي</span><span id="totalValue">0 د.ع</span></div>
 
         <div class="promo-row">
-          <input type="text" placeholder="كود الخصم" />
-          <button type="button">تطبيق</button>
+          <input id="couponInput" type="text" placeholder="كود الخصم" />
+          <button type="button" id="applyCouponBtn">تطبيق</button>
         </div>
 
         <div class="confirm-zone">
@@ -501,7 +478,7 @@
               </svg>
             </div>
             <div class="success-title">تم تأكيد طلبك</div>
-            <div class="success-sub">رقم الطلب #NV-58231 · سنرسل لك تحديثات الشحن على هاتفك</div>
+            <div class="success-sub">سنرسل لك تفاصيل الطلب على واتساب</div>
           </div>
         </div>
       </div>
@@ -525,16 +502,109 @@
     starsContainer.appendChild(s);
   }
 
+  const checkoutItemsWrap = document.getElementById('checkoutItems');
+  const subtotalValue = document.getElementById('subtotalValue');
+  const shippingValue = document.getElementById('shippingValue');
+  const discountValue = document.getElementById('discountValue');
+  const totalValue = document.getElementById('totalValue');
+  const couponInput = document.getElementById('couponInput');
+  const applyCouponBtn = document.getElementById('applyCouponBtn');
   const confirmBtn = document.getElementById('confirmBtn');
   const rocketFly = document.getElementById('rocketFly');
   const trail = document.getElementById('trail');
   const successPanel = document.getElementById('successPanel');
 
+  const priceFormat = (value) => `${Number(value || 0).toLocaleString('en-US')} د.ع`;
+
+  function getCartItems() {
+    try {
+      return JSON.parse(localStorage.getItem('iraqGameCart') || '[]');
+    } catch (error) {
+      return [];
+    }
+  }
+
+  let couponPercent = 0;
+
+  function renderCheckout() {
+    const items = getCartItems();
+    const shipping = items.length ? 2500 : 0;
+    const subtotal = items.reduce((sum, item) => sum + Number(item.price || 0) * Number(item.qty || 1), 0);
+    const discount = Math.round(subtotal * (couponPercent / 100));
+    const total = subtotal + shipping - discount;
+
+    document.getElementById('itemsTitle').textContent = `المنتجات (${items.length})`;
+    subtotalValue.textContent = priceFormat(subtotal);
+    shippingValue.textContent = priceFormat(shipping);
+    discountValue.textContent = `-${priceFormat(discount)}`;
+    totalValue.textContent = priceFormat(total);
+
+    if (!items.length) {
+      checkoutItemsWrap.innerHTML = `
+        <div class="empty-cart" style="padding:18px 8px; text-align:center;">
+          <div class="empty-icon" style="font-size:42px; margin-bottom:12px;">🛒</div>
+          <h3 style="margin-bottom:10px;">السلة فارغة</h3>
+          <p style="color:#9aa3c0; margin-bottom:16px;">لا توجد ألعاب في السلة الآن.</p>
+          <a href="/" class="edit-link" style="display:inline-block; padding:10px 14px; border-radius:8px; border:1px solid rgba(255,255,255,0.12);">العودة للتسوق</a>
+        </div>
+      `;
+      return;
+    }
+
+    checkoutItemsWrap.innerHTML = items.map((item, index) => {
+      const name = item.name_ar || item.name_en || item.name || 'منتج';
+      const qty = Number(item.qty || 1);
+      const price = Number(item.price || 0) * qty;
+      const thumb = item.cover_image_url || 'https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=800&q=80';
+      return `
+        <div class="item-row" style="animation-delay:${index * 0.08}s; --thumb-a:#3fa0d6; --thumb-b:#7d2fae;">
+          <div class="thumb" style="background:linear-gradient(135deg, #3fa0d6, #7d2fae); background-image: url('${thumb}'); background-size:cover; background-position:center;"></div>
+          <div class="item-info">
+            <div class="item-name">${name}</div>
+            <div class="item-meta">الكمية: ${qty}</div>
+          </div>
+          <div class="item-qty">${qty}</div>
+          <div class="item-price">${priceFormat(price)}</div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  applyCouponBtn.addEventListener('click', async () => {
+    const code = couponInput.value.trim();
+    if (!code) {
+      alert('أدخل رمز الخصم أولاً');
+      return;
+    }
+
+    try {
+      const response = await fetch('/api/coupons/validate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code })
+      });
+      const payload = await response.json();
+      if (!response.ok) {
+        throw new Error(payload.error || 'الكوبون غير صالح');
+      }
+      couponPercent = Number(payload.percent || 0);
+      renderCheckout();
+      alert(`تم تطبيق الخصم: ${couponPercent}%`);
+    } catch (error) {
+      alert(error.message || 'الكوبون غير صالح');
+    }
+  });
+
   confirmBtn.addEventListener('click', () => {
     if (confirmBtn.disabled) return;
+    const cartItems = getCartItems();
+    if (!cartItems.length) {
+      alert('السلة فارغة');
+      return;
+    }
+
     confirmBtn.disabled = true;
     confirmBtn.classList.add('launching');
-
     rocketFly.classList.add('go');
     trail.classList.add('go');
 
@@ -543,24 +613,24 @@
       successPanel.classList.add('show');
     }, 950);
 
-    const cartItems = JSON.parse(localStorage.getItem('iraqGameCart') || '[]');
     const whatsappNumber = '7713377783';
-
-    if (!cartItems.length) {
-      alert('السلة فارغة');
-      return;
-    }
-
     const message = cartItems.map((item, index) => {
+      const qty = Number(item.qty || 1);
       const name = item.name_ar || item.name_en || item.name || 'منتج';
-      const price = Number(item.price || 0);
-      return `${index + 1}. ${name} - ${price} د.ع`;
+      const price = Number(item.price || 0) * qty;
+      return `${index + 1}. ${name} × ${qty} — ${price} د.ع`;
     }).join('\n');
 
-    const fullMessage = `طلب شراء جديد:\n${message}\n\nالإجمالي: ${cartItems.reduce((sum, item) => sum + Number(item.price || 0), 0)} د.ع`;
+    const subtotal = cartItems.reduce((sum, item) => sum + Number(item.price || 0) * Number(item.qty || 1), 0);
+    const shipping = cartItems.length ? 2500 : 0;
+    const discount = Math.round(subtotal * (couponPercent / 100));
+    const total = subtotal + shipping - discount;
+    const fullMessage = `طلب شراء جديد:\n${message}\n\nالمجموع الفرعي: ${subtotal} د.ع\nالشحن: ${shipping} د.ع\nالخصم: ${discount} د.ع\nالإجمالي: ${total} د.ع`;
     const url = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(fullMessage)}`;
     window.open(url, '_blank');
   });
+
+  renderCheckout();
 </script>
 </body>
 </html>

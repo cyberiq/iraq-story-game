@@ -103,6 +103,18 @@ function saveTodayOffersFile() {
   writeJsonFile(todayOffersPath, runtimeTodayOffers);
 }
 
+function normalizeOfferRecord(item) {
+  return {
+    id: item.id || String(Date.now() + Math.random()),
+    title: String(item.title || 'عرض اليوم').trim() || 'عرض اليوم',
+    product_type: String(item.product_type || 'game').trim() || 'game',
+    percent: Number(item.percent || 0),
+    price: Number(item.price || 0),
+    active: item.active !== false,
+    created_at: item.created_at || new Date().toISOString()
+  };
+}
+
 const uploadsDir = path.join(__dirname, "public", "uploads");
 if (!fs.existsSync(uploadsDir)) {
   fs.mkdirSync(uploadsDir, { recursive: true });
@@ -555,6 +567,64 @@ app.post('/api/coupons/validate', async (req, res) => {
     console.error('Failed to validate coupon', error);
     return res.status(500).json({ error: 'Internal server error' });
   }
+});
+
+app.get('/api/today-offers', (req, res) => {
+  const adminMode = req.session && req.session.isAdmin === true;
+  const includeAll = adminMode || req.query.admin === '1';
+  const offers = runtimeTodayOffers
+    .map(normalizeOfferRecord)
+    .filter((offer) => includeAll || offer.active !== false)
+    .sort((a, b) => Number(b.created_at && new Date(b.created_at).valueOf()) - Number(a.created_at && new Date(a.created_at).valueOf()));
+
+  return res.json({ offers });
+});
+
+app.post('/api/today-offers', requireAdmin, (req, res) => {
+  const { id, title, product_type, percent, price, active } = req.body || {};
+  const cleanTitle = String(title || '').trim();
+  const cleanProductType = String(product_type || 'game').trim() || 'game';
+  const percentValue = Number(percent || 0);
+  const priceValue = Number(price || 0);
+
+  if (!cleanTitle) {
+    return res.status(400).json({ error: 'عنوان العرض مطلوب.' });
+  }
+
+  if (!Number.isFinite(percentValue) || percentValue < 0 || percentValue > 100) {
+    return res.status(400).json({ error: 'نسبة الخصم غير صالحة.' });
+  }
+
+  const normalized = normalizeOfferRecord({
+    id: id || `offer-${Date.now()}`,
+    title: cleanTitle,
+    product_type: cleanProductType,
+    percent: percentValue,
+    price: priceValue,
+    active: active !== false,
+    created_at: new Date().toISOString()
+  });
+
+  const existingIndex = runtimeTodayOffers.findIndex((entry) => String(entry.id) === String(normalized.id));
+  if (existingIndex >= 0) {
+    runtimeTodayOffers[existingIndex] = normalized;
+  } else {
+    runtimeTodayOffers.push(normalized);
+  }
+
+  saveTodayOffersFile();
+  return res.json({ ok: true, offer: normalized });
+});
+
+app.delete('/api/today-offers/:id', requireAdmin, (req, res) => {
+  const id = req.params.id;
+  const before = runtimeTodayOffers.length;
+  runtimeTodayOffers = runtimeTodayOffers.filter((entry) => String(entry.id) !== String(id));
+  if (runtimeTodayOffers.length === before) {
+    return res.status(404).json({ error: 'العرض غير موجود.' });
+  }
+  saveTodayOffersFile();
+  return res.json({ ok: true });
 });
 
 // Companies (admin) - list, create, update, delete
