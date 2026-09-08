@@ -241,6 +241,74 @@ This document defines all key decisions made in the Iraq Game Store project. **D
 
 ---
 
+## 🔁 تحديثات النشر والتشغيل (Recent Deployment & Fixes) — 2026-09-07
+
+- إصلاح مشكلة 502 Bad Gateway: الخادم الآن يستمع على `0.0.0.0` و`nginx` يوجّه إلى `127.0.0.1:3000` لضمان توافق IPv4.
+- تمّ إضافة/استعادة نقاط نهاية الإدارة والكتالوج التي يحتاجها واجهة `admin`:
+  - `GET /api/companies` (admin)
+  - `POST /api/companies`, `PUT /api/companies/:id`, `DELETE /api/companies/:id`
+  - `GET /api/catalog` (public) مع دعم `search`, `sort`, `product_type`
+  - `GET /api/games/:id`, `POST /api/games`, `PUT /api/games/:id`, `DELETE /api/games/:id`
+- إضافة مسار مساعد: `/admin/password` يُعيد توجيه مصادقًا إلى صفحة تغيير كلمة المرور (يتطلب جلسة أدمن).
+- حماية ملفات الموارد الإدارية: `admin.js`, `change-password.js` تُقدّم عبر مسارات محمية وتعيد 401 إذا لم يكن `req.session.isAdmin`.
+- تحسينات أمان وتشغيل:
+  - قفل محاولات تسجيل الدخول على مستوى IP: `LOGIN_MAX_ATTEMPTS` (افتراضي 5) و`LOGIN_LOCK_MS` (افتراضي 10 دقيقة).
+  - إعدادات الكوكي: `HttpOnly`, `SameSite=Lax`, و`secure` في بيئة الإنتاج.
+  - إعادة تشغيل pm2 يجب أن تستخدم `--cwd /var/www/iraqstorycard.tech` أو بدء العملية من مسار المشروع لإصلاح أخطاء MODULE_NOT_FOUND.
+
+### أوامر مفيدة (على الخادم)
+```bash
+# إعادة تشغيل الخدمة (pm2)
+sudo pm2 restart iraq-story --cwd /var/www/iraqstorycard.tech -f
+
+# فحص الصحة محلياً
+curl -si http://127.0.0.1:3000/api/health
+
+# اختبار نقاط النهاية من الخارج
+curl -si https://www.iraqstorycard.tech/api/catalog
+curl -si https://www.iraqstorycard.tech/admin/password
+```
+
+### أماكن الملفات المهمة
+- خادم التطبيق: `/var/www/iraqstorycard.tech/server.js`
+- سكربتات ونسخة التطوير: `/home/kali/Desktop/card game/server.js` (مصدر التعديل)
+- إعدادات الأدمن: `data/admin-settings.json`
+- بيانات fallback: `data/fallback-data.json`
+- كوبونات: `data/coupons.json`
+- رفع الملفات: `public/uploads/` (ملفات الصور)
+
+### ملاحظات تشغيل/اختبار
+- بعد تسجيل الدخول كأدمن (واجهة الويب)، افتح `/admin` أو `/admin.html` لعرض وإدارة الشركات والألعاب.
+- واجهة الإدارة تعتمد على أن تكون الجلسة صالحة (cookie `connect.sid` مع `credentials:'same-origin'` من الواجهة).
+- إذا لم تظهر البيانات في الواجهة، تحقق ما إذا كان الخادم يعمل في وضع قاعدة بيانات (database mode) أم وضع fallback (JSON files). راجع `databaseReady` في `/api/health`.
+
+إذا رغبت، أستطيع إضافة مقطع "How-to rollback" أو سكربت نشر آمن (pm2 ecosystem file + logrotate) لاحقًا.
+
+---
+
+## 🛠️ How-to rollback & نشر آمن
+
+نُشرنا سكربتات مساعدة داخل `scripts/` لتسهيل النشر والتراجع على الخادم **من داخل مجلد المشروع** (`/var/www/iraqstorycard.tech`).
+
+- `scripts/deploy.sh`: يسحب آخر تغييرات من الريبو، يثبت الحزم بالإعداد الإنتاجي ثم يعيد تحميل أو بدء عمليات `pm2` عبر `ecosystem.config.js`.
+- `scripts/rollback.sh`: يحاول التراجع عن الكوميت الأخير (`git revert`) أو إعادة التعيين إلى `HEAD~1` إن فشل، ثم يعيد تثبيت الحزم وإعادة تحميل `pm2`.
+
+التشغيل (على الخادم، من مجلد المشروع):
+```bash
+# افتراضي: اذهب إلى مسار المشروع
+cd /var/www/iraqstorycard.tech
+
+# تنفيذ نشر
+sudo ./scripts/deploy.sh
+
+# تنفيذ تراجع
+sudo ./scripts/rollback.sh
+```
+
+ملاحظة أمان: هذه سكربتات بسيطة ومصممة لتشغيل في بيئة تحكم فيها بالخادم. إذا أردت، أستطيع تحويلها إلى خطوات أكثر أمناً (تحقق من العلامة الرقمية للتغييرات، حفظ نسخة احتياطية من الملفات الحساسة، استخدام CI/CD).
+
+---
+
 ## ⚙️ Environment & Configuration
 
 ### Environment Variables

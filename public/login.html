@@ -119,10 +119,14 @@
     for(let i=0;i<STAR_COUNT;i++){const s=document.createElement('div');s.className='star';const size=Math.random()*2+1;s.style.width=size+'px';s.style.height=size+'px';s.style.top=Math.random()*100+'%';s.style.left=Math.random()*100+'%';s.style.animationDelay=(Math.random()*3)+'s';s.style.animationDuration=(2+Math.random()*3)+'s';starsContainer.appendChild(s)}
     function spawnShootingStar(){const s=document.createElement('div');s.className='shooting';const top=Math.random()*50;const left=Math.random()*60+20;s.style.top=top+'%';s.style.left=left+'%';starsContainer.appendChild(s);s.animate([{transform:'translate(0,0)',opacity:1},{transform:'translate(-220px,160px)',opacity:0}],{duration:1000,easing:'ease-in'}).onfinish=()=>s.remove()}setInterval(spawnShootingStar,3500);
 
-    // password visibility toggle
-    const passwordInput = document.getElementById('password');
+    // password visibility toggle (use a distinct inline variable name to avoid redeclaration)
+    const inlinePasswordInput = document.getElementById('password');
     const toggleBtn = document.getElementById('togglePassword');
-    toggleBtn.addEventListener('click',()=>{const isPassword = passwordInput.type==='password';passwordInput.type = isPassword ? 'text' : 'password'; toggleBtn.setAttribute('aria-label', isPassword ? 'إخفاء كلمة المرور' : 'إظهار كلمة المرور');});
+    toggleBtn.addEventListener('click', () => {
+      const isPassword = inlinePasswordInput.type === 'password';
+      inlinePasswordInput.type = isPassword ? 'text' : 'password';
+      toggleBtn.setAttribute('aria-label', isPassword ? 'إخفاء كلمة المرور' : 'إظهار كلمة المرور');
+    });
   </script>
 
   <script src="/login.js" defer></script>

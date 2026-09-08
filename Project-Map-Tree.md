@@ -494,3 +494,22 @@ index.html (click category button)
 
 **Last Updated**: 2026-08-25  
 **For questions**: Refer to Decisions.md for design rationale
+
+---
+
+## 🔁 تغييرات ونقاط سريعة (Recent changes) — 2026-09-07
+
+- تمّت إضافة نقاط نهاية إدارية وعمليات CRUD للكتالوج حتى يعمل `server_assets/admin.js` بشكل صحيح:
+  - `GET /api/companies`, `POST /api/companies`, `PUT/DELETE /api/companies/:id`
+  - `GET /api/catalog` (يدعم `search`, `sort`, `product_type`)
+  - `GET /api/games/:id`, `POST/PUT/DELETE /api/games/:id`
+- أضيفت مسارات محمية: `/admin-assets/admin.js`, `/change-password.js` و`/admin/password` (alias).
+- ملحوظة تشغيل: استخدم `pm2 restart iraq-story --cwd /var/www/iraqstorycard.tech -f` عند نشر تغييرات `server.js`.
+
+### أماكن سريعة للبحث عن الأخطاء
+- سجل العمليات و الأخطاء (pm2): `/root/.pm2/logs/iraq-story-out.log` و`/root/.pm2/logs/iraq-story-error.log`
+- ملف الخادم المنشور: `/var/www/iraqstorycard.tech/server.js`
+- ملفات البيانات: `data/*.json` (`fallback-data.json`, `admin-settings.json`, `coupons.json`, `today-offers.json`)
+- واجهة الادمن العميلة: `server_assets/admin.js` و`public/admin.html`
+
+أضفت هذه المعلومات هنا حتى تصبح الخريطة مرجعية سريعة عند العودة للتدقيق أو استرجاع تغييرات سابقة.

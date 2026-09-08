@@ -109,7 +109,7 @@ async function loadGameDetails() {
       }
     });
 
-    buyBtn.addEventListener('click', () => {
+    buyBtn.addEventListener('click', async () => {
       if (!currentGame) return;
       const code = (couponInput.value || '').trim();
       const priceValue = Number(currentGame.price || 0);
@@ -118,12 +118,31 @@ async function loadGameDetails() {
         finalPrice = Math.round(priceValue * (1 - Number(activeCoupon.percent) / 100));
       }
 
-      const displayPrice = formatPrice(finalPrice, currentGame.currency || 'IQD');
-      const message = `أرغب بشراء: ${currentGame.name_ar} / ${currentGame.name_en} (ID:${currentGame.id})‎\nالسعر: ${displayPrice}\nرمز الكوبون: ${code || 'لا يوجد'}`;
-      // WhatsApp number provided by user
-      const waNumber = '7713377783';
-      const waUrl = `https://wa.me/${waNumber}?text=${encodeURIComponent(message)}`;
-      window.location.href = waUrl;
+      // Try adding to server-side session cart, then redirect to cart page
+      try {
+        await fetch('/api/cart/add', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            id: currentGame.id,
+            name_ar: currentGame.name_ar,
+            name_en: currentGame.name_en,
+            price: finalPrice,
+            currency: currentGame.currency || 'IQD',
+            coupon: code || null
+          })
+        });
+
+        window.location.href = '/cart';
+      } catch (err) {
+        console.error('Failed to add to cart, falling back to WhatsApp:', err);
+        // Fallback: open WhatsApp link
+        const displayPrice = formatPrice(finalPrice, currentGame.currency || 'IQD');
+        const message = `أرغب بشراء: ${currentGame.name_ar} / ${currentGame.name_en} (ID:${currentGame.id})\nالسعر: ${displayPrice}\nرمز الكوبون: ${code || 'لا يوجد'}`;
+        const waNumber = '7713377783';
+        const waUrl = `https://wa.me/${waNumber}?text=${encodeURIComponent(message)}`;
+        window.location.href = waUrl;
+      }
     });
 
     cardNode.classList.remove("hidden");

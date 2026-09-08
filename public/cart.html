@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>سلة المشتريات | iraq story game</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <main class="cart-wrap">
+      <div class="detail-topbar">
+        <a class="btn-secondary" href="/">عودة للرئيسية</a>
+      </div>
+      <h1>سلة المشتريات</h1>
+      <section id="cartStatus" class="status" aria-live="polite"></section>
+      <section id="cartList"></section>
+      <div style="margin-top:16px">
+        <button id="placeOrderBtn" class="btn-primary">إرسال الطلب عبر واتساب</button>
+        <button id="clearCartBtn" class="btn-secondary">تفريغ السلة</button>
+      </div>
+    </main>
+    <script src="/cart.js" defer></script>
+  </body>
+</html>

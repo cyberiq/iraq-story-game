@@ -1,6 +1,6 @@
 const form = document.getElementById("loginForm");
 const usernameInput = document.getElementById("username");
-const passwordInput = document.getElementById("password");
+const loginPasswordInput = document.getElementById("password");
 const statusNode = document.getElementById("loginStatus");
 
 function setStatus(message) {
@@ -15,10 +15,11 @@ form.addEventListener("submit", async (event) => {
   try {
     const response = await fetch("/api/auth/login", {
       method: "POST",
+      credentials: 'same-origin',
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         username: usernameInput.value.trim(),
-        password: passwordInput.value.trim()
+        password: loginPasswordInput.value.trim()
       })
     });
 

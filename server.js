@@ -185,6 +185,20 @@ app.get('/change-password.js', (req, res) => {
   if (!req.session || req.session.isAdmin !== true) return res.status(401).json({ error: 'Unauthorized' });
   return res.sendFile(path.join(__dirname, 'public', 'change-password.js'));
 });
+// Friendly admin password URL
+app.get('/admin/password', (req, res) => {
+  if (!req.session || req.session.isAdmin !== true) return res.redirect('/login');
+  return res.sendFile(path.join(__dirname, 'public', 'change-password.html'));
+});
+// Serve login page (friendly URL without .html)
+app.get('/login', (req, res) => {
+  return res.sendFile(path.join(__dirname, 'public', 'login.html'));
+});
+// Serve game page without .html suffix (friendly URL: /game?id=123)
+app.get('/game', (req, res) => {
+  return res.sendFile(path.join(__dirname, 'public', 'game.html'));
+});
+
 app.use(express.static(path.join(__dirname, "public"), { index: false }));
 app.use("/uploads", express.static(path.join(__dirname, "public", "uploads")));
 
@@ -447,4 +461,231 @@ app.get('/api/coupons', requireAdmin, async (req, res) => {
     console.error('Failed to fetch coupons', error);
     res.status(500).json({ error: 'Internal server error' });
   }
+});
+
+// Companies (admin) - list, create, update, delete
+app.get('/api/companies', requireAdmin, async (req, res) => {
+  if (!databaseReady) {
+    return res.json({ companies: fallbackCompaniesList() });
+  }
+
+  try {
+    const companies = await getCompaniesList();
+    return res.json({ companies });
+  } catch (error) {
+    console.error('Failed to fetch companies', error);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+app.post('/api/companies', requireAdmin, async (req, res) => {
+  const { slug, name_ar, name_en } = req.body || {};
+  if (!slug || !name_en) return res.status(400).json({ error: 'Missing required fields' });
+  try {
+    const created = await createCompany({ slug, name_ar, name_en });
+    return res.json({ ok: true, id: created.id });
+  } catch (error) {
+    console.error('Failed to create company', error);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+app.put('/api/companies/:id', requireAdmin, async (req, res) => {
+  const id = Number(req.params.id);
+  const { slug, name_ar, name_en } = req.body || {};
+  if (!id) return res.status(400).json({ error: 'Invalid id' });
+  try {
+    const changed = await updateCompany(id, { slug, name_ar, name_en });
+    return res.json({ ok: true, changed });
+  } catch (error) {
+    console.error('Failed to update company', error);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+app.delete('/api/companies/:id', requireAdmin, async (req, res) => {
+  const id = Number(req.params.id);
+  if (!id) return res.status(400).json({ error: 'Invalid id' });
+  try {
+    const removed = await deleteCompany(id);
+    return res.json({ ok: true, removed });
+  } catch (error) {
+    console.error('Failed to delete company', error);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Public catalog endpoint used by storefront and admin UI
+app.get('/api/catalog', async (req, res) => {
+  const { search = '', sort = '', product_type } = req.query || {};
+  if (!databaseReady) {
+    let data = fallbackCatalog();
+    if (product_type) {
+      data = data.map(c => ({ ...c, games: (c.games || []).filter(g => (g.product_type || 'game') === String(product_type) ) })).filter(c => (c.games || []).length);
+    }
+    return res.json({ companies: data });
+  }
+
+  try {
+    const catalog = await getCatalog({ search, sort });
+    // optional server-side filter by product_type
+    let out = catalog;
+    if (product_type) {
+      out = catalog.map(c => ({ ...c, games: (c.games || []).filter(g => (g.product_type || 'game') === String(product_type) ) })).filter(c => (c.games || []).length);
+    }
+    return res.json({ companies: out });
+  } catch (error) {
+    console.error('Failed to fetch catalog', error);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Game endpoints
+app.get('/api/games/:id', async (req, res) => {
+  const id = Number(req.params.id);
+  if (!id) return res.status(400).json({ error: 'Invalid id' });
+  if (!databaseReady) {
+    const g = fallbackGameById(id);
+    if (!g) return res.status(404).json({ error: 'Not found' });
+    return res.json({ game: g });
+  }
+
+  try {
+    const game = await getGameDetailsById(id);
+    if (!game) return res.status(404).json({ error: 'Not found' });
+    return res.json({ game });
+  } catch (error) {
+    console.error('Failed to fetch game', error);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+app.post('/api/games', requireAdmin, upload.single('image'), async (req, res) => {
+  try {
+    const body = req.body || {};
+    const coverImageUrl = req.file ? `/uploads/${req.file.filename}` : (body.cover_image_url || null);
+    const payload = {
+      company_id: Number(body.company_id),
+      product_type: body.product_type || 'game',
+      product_subtype: body.product_subtype || null,
+      name_ar: body.name_ar || '',
+      name_en: body.name_en || '',
+      genre: body.genre || '',
+      release_year: Number(body.release_year) || 0,
+      price: Number(body.price) || 0,
+      currency: (body.currency || 'IQD').toUpperCase(),
+      cover_image_url: coverImageUrl,
+      description: body.description || ''
+    };
+    const created = await createGame(payload);
+    return res.json({ ok: true, id: created.id });
+  } catch (error) {
+    console.error('Failed to create game', error);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+app.put('/api/games/:id', requireAdmin, upload.single('image'), async (req, res) => {
+  const id = Number(req.params.id);
+  if (!id) return res.status(400).json({ error: 'Invalid id' });
+  try {
+    const body = req.body || {};
+    const coverImageUrl = req.file ? `/uploads/${req.file.filename}` : (body.cover_image_url || body.current_cover_image_url || null);
+    const payload = {
+      company_id: Number(body.company_id),
+      product_type: body.product_type || 'game',
+      product_subtype: body.product_subtype || null,
+      name_ar: body.name_ar || '',
+      name_en: body.name_en || '',
+      genre: body.genre || '',
+      release_year: Number(body.release_year) || 0,
+      price: Number(body.price) || 0,
+      currency: (body.currency || 'IQD').toUpperCase(),
+      cover_image_url: coverImageUrl,
+      description: body.description || ''
+    };
+    const changed = await updateGame(id, payload);
+    return res.json({ ok: true, changed });
+  } catch (error) {
+    console.error('Failed to update game', error);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+app.delete('/api/games/:id', requireAdmin, async (req, res) => {
+  const id = Number(req.params.id);
+  if (!id) return res.status(400).json({ error: 'Invalid id' });
+  try {
+    const removed = await deleteGame(id);
+    return res.json({ ok: true, removed });
+  } catch (error) {
+    console.error('Failed to delete game', error);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Start the HTTP server
+const server = app.listen(PORT, '0.0.0.0', () => {
+  console.log(`Server listening on port ${PORT} (env=${process.env.NODE_ENV || 'development'})`);
+});
+
+// Graceful shutdown handlers
+function shutdown(signal) {
+  console.log(`Received ${signal}, closing server...`);
+  server.close(() => {
+    console.log('Server closed, exiting');
+    process.exit(0);
+  });
+}
+
+process.on('SIGINT', () => shutdown('SIGINT'));
+process.on('SIGTERM', () => shutdown('SIGTERM'));
+
+process.on('uncaughtException', (err) => {
+  console.error('Uncaught exception:', err);
+});
+
+process.on('unhandledRejection', (reason) => {
+  console.error('Unhandled rejection:', reason);
+});
+
+// Expose friendly 403 page
+app.get('/403', (req, res) => {
+  return res.status(403).sendFile(path.join(__dirname, 'public', '403.html'));
+});
+
+// Catch-all 404 handler (HTML clients get 404 page, others get JSON)
+app.use((req, res) => {
+  if (req.accepts && req.accepts('html')) {
+    return res.status(404).sendFile(path.join(__dirname, 'public', '404.html'));
+  }
+
+  return res.status(404).json({ error: 'Not found' });
+});
+
+// --- Simple cart API using server-side session ---
+app.post('/api/cart/add', (req, res) => {
+  try {
+    const payload = req.body || {};
+    if (!req.session) return res.status(500).json({ error: 'Session missing' });
+    if (!req.session.cart) req.session.cart = [];
+    req.session.cart.push(payload);
+    return res.json({ ok: true, cart: req.session.cart });
+  } catch (err) {
+    console.error('Failed to add to cart', err);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+app.get('/api/cart', (req, res) => {
+  return res.json({ cart: (req.session && req.session.cart) || [] });
+});
+
+app.post('/api/cart/clear', (req, res) => {
+  if (req.session) req.session.cart = [];
+  return res.json({ ok: true });
+});
+
+app.get('/cart', (req, res) => {
+  return res.sendFile(path.join(__dirname, 'public', 'cart.html'));
 });
