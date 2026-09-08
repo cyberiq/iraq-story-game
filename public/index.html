@@ -1,107 +1,583 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="ar" dir="rtl">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Iraq Game Store</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap"
-      rel="stylesheet"
-    />
-    <link rel="stylesheet" href="/styles.css" />
-  </head>
-  <body>
-    <div class="bg-shape bg-shape-a"></div>
-    <div class="bg-shape bg-shape-b"></div>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>المتجر | كل الألعاب</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Tajawal:wght@400;500;700;900&display=swap');
 
-    <header class="store-header">
-      <div class="header-bar">
-        <div class="brand-wrap">
-          <div class="brand-mark">IQ</div>
-          <div class="brand-copy">
-            <strong>Iraq Game</strong>
-            <span>store hub</span>
-          </div>
-        </div>
+  :root{
+    --bg-1:#0a0b12;
+    --bg-2:#12141f;
+    --surface:#171a29;
+    --surface-2:#1e2233;
+    --border:rgba(255,255,255,.08);
+    --purple:#8b5cf6;
+    --cyan:#33e0c8;
+    --pink:#ef5ea6;
+    --gold:#f5b942;
+    --muted:#9298b3;
+    --white:#f2f3fb;
+    --danger:#ef5b6b;
+  }
 
-        <label class="search-shell" aria-label="بحث">
-          <span class="search-icon">⌕</span>
-          <input
-            id="searchInput"
-            type="search"
-            placeholder="ابحث عن لعبة أو شركة..."
-            autocomplete="off"
-            list="searchSuggestions"
-          />
-          <datalist id="searchSuggestions"></datalist>
-        </label>
+  *{ box-sizing:border-box; margin:0; padding:0; }
+  html,body{ min-height:100%; }
 
-        <div class="header-actions">
-          <button id="languageToggle" class="header-link muted" type="button" aria-label="تبديل اللغة">AR / EN</button>
-          <button id="cartButton" class="cart-button" type="button">السلة <span id="cartCount">0</span></button>
-        </div>
-      </div>
+  body{
+    font-family:'Tajawal', sans-serif;
+    background:
+      radial-gradient(ellipse 700px 400px at 85% -5%, rgba(139,92,246,.20), transparent 60%),
+      radial-gradient(ellipse 600px 400px at 5% 15%, rgba(51,224,200,.12), transparent 60%),
+      linear-gradient(180deg, var(--bg-1), var(--bg-2));
+    color:var(--white);
+    min-height:100vh;
+  }
 
-      <nav class="category-bar" aria-label="التصنيفات">
-        <button type="button" class="category-pill active" data-filter="all">كل الألعاب</button>
-        <button type="button" class="category-pill" data-filter="games">ألعاب</button>
-        <button type="button" class="category-pill" data-filter="subscriptions">اشتراكات</button>
-        <button type="button" class="category-pill" data-filter="playstation">بلايستيشن</button>
-        <button type="button" class="category-pill" data-filter="xbox">إكس بوكس</button>
-        <button type="button" class="category-pill" data-filter="deals">عروض اليوم</button>
-      </nav>
-    </header>
+  a{ color:inherit; text-decoration:none; }
+  button{ font-family:inherit; }
 
-    <main class="market-main">
-      <section class="market-hero">
-        <p class="hero-kicker">أفضل العروض</p>
-        <h1>متجر ألعاب عراقي بتصميم عصري</h1>
-        <p class="hero-subtitle">
-          اكتشف شركات الألعاب والاشتراكات بأسعار مناسبة، تجربة احترافية، وتجربة شراء سريعة وواضحة.
-        </p>
-      </section>
+  header{
+    position:sticky;
+    top:0;
+    z-index:20;
+    background:rgba(10,11,18,.82);
+    backdrop-filter:blur(14px);
+    border-bottom:1px solid var(--border);
+  }
 
-      <section id="status" class="status" aria-live="polite"></section>
-      <section id="todayOffers" class="offers-strip" aria-live="polite"></section>
-      <section id="catalog" class="company-grid"></section>
-    </main>
+  .header-inner{
+    max-width:1180px;
+    margin:0 auto;
+    padding:14px 20px;
+    display:flex;
+    align-items:center;
+    gap:18px;
+  }
 
-    <template id="companyTemplate">
-      <article class="company-card">
-        <div class="company-header">
-          <div class="company-brand">
-            <span class="company-icon" aria-hidden="true">🎮</span>
-            <div class="company-meta">
-              <h2 class="company-name"></h2>
-              <p class="company-slug"></p>
-            </div>
-          </div>
-          <span class="company-pill"></span>
-        </div>
-        <div class="games-list"></div>
-      </article>
-    </template>
+  .logo{
+    display:flex;
+    align-items:center;
+    gap:9px;
+    font-family:'Baloo 2', sans-serif;
+    font-weight:800;
+    font-size:18px;
+    flex-shrink:0;
+  }
+  .logo-badge{
+    width:34px; height:34px;
+    border-radius:10px;
+    background:linear-gradient(135deg, var(--purple), var(--cyan));
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:15px;
+    color:#0a0b12;
+    font-weight:800;
+  }
 
-    <template id="gameTemplate">
-      <article class="game-card" data-game-id="">
-        <img class="game-cover" alt="صورة اللعبة" loading="lazy" />
-        <div class="game-content">
-          <h3 class="game-name"></h3>
-          <p class="game-meta"></p>
-          <div class="game-price-row">
-            <span class="game-price">₪0</span>
-            <div class="card-actions">
-              <button class="add-to-cart" type="button">إضافة للسلة</button>
-              <a class="details-link" href="#">تفاصيل اللعبة</a>
-            </div>
-          </div>
-        </div>
-      </article>
-    </template>
+  .search-shell{
+    flex:1;
+    max-width:440px;
+    display:flex;
+    align-items:center;
+    gap:8px;
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:12px;
+    padding:9px 14px;
+    transition:border-color .15s;
+  }
+  .search-shell:focus-within{ border-color:var(--purple); }
+  .search-shell svg{ width:17px; height:17px; color:var(--muted); flex-shrink:0; }
+  .search-shell input{
+    flex:1;
+    background:none;
+    border:none;
+    outline:none;
+    color:var(--white);
+    font-family:inherit;
+    font-size:14px;
+  }
+  .search-shell input::placeholder{ color:var(--muted); }
 
-    <script src="/cart-widget.js" defer></script>
-    <script src="/app.js" defer></script>
-  </body>
+  .header-actions{
+    display:flex;
+    align-items:center;
+    gap:14px;
+    margin-inline-start:auto;
+    flex-shrink:0;
+  }
+
+  .lang-pill{
+    font-size:12.5px;
+    color:var(--muted);
+    border:1px solid var(--border);
+    border-radius:20px;
+    padding:6px 12px;
+    cursor:pointer;
+  }
+  .lang-pill:hover{ color:var(--white); border-color:rgba(255,255,255,.2); }
+
+  .cart-btn{
+    position:relative;
+    display:flex;
+    align-items:center;
+    gap:8px;
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:12px;
+    padding:9px 14px;
+    cursor:pointer;
+    color:var(--white);
+    font-size:14px;
+  }
+  .cart-btn svg{ width:18px; height:18px; }
+  .cart-count{
+    background:linear-gradient(135deg, var(--purple), var(--pink));
+    color:#fff;
+    font-size:11px;
+    font-weight:700;
+    min-width:18px;
+    height:18px;
+    border-radius:9px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:0 4px;
+    transition:transform .25s cubic-bezier(.34,1.56,.64,1);
+  }
+  .cart-count.bump{ animation:bump .35s ease; }
+  @keyframes bump{ 0%{transform:scale(1);} 40%{transform:scale(1.5);} 100%{transform:scale(1);} }
+
+  .nav-row{
+    max-width:1180px;
+    margin:0 auto;
+    padding:0 20px 14px;
+    display:flex;
+    gap:22px;
+    overflow-x:auto;
+    scrollbar-width:none;
+  }
+  .nav-row::-webkit-scrollbar{ display:none; }
+  .nav-row a{
+    font-size:13.5px;
+    color:var(--muted);
+    white-space:nowrap;
+    padding-bottom:4px;
+    border-bottom:2px solid transparent;
+    transition:color .15s, border-color .15s;
+  }
+  .nav-row a:hover{ color:var(--white); }
+  .nav-row a.active{ color:var(--white); border-color:var(--purple); font-weight:700; }
+
+  .hero{
+    max-width:1180px;
+    margin:28px auto 8px;
+    padding:0 20px;
+  }
+  .hero-card{
+    position:relative;
+    border-radius:22px;
+    padding:34px 32px;
+    background:
+      radial-gradient(circle at 85% 20%, rgba(139,92,246,.35), transparent 55%),
+      radial-gradient(circle at 15% 90%, rgba(51,224,200,.22), transparent 55%),
+      linear-gradient(135deg, #1a1d2e, #14151f);
+    border:1px solid var(--border);
+    overflow:hidden;
+  }
+  .hero-card h1{
+    font-family:'Baloo 2', sans-serif;
+    font-size:clamp(22px, 3.4vw, 30px);
+    font-weight:800;
+    margin-bottom:8px;
+    max-width:560px;
+  }
+  .hero-card p{
+    color:var(--muted);
+    font-size:14.5px;
+    max-width:480px;
+    line-height:1.8;
+  }
+  .hero-glow{
+    position:absolute;
+    top:-40px; left:-40px;
+    width:180px; height:180px;
+    border-radius:50%;
+    background:radial-gradient(circle, rgba(139,92,246,.4), transparent 70%);
+    filter:blur(10px);
+  }
+
+  .filters{
+    max-width:1180px;
+    margin:26px auto 4px;
+    padding:0 20px;
+    display:flex;
+    gap:10px;
+    flex-wrap:wrap;
+  }
+  .chip{
+    font-size:13px;
+    padding:8px 16px;
+    border-radius:20px;
+    background:var(--surface);
+    border:1px solid var(--border);
+    color:var(--muted);
+    cursor:pointer;
+    transition:all .15s;
+  }
+  .chip:hover{ color:var(--white); border-color:rgba(255,255,255,.2); }
+  .chip.active{
+    background:linear-gradient(135deg, var(--purple), #6d3fd4);
+    color:#fff;
+    border-color:transparent;
+  }
+
+  .grid{
+    max-width:1180px;
+    margin:22px auto 60px;
+    padding:0 20px;
+    display:grid;
+    grid-template-columns:repeat(4, 1fr);
+    gap:18px;
+  }
+
+  .game-card{
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:16px;
+    overflow:hidden;
+    display:flex;
+    flex-direction:column;
+    opacity:0;
+    transform:translateY(14px);
+    animation:cardIn .5s ease forwards;
+    transition:transform .2s, border-color .2s, box-shadow .2s;
+  }
+  .game-card:hover{
+    transform:translateY(-5px);
+    border-color:rgba(139,92,246,.5);
+    box-shadow:0 16px 34px -18px rgba(139,92,246,.55);
+  }
+  @keyframes cardIn{
+    from{ opacity:0; transform:translateY(14px); }
+    to{ opacity:1; transform:translateY(0); }
+  }
+
+  .cover{
+    position:relative;
+    aspect-ratio:4/3;
+    background:linear-gradient(135deg, var(--c-a,#8b5cf6), var(--c-b,#33e0c8));
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    overflow:hidden;
+  }
+  .cover::after{
+    content:'';
+    position:absolute; inset:0;
+    background:radial-gradient(circle at 30% 20%, rgba(255,255,255,.28), transparent 55%);
+  }
+  .cover .glyph{
+    font-size:34px;
+    opacity:.9;
+    filter:drop-shadow(0 4px 10px rgba(0,0,0,.25));
+  }
+
+  .badge{
+    position:absolute;
+    top:10px;
+    inset-inline-start:10px;
+    font-size:11px;
+    font-weight:700;
+    padding:4px 10px;
+    border-radius:20px;
+    z-index:2;
+  }
+  .badge.free{ background:rgba(51,224,200,.18); color:var(--cyan); border:1px solid rgba(51,224,200,.4); }
+  .badge.discount{ background:rgba(239,94,166,.18); color:var(--pink); border:1px solid rgba(239,94,166,.4); }
+
+  .platform-tag{
+    position:absolute;
+    top:10px;
+    inset-inline-end:10px;
+    font-size:10.5px;
+    background:rgba(10,11,18,.55);
+    color:var(--white);
+    padding:4px 9px;
+    border-radius:8px;
+    z-index:2;
+    backdrop-filter:blur(4px);
+  }
+
+  .card-body{
+    padding:14px 14px 16px;
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+    flex:1;
+  }
+  .game-title{
+    font-size:14.5px;
+    font-weight:700;
+    line-height:1.4;
+  }
+  .game-sub{
+    font-size:12px;
+    color:var(--muted);
+  }
+
+  .price-row{
+    margin-top:auto;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding-top:8px;
+  }
+  .price{
+    font-family:'Baloo 2', sans-serif;
+    font-weight:700;
+    font-size:15.5px;
+    color:var(--gold);
+  }
+  .price.free-text{ color:var(--cyan); }
+  .price-old{
+    font-size:12px;
+    color:var(--muted);
+    text-decoration:line-through;
+    margin-inline-end:6px;
+  }
+
+  .add-btn{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:6px;
+    width:100%;
+    margin-top:10px;
+    padding:10px;
+    border-radius:10px;
+    border:1px solid var(--border);
+    background:var(--surface-2);
+    color:var(--white);
+    font-size:13px;
+    font-weight:600;
+    cursor:pointer;
+    transition:background .15s, border-color .15s, transform .12s;
+  }
+  .add-btn:hover{
+    background:linear-gradient(135deg, var(--purple), #6d3fd4);
+    border-color:transparent;
+  }
+  .add-btn:active{ transform:scale(.97); }
+  .add-btn svg{ width:15px; height:15px; }
+
+  .add-btn.added{
+    background:rgba(51,224,200,.16);
+    border-color:rgba(51,224,200,.4);
+    color:var(--cyan);
+  }
+
+  .toast{
+    position:fixed;
+    bottom:26px;
+    right:50%;
+    transform:translateX(50%) translateY(20px);
+    background:var(--surface-2);
+    border:1px solid rgba(51,224,200,.4);
+    color:var(--white);
+    padding:12px 20px;
+    border-radius:12px;
+    font-size:13.5px;
+    display:flex;
+    align-items:center;
+    gap:8px;
+    opacity:0;
+    pointer-events:none;
+    transition:opacity .25s, transform .25s;
+    z-index:50;
+  }
+  .toast.show{
+    opacity:1;
+    transform:translateX(50%) translateY(0);
+  }
+  .toast svg{ width:16px; height:16px; color:var(--cyan); }
+
+  @media (max-width:980px){
+    .grid{ grid-template-columns:repeat(3, 1fr); }
+  }
+  @media (max-width:720px){
+    .grid{ grid-template-columns:repeat(2, 1fr); }
+    .search-shell{ display:none; }
+  }
+  @media (max-width:460px){
+    .grid{ grid-template-columns:1fr 1fr; gap:12px; }
+    .hero-card{ padding:24px 20px; }
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    *{ animation-duration:.01ms !important; }
+  }
+
+  :focus-visible{ outline:2px solid var(--purple); outline-offset:2px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <div class="logo">
+      <div class="logo-badge">IQ</div>
+      Iraq Game
+    </div>
+
+    <div class="search-shell">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+      <input type="text" placeholder="ابحث عن لعبة أو اشتراك..." />
+    </div>
+
+    <div class="header-actions">
+      <div class="lang-pill">AR / EN</div>
+      <button class="cart-btn" id="cartBtn" type="button">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+        السلة
+        <span class="cart-count" id="cartCount">0</span>
+      </button>
+    </div>
+  </div>
+
+  <nav class="nav-row">
+    <a href="#" class="active">كل الألعاب</a>
+    <a href="#">ألعاب</a>
+    <a href="#">اشتراكات</a>
+    <a href="#">بلايستيشن</a>
+    <a href="#">إكس بوكس</a>
+    <a href="#">عروض اليوم</a>
+    <a href="#">أفضل العروض</a>
+  </nav>
+</header>
+
+<section class="hero">
+  <div class="hero-card">
+    <div class="hero-glow"></div>
+    <h1>متجر ألعاب عراقي بتصميم عصري</h1>
+    <p>اكتشف أشهر الألعاب والاشتراكات بأسعار مناسبة، مع تجربة شراء سريعة وواضحة وشحن كودات فورية.</p>
+  </div>
+</section>
+
+<div class="filters">
+  <div class="chip active">الكل</div>
+  <div class="chip">مجانية</div>
+  <div class="chip">أكشن</div>
+  <div class="chip">رياضية</div>
+  <div class="chip">اشتراكات</div>
+  <div class="chip">عروض</div>
+</div>
+
+<section class="grid" id="grid">
+</section>
+
+<div class="toast" id="toast">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6L9 17l-5-5"/></svg>
+  <span id="toastText">تمت الإضافة إلى السلة</span>
+</div>
+
+<script>
+const games = [
+  { title:"فورتنايت - حزمة أبطال", sub:"إكس بوكس / بلايستيشن", price:0, isFree:true, platform:"PS/XB", glyph:"🎮", colors:["#33e0c8","#8b5cf6"] },
+  { title:"فيفا ٢٥ - الإصدار الكامل", sub:"رياضية · أونلاين", price:35000, oldPrice:45000, platform:"PS5", glyph:"⚽", colors:["#f5b942","#ef5ea6"] },
+  { title:"اشتراك بلاس - ٣ أشهر", sub:"اشتراكات · بلايستيشن", price:28000, platform:"PS", glyph:"🕹️", colors:["#8b5cf6","#6d3fd4"] },
+  { title:"كول أوف ديوتي - موديرن", sub:"أكشن · إكس بوكس", price:42000, oldPrice:52000, platform:"XB", glyph:"🎯", colors:["#ef5b6b","#8b5cf6"] },
+  { title:"جاتا الخامسة - النسخة الممتازة", sub:"أكشن · مغامرات", price:38000, platform:"PS/XB", glyph:"🚗", colors:["#33e0c8","#3fa0d6"] },
+  { title:"اشتراك جيم باس ألتيميت", sub:"اشتراكات · إكس بوكس", price:22000, platform:"XB", glyph:"🎫", colors:["#f5b942","#33e0c8"] },
+  { title:"إي أف سي موبايل بلس", sub:"رياضية · مجانية", price:0, isFree:true, platform:"PS/XB", glyph:"🏆", colors:["#8b5cf6","#ef5ea6"] },
+  { title:"مورتال كومبات ١", sub:"أكشن · قتال", price:47000, platform:"PS5", glyph:"🥊", colors:["#ef5ea6","#ef5b6b"] },
+];
+
+const grid = document.getElementById('grid');
+
+function fmtPrice(n){
+  return n.toLocaleString('ar-IQ') + ' د.ع';
+}
+
+games.forEach((g, i) => {
+  const card = document.createElement('div');
+  card.className = 'game-card';
+  card.style.animationDelay = (i * 0.06) + 's';
+
+  const badge = g.isFree
+    ? '<span class="badge free">مجانية</span>'
+    : (g.oldPrice ? '<span class="badge discount">خصم ' + Math.round(100 - (g.price/g.oldPrice*100)) + '%</span>' : '');
+
+  const priceHtml = g.isFree
+    ? '<span class="price free-text">مجانية</span>'
+    : '<span>' + (g.oldPrice ? '<span class="price-old">' + fmtPrice(g.oldPrice) + '</span>' : '') + '<span class="price">' + fmtPrice(g.price) + '</span></span>';
+
+  card.innerHTML = `
+    <div class="cover" style="--c-a:${g.colors[0]}; --c-b:${g.colors[1]}">
+      ${badge}
+      <span class="platform-tag">${g.platform}</span>
+      <span class="glyph">${g.glyph}</span>
+    </div>
+    <div class="card-body">
+      <div class="game-title">${g.title}</div>
+      <div class="game-sub">${g.sub}</div>
+      <div class="price-row">${priceHtml}</div>
+      <button class="add-btn" type="button">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+        <span class="add-label">إضافة للسلة</span>
+      </button>
+    </div>
+  `;
+  grid.appendChild(card);
+});
+
+let cartCount = 0;
+const cartCountEl = document.getElementById('cartCount');
+const toast = document.getElementById('toast');
+const toastText = document.getElementById('toastText');
+let toastTimer;
+
+grid.addEventListener('click', (e) => {
+  const btn = e.target.closest('.add-btn');
+  if(!btn) return;
+
+  const title = btn.closest('.game-card').querySelector('.game-title').textContent;
+  cartCount++;
+  cartCountEl.textContent = cartCount;
+  cartCountEl.classList.remove('bump');
+  void cartCountEl.offsetWidth;
+  cartCountEl.classList.add('bump');
+
+  btn.classList.add('added');
+  btn.querySelector('.add-label').textContent = 'أُضيفت ✓';
+  setTimeout(() => {
+    btn.classList.remove('added');
+    btn.querySelector('.add-label').textContent = 'إضافة للسلة';
+  }, 1400);
+
+  toastText.textContent = `تمت إضافة "${title}" إلى السلة`;
+  toast.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => toast.classList.remove('show'), 2200);
+});
+
+document.querySelectorAll('.chip').forEach(chip => {
+  chip.addEventListener('click', () => {
+    document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+    chip.classList.add('active');
+  });
+});
+
+document.querySelectorAll('.nav-row a').forEach(link => {
+  link.addEventListener('click', (e) => {
+    e.preventDefault();
+    document.querySelectorAll('.nav-row a').forEach(l => l.classList.remove('active'));
+    link.classList.add('active');
+  });
+});
+</script>
+</body>
 </html>
