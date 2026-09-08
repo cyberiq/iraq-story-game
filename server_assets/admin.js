@@ -95,6 +95,39 @@ const fallbackAdminCompanies = [
 
 function setStatus(message) {
   adminStatus.textContent = message;
+  adminStatus.style.border = "1px solid rgba(255,255,255,0.06)";
+  adminStatus.style.background = "rgba(255,255,255,0.02)";
+}
+
+function showInlineConfirm({ message, onConfirm, onCancel }) {
+  adminStatus.innerHTML = `
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:12px 16px;border-radius:12px;background:rgba(255,115,115,0.08);border:1px solid rgba(255,115,115,0.28);color:#fff;">
+      <span style="font-weight:600;">${message}</span>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button type="button" class="btn-danger confirm-yes" style="padding:8px 14px;">نعم، حذف</button>
+        <button type="button" class="btn-secondary confirm-no" style="padding:8px 14px;">إلغاء</button>
+      </div>
+    </div>
+  `;
+
+  const confirmBtn = adminStatus.querySelector('.confirm-yes');
+  const cancelBtn = adminStatus.querySelector('.confirm-no');
+
+  confirmBtn?.addEventListener('click', async () => {
+    adminStatus.innerHTML = '';
+    adminStatus.textContent = '';
+    if (typeof onConfirm === 'function') {
+      await onConfirm();
+    }
+  });
+
+  cancelBtn?.addEventListener('click', () => {
+    adminStatus.innerHTML = '';
+    adminStatus.textContent = '';
+    if (typeof onCancel === 'function') {
+      onCancel();
+    }
+  });
 }
 
 let currentGameImageUrl = "";
@@ -350,16 +383,21 @@ async function loadCoupons() {
     });
 
     const delBtns = couponList.querySelectorAll('[data-delete-coupon]');
-    delBtns.forEach((b) => b.addEventListener('click', async () => {
+    delBtns.forEach((b) => b.addEventListener('click', () => {
       const code = b.getAttribute('data-delete-coupon');
-      if (!confirm('حذف الكوبون؟')) return;
-      try {
-        await fetchJson(`/api/coupons/${encodeURIComponent(code)}`, { method: 'DELETE' });
-        setStatus('تم حذف الكوبون.');
-        await loadCoupons();
-      } catch (err) {
-        setStatus(`خطأ: ${err.message}`);
-      }
+      showInlineConfirm({
+        message: 'هل تريد حذف هذا الكوبون؟',
+        onConfirm: async () => {
+          try {
+            await fetchJson(`/api/coupons/${encodeURIComponent(code)}`, { method: 'DELETE' });
+            setStatus('تم حذف الكوبون.');
+            await loadCoupons();
+          } catch (err) {
+            setStatus(`خطأ: ${err.message}`);
+          }
+        },
+        onCancel: () => setStatus('تم إلغاء حذف الكوبون.')
+      });
     }));
   } catch (err) {
     console.error(err);
@@ -403,15 +441,20 @@ async function loadOffers() {
       const delBtn = document.createElement('button');
       delBtn.className = 'btn-danger';
       delBtn.textContent = 'حذف';
-      delBtn.addEventListener('click', async () => {
-        if (!confirm('حذف هذا العرض؟')) return;
-        try {
-          await fetchJson(`/api/today-offers/${encodeURIComponent(offer.id)}`, { method: 'DELETE' });
-          setStatus('تم حذف العرض.');
-          await loadOffers();
-        } catch (err) {
-          setStatus(`خطأ: ${err.message}`);
-        }
+      delBtn.addEventListener('click', () => {
+        showInlineConfirm({
+          message: 'هل تريد حذف هذا العرض؟',
+          onConfirm: async () => {
+            try {
+              await fetchJson(`/api/today-offers/${encodeURIComponent(offer.id)}`, { method: 'DELETE' });
+              setStatus('تم حذف العرض.');
+              await loadOffers();
+            } catch (err) {
+              setStatus(`خطأ: ${err.message}`);
+            }
+          },
+          onCancel: () => setStatus('تم إلغاء حذف العرض.')
+        });
       });
 
       row.appendChild(strong);
@@ -538,21 +581,23 @@ function bindEditButtons(companies, catalogCompanies) {
 
   const deleteGameButtons = document.querySelectorAll("[data-delete-game]");
   deleteGameButtons.forEach((button) => {
-    button.addEventListener("click", async () => {
+    button.addEventListener("click", () => {
       const id = Number(button.getAttribute("data-delete-game"));
-      const confirmed = window.confirm("تأكيد حذف اللعبة؟");
-      if (!confirmed) {
-        return;
-      }
 
-      try {
-        await fetchJson(`/api/games/${id}`, { method: "DELETE" });
-        setStatus("تم حذف اللعبة بنجاح.");
-        await loadData();
-      } catch (error) {
-        console.error(error);
-        setStatus(`خطأ: ${error.message}`);
-      }
+      showInlineConfirm({
+        message: 'هل تريد حذف هذه اللعبة؟',
+        onConfirm: async () => {
+          try {
+            await fetchJson(`/api/games/${id}`, { method: "DELETE" });
+            setStatus("تم حذف اللعبة بنجاح.");
+            await loadData();
+          } catch (error) {
+            console.error(error);
+            setStatus(`خطأ: ${error.message}`);
+          }
+        },
+        onCancel: () => setStatus('تم إلغاء حذف اللعبة.')
+      });
     });
   });
 }
