@@ -246,6 +246,46 @@
   }
   .promo-row button:hover{ border-color:rgba(255,255,255,.3); }
 
+  .coupon-notice{
+    margin-top:10px;
+    display:none;
+    align-items:center;
+    gap:8px;
+    border-radius:10px;
+    padding:10px 12px;
+    font-size:13px;
+    line-height:1.6;
+    border:1px solid transparent;
+    background:rgba(255,255,255,.04);
+    color:var(--white);
+  }
+  .coupon-notice.visible{ display:flex; }
+  .coupon-notice.error{
+    background:rgba(255, 94, 94, 0.08);
+    border-color:rgba(255, 94, 94, 0.28);
+    color:#ffc9c9;
+  }
+  .coupon-notice.success{
+    background:rgba(127, 217, 182, 0.08);
+    border-color:rgba(127, 217, 182, 0.3);
+    color:#d8ffef;
+  }
+  .coupon-notice::before{
+    content:'!';
+    width:18px;
+    height:18px;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    border-radius:50%;
+    font-weight:700;
+    background:rgba(255,255,255,.08);
+  }
+  .coupon-notice.success::before{
+    content:'✓';
+    background:rgba(127, 217, 182, 0.12);
+  }
+
   .confirm-zone{
     position:relative;
     margin-top:22px;
@@ -415,6 +455,7 @@
           <input id="couponInput" type="text" placeholder="كود الخصم" />
           <button type="button" id="applyCouponBtn">تطبيق</button>
         </div>
+        <div id="couponNotice" class="coupon-notice" aria-live="polite"></div>
 
         <div class="confirm-zone">
           <button class="confirm-btn" id="confirmBtn" type="button">
@@ -473,10 +514,18 @@
   const totalValue = document.getElementById('totalValue');
   const couponInput = document.getElementById('couponInput');
   const applyCouponBtn = document.getElementById('applyCouponBtn');
+  const couponNotice = document.getElementById('couponNotice');
   const confirmBtn = document.getElementById('confirmBtn');
   const rocketFly = document.getElementById('rocketFly');
   const trail = document.getElementById('trail');
   const successPanel = document.getElementById('successPanel');
+
+  function showCouponNotice(message, type = 'error') {
+    if (!couponNotice) return;
+    couponNotice.textContent = message;
+    couponNotice.classList.remove('visible', 'error', 'success');
+    couponNotice.classList.add(type, 'visible');
+  }
 
   const priceFormat = (value) => `${Number(value || 0).toLocaleString('en-US')} د.ع`;
 
@@ -579,7 +628,7 @@
   applyCouponBtn.addEventListener('click', async () => {
     const code = couponInput.value.trim();
     if (!code) {
-      alert('أدخل رمز الخصم أولاً');
+      showCouponNotice('أدخل رمز الخصم أولاً', 'error');
       return;
     }
 
@@ -595,9 +644,11 @@
       }
       couponPercent = Number(payload.percent || 0);
       renderCheckout();
-      alert(`تم تطبيق الخصم: ${couponPercent}%`);
+      showCouponNotice(`تم تطبيق الخصم: ${couponPercent}%`, 'success');
     } catch (error) {
-      alert(error.message || 'الكوبون غير صالح');
+      couponPercent = 0;
+      renderCheckout();
+      showCouponNotice(error.message || 'الكوبون غير صالح', 'error');
     }
   });
 
