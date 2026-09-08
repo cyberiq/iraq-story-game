@@ -463,6 +463,90 @@ app.get('/api/coupons', requireAdmin, async (req, res) => {
   }
 });
 
+app.post('/api/coupons', requireAdmin, async (req, res) => {
+  const { code, percent } = req.body || {};
+  const cleanCode = String(code || '').trim();
+  const numericPercent = Number(percent || 0);
+
+  if (!cleanCode) {
+    return res.status(400).json({ error: 'رمز الكوبون مطلوب.' });
+  }
+
+  if (!Number.isFinite(numericPercent) || numericPercent < 1 || numericPercent > 100) {
+    return res.status(400).json({ error: 'نسبة الخصم يجب أن تكون بين 1 و 100.' });
+  }
+
+  try {
+    if (!databaseReady) {
+      const exists = runtimeCoupons.some((item) => String(item.code || '').trim().toLowerCase() === cleanCode.toLowerCase());
+      if (exists) {
+        return res.status(409).json({ error: 'الكوبون موجود بالفعل.' });
+      }
+
+      runtimeCoupons.push({ code: cleanCode, percent: numericPercent, active: 1 });
+      saveCouponsFile();
+      return res.json({ ok: true, coupon: { code: cleanCode, percent: numericPercent } });
+    }
+
+    const created = await createCoupon({ code: cleanCode, percent: numericPercent });
+    return res.json({ ok: true, coupon: created });
+  } catch (error) {
+    console.error('Failed to create coupon', error);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+app.delete('/api/coupons/:code', requireAdmin, async (req, res) => {
+  const code = decodeURIComponent(req.params.code || '');
+
+  try {
+    if (!databaseReady) {
+      const before = runtimeCoupons.length;
+      runtimeCoupons = runtimeCoupons.filter((item) => String(item.code || '').trim().toLowerCase() !== String(code || '').trim().toLowerCase());
+      if (runtimeCoupons.length === before) {
+        return res.status(404).json({ error: 'الكوبون غير موجود.' });
+      }
+      saveCouponsFile();
+      return res.json({ ok: true });
+    }
+
+    const removed = await deleteCoupon(code);
+    if (!removed) {
+      return res.status(404).json({ error: 'الكوبون غير موجود.' });
+    }
+    return res.json({ ok: true });
+  } catch (error) {
+    console.error('Failed to delete coupon', error);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+app.post('/api/coupons/validate', async (req, res) => {
+  const code = String(req.body?.code || '').trim();
+  if (!code) {
+    return res.status(400).json({ error: 'رمز الكوبون مطلوب.' });
+  }
+
+  try {
+    if (!databaseReady) {
+      const item = runtimeCoupons.find((entry) => String(entry.code || '').trim().toLowerCase() === code.toLowerCase() && Number(entry.active || 1) === 1);
+      if (!item) {
+        return res.status(400).json({ error: 'الكوبون غير صالح أو غير فعال.' });
+      }
+      return res.json({ ok: true, percent: Number(item.percent || 0), code: item.code });
+    }
+
+    const coupon = await validateCoupon(code);
+    if (!coupon) {
+      return res.status(400).json({ error: 'الكوبون غير صالح أو غير فعال.' });
+    }
+    return res.json({ ok: true, percent: Number(coupon.percent || 0), code });
+  } catch (error) {
+    console.error('Failed to validate coupon', error);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 // Companies (admin) - list, create, update, delete
 app.get('/api/companies', requireAdmin, async (req, res) => {
   if (!databaseReady) {
