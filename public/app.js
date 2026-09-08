@@ -439,7 +439,9 @@ function fallbackImage(gameName) {
 }
 
 function setStatus(message) {
-  statusNode.textContent = message;
+  if (statusNode) {
+    statusNode.textContent = message;
+  }
 }
 
 function formatPrice(value, currency = "IQD") {
@@ -735,15 +737,19 @@ function updateCategoryButtons() {
   });
 }
 
-categoryButtons.forEach((button) => {
-  button.addEventListener('click', () => {
-    activeCategory = button.dataset.filter || 'all';
-    updateCategoryButtons();
-    fetchCatalog();
+if (categoryButtons.length) {
+  categoryButtons.forEach((button) => {
+    button.addEventListener('click', () => {
+      activeCategory = button.dataset.filter || 'all';
+      updateCategoryButtons();
+      fetchCatalog();
+    });
   });
-});
+}
 
-searchInput.addEventListener("input", onSearchInput);
+if (searchInput) {
+  searchInput.addEventListener("input", onSearchInput);
+}
 
 async function fetchSuggestions() {
   const term = searchInput.value.trim();
@@ -906,9 +912,16 @@ function applyLanguage() {
   const isEnglish = language === 'en';
   document.documentElement.lang = isEnglish ? 'en' : 'ar';
   document.documentElement.dir = isEnglish ? 'ltr' : 'rtl';
-  languageToggle.textContent = isEnglish ? 'EN / AR' : 'AR / EN';
-  document.querySelector('.brand-copy strong').textContent = isEnglish ? 'Iraq Game' : 'متجر العراق';
-  document.querySelector('.brand-copy span').textContent = isEnglish ? 'store hub' : 'مركز المتجر';
+
+  if (languageToggle) {
+    languageToggle.textContent = isEnglish ? 'EN / AR' : 'AR / EN';
+  }
+
+  const brandName = document.querySelector('.brand-wrap span');
+  if (brandName) {
+    brandName.textContent = isEnglish ? 'Iraq Game' : 'متجر العراق';
+  }
+
   const searchPlaceholder = isEnglish ? 'Search for a game or company...' : 'ابحث عن لعبة أو شركة...';
   const searchInputEl = document.getElementById('searchInput');
   if (searchInputEl) searchInputEl.placeholder = searchPlaceholder;
@@ -927,9 +940,10 @@ function applyLanguage() {
     button.textContent = categoryLabels[key] || button.textContent;
   });
 
-  if (document.querySelector('.cart-button')) {
+  if (cartButton) {
     const cartText = isEnglish ? 'Cart' : 'السلة';
-    document.querySelector('.cart-button').innerHTML = `${cartText} <span id="cartCount">${cart.reduce((sum, item) => sum + Number(item.qty || 0), 0)}</span>`;
+    const count = cart.reduce((sum, item) => sum + Number(item.qty || 0), 0);
+    cartButton.innerHTML = `${cartText} <span id="cartCount">${count}</span>`;
   }
 
   const heroKicker = document.querySelector('.hero-kicker');
@@ -961,6 +975,10 @@ window.addEventListener('click', (event) => {
 });
 
 document.addEventListener("DOMContentLoaded", async () => {
+  if (cartButton) {
+    cartButton.addEventListener('click', toggleCart);
+  }
+
   renderCart();
   applyLanguage();
   await fetchTodayOffers();

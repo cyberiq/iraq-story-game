@@ -206,6 +206,15 @@ app.get('/admin/password', (req, res) => {
 app.get('/login', (req, res) => {
   return res.sendFile(path.join(__dirname, 'public', 'login.html'));
 });
+
+app.get('/', (req, res) => {
+  return res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+app.get('/index.html', (req, res) => {
+  return res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
 // Serve game page without .html suffix (friendly URL: /game?id=123)
 app.get('/game', (req, res) => {
   return res.sendFile(path.join(__dirname, 'public', 'game.html'));
