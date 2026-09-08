@@ -840,19 +840,48 @@ function renderCart() {
   if (!itemsWrap) return;
 
   if (!cart.length) {
-    itemsWrap.innerHTML = '<p style="text-align: center; color: #999;">سلة التسوق فارغة</p>';
+    itemsWrap.innerHTML = `
+      <div style="padding: 18px 12px; text-align: center; color: #a9b2d0; border: 1px dashed rgba(255,255,255,0.12); border-radius: 12px; background: rgba(255,255,255,0.02);">
+        سلة التسوق فارغة
+      </div>
+    `;
     return;
   }
 
-  itemsWrap.innerHTML = cart.map((item, idx) => `
-    <div class="cart-item" style="display: flex; justify-content: space-between; align-items: center; padding: 12px; background: #16213e; margin-bottom: 10px; border-radius: 8px;">
-      <div style="flex: 1;">
-        <div style="font-weight: bold; margin-bottom: 5px;">${item.name}</div>
-        <div style="font-size: 14px; color: #00d4ff;">${item.qty} × ${Number(item.price || 0).toLocaleString('en-US')}</div>
-      </div>
-      <button type="button" class="delete-item-btn" data-index="${idx}" style="background: #ff6b6b; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 12px; margin-right: 10px;">حذف</button>
+  const subtotal = cart.reduce((sum, item) => sum + Number(item.price || 0) * Number(item.qty || 1), 0);
+  const discountPercent = Number(localStorage.getItem('iraqGameDiscountPercent') || 0);
+  const discount = Math.round(subtotal * (discountPercent / 100));
+  const total = Math.max(0, subtotal - discount);
+
+  itemsWrap.innerHTML = `
+    <div style="padding-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,0.08); margin-bottom: 12px;">
+      ${cart.map((item, idx) => `
+        <div style="display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px dashed rgba(255,255,255,0.08);">
+          <div style="flex: 1; min-width: 0;">
+            <div style="font-size: 13px; font-weight: 700; line-height: 1.5; color: #f5f7ff;">${item.name}</div>
+            <div style="font-size: 12px; color: #8ad8ff; margin-top: 2px;">${Number(item.qty || 1)} × ${Number(item.price || 0).toLocaleString('en-US')} د.ع</div>
+          </div>
+          <div style="font-size: 12px; color: #f2c66b; font-weight: 700; min-width: 70px; text-align: left;">${(Number(item.price || 0) * Number(item.qty || 1)).toLocaleString('en-US')} د.ع</div>
+          <button type="button" class="delete-item-btn" data-index="${idx}" style="background: rgba(255, 108, 120, 0.12); color: #ffb6c0; border: 1px solid rgba(255, 108, 120, 0.2); padding: 6px 8px; border-radius: 8px; cursor: pointer; font-size: 11px;">حذف</button>
+        </div>
+      `).join('')}
     </div>
-  `).join('');
+
+    <div style="display: grid; gap: 8px; font-size: 12.5px; color: #dfe5ff;">
+      <div style="display: flex; justify-content: space-between; gap: 10px;">
+        <span>المجموع</span>
+        <span>${subtotal.toLocaleString('en-US')} د.ع</span>
+      </div>
+      <div style="display: flex; justify-content: space-between; gap: 10px;">
+        <span>الخصم</span>
+        <span>-${discount.toLocaleString('en-US')} د.ع</span>
+      </div>
+      <div style="display: flex; justify-content: space-between; gap: 10px; padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.08); font-weight: 800; color: #f7d782; font-size: 13px;">
+        <span>الإجمالي</span>
+        <span>${total.toLocaleString('en-US')} د.ع</span>
+      </div>
+    </div>
+  `;
 
   // Add delete handlers for each item
   panel.querySelectorAll('.delete-item-btn').forEach((btn) => {
