@@ -4,21 +4,69 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>سلة المشتريات | iraq story game</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="/styles.css" />
   </head>
   <body>
-    <main class="cart-wrap">
-      <div class="detail-topbar">
-        <a class="btn-secondary" href="/">عودة للرئيسية</a>
+    <div class="bg-shape bg-shape-a"></div>
+    <div class="bg-shape bg-shape-b"></div>
+
+    <header class="store-header">
+      <div class="header-bar">
+        <div class="brand-wrap">
+          <div class="brand-mark">I</div>
+          <div class="brand-copy">
+            <strong>iraq story</strong>
+            <span>Game Store</span>
+          </div>
+        </div>
+
+        <div class="header-actions" style="margin-right:auto;">
+          <a class="header-link muted" href="/">العودة للمتجر</a>
+        </div>
       </div>
-      <h1>سلة المشتريات</h1>
+    </header>
+
+    <main class="market-main cart-shell">
+      <div class="cart-toolbar">
+        <div>
+          <p class="hero-kicker">السلة</p>
+          <h1>سلة المشتريات</h1>
+        </div>
+      </div>
+
       <section id="cartStatus" class="status" aria-live="polite"></section>
-      <section id="cartList"></section>
-      <div style="margin-top:16px">
-        <button id="placeOrderBtn" class="btn-primary">إرسال الطلب عبر واتساب</button>
-        <button id="clearCartBtn" class="btn-secondary">تفريغ السلة</button>
+
+      <div class="cart-layout">
+        <section class="cart-panel">
+          <div id="cartList" class="cart-items"></div>
+        </section>
+
+        <aside class="cart-summary">
+          <h2>ملخص الطلب</h2>
+          <div class="summary-row">
+            <span>المجموع</span>
+            <strong id="summarySubtotal">0 د.ع</strong>
+          </div>
+          <div class="summary-row">
+            <span>الشحن</span>
+            <strong id="summaryShipping">0 د.ع</strong>
+          </div>
+          <div class="summary-row total">
+            <span>الإجمالي</span>
+            <strong id="summaryTotal">0 د.ع</strong>
+          </div>
+
+          <div class="checkout-actions">
+            <button id="placeOrderBtn" class="btn-primary">إرسال الطلب عبر واتساب</button>
+            <button id="clearCartBtn" class="btn-secondary">تفريغ السلة</button>
+          </div>
+        </aside>
       </div>
     </main>
+
     <script src="/cart.js" defer></script>
   </body>
 </html>

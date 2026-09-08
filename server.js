@@ -199,6 +199,16 @@ app.get('/game', (req, res) => {
   return res.sendFile(path.join(__dirname, 'public', 'game.html'));
 });
 
+// Serve the contact page from the public folder
+app.get('/contact', (req, res) => {
+  return res.sendFile(path.join(__dirname, 'public', 'contact.html'));
+});
+
+// Serve the cart page from the public folder
+app.get('/cart', (req, res) => {
+  return res.sendFile(path.join(__dirname, 'public', 'cart.html'));
+});
+
 app.use(express.static(path.join(__dirname, "public"), { index: false }));
 app.use("/uploads", express.static(path.join(__dirname, "public", "uploads")));
 
