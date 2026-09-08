@@ -1,10 +1,11 @@
 const cartStatus = document.getElementById('cartStatus');
 const cartList = document.getElementById('cartList');
-const placeOrderBtn = document.getElementById('placeOrderBtn');
-const clearCartBtn = document.getElementById('clearCartBtn');
 const summarySubtotal = document.getElementById('summarySubtotal');
 const summaryShipping = document.getElementById('summaryShipping');
 const summaryTotal = document.getElementById('summaryTotal');
+const placeOrderBtn = document.getElementById('placeOrderBtn');
+const clearCartBtn = document.getElementById('clearCartBtn');
+const successPanel = document.getElementById('successPanel');
 const waNumber = '7713377783';
 
 function formatPrice(value, currency = 'IQD') {
@@ -21,6 +22,17 @@ function renderSummary(items) {
   summarySubtotal.textContent = formatPrice(subtotal, 'IQD');
   summaryShipping.textContent = formatPrice(shipping, 'IQD');
   summaryTotal.textContent = formatPrice(total, 'IQD');
+}
+
+function createItemThumb(item) {
+  const colors = [
+    ['#3fa0d6', '#7d2fae'],
+    ['#ff7a18', '#ffb347'],
+    ['#55c4b1', '#186d83'],
+    ['#f75d5d', '#a71d31']
+  ];
+  const pick = colors[Math.abs((item.id || item.name_ar || '').length) % colors.length];
+  return `linear-gradient(135deg, ${pick[0]}, ${pick[1]})`;
 }
 
 async function loadCart() {
@@ -45,19 +57,15 @@ async function loadCart() {
 
     cartStatus.textContent = `${items.length} عنصر في السلة`;
     cartList.innerHTML = items.map((item, index) => `
-      <article class="cart-item" data-index="${index}">
-        <div class="cart-thumb" style="background:linear-gradient(135deg, rgba(255,175,72,.85), rgba(125,118,255,.8));"></div>
-        <div class="cart-item-body">
-          <div class="cart-item-header">
-            <h3>${item.name_ar || item.name_en || 'منتج'}</h3>
-            <span class="cart-price">${formatPrice(item.price, item.currency || 'IQD')}</span>
-          </div>
-          <p class="cart-item-meta">${item.name_en || 'Game'}</p>
-          <div class="cart-item-footer">
-            <span class="cart-tag">${item.currency || 'IQD'}</span>
-          </div>
+      <div class="item-row" style="animation-delay:${index * 0.05}s; --thumb-a:${createItemThumb(item).split(',')[0].replace('linear-gradient(135deg, ', '').trim()}; --thumb-b:${createItemThumb(item).split(',')[1].trim()};">
+        <div class="thumb" style="background:${createItemThumb(item)}"></div>
+        <div class="item-info">
+          <div class="item-name">${item.name_ar || item.name_en || 'منتج'}</div>
+          <div class="item-meta">${item.name_en || 'Game'}</div>
         </div>
-      </article>
+        <div class="item-qty">1 ×</div>
+        <div class="item-price">${formatPrice(item.price, item.currency || 'IQD')}</div>
+      </div>
     `).join('');
 
     renderSummary(items);
@@ -72,10 +80,18 @@ placeOrderBtn.addEventListener('click', async () => {
     const res = await fetch('/api/cart');
     const payload = await res.json();
     const items = payload.cart || [];
+
     if (!items.length) {
       cartStatus.textContent = 'السلة فارغة.';
       return;
     }
+
+    const rocketFly = document.getElementById('rocketFly');
+    const trail = document.getElementById('trail');
+    placeOrderBtn.disabled = true;
+    placeOrderBtn.classList.add('launching');
+    rocketFly.classList.add('go');
+    trail.classList.add('go');
 
     let message = 'طلب شراء من iraq story:\n';
     let total = 0;
@@ -85,10 +101,14 @@ placeOrderBtn.addEventListener('click', async () => {
     });
     message += `المجموع: ${formatPrice(total, 'IQD')}`;
 
-    fetch('/api/cart/clear', { method: 'POST' }).catch(() => {});
+    setTimeout(() => {
+      placeOrderBtn.style.display = 'none';
+      successPanel.classList.add('show');
+      fetch('/api/cart/clear', { method: 'POST' }).catch(() => {});
+    }, 950);
 
     const waUrl = `https://wa.me/${waNumber}?text=${encodeURIComponent(message)}`;
-    window.location.href = waUrl;
+    window.open(waUrl, '_blank', 'noopener');
   } catch (err) {
     console.error(err);
     cartStatus.textContent = 'خطأ أثناء تجهيز الطلب.';
@@ -106,4 +126,22 @@ clearCartBtn.addEventListener('click', async () => {
   }
 });
 
-document.addEventListener('DOMContentLoaded', loadCart);
+document.addEventListener('DOMContentLoaded', () => {
+  const starsContainer = document.getElementById('stars');
+  if (starsContainer) {
+    for (let i = 0; i < 70; i += 1) {
+      const star = document.createElement('div');
+      star.className = 'star';
+      const size = Math.random() * 2 + 1;
+      star.style.width = `${size}px`;
+      star.style.height = `${size}px`;
+      star.style.top = `${Math.random() * 100}%`;
+      star.style.left = `${Math.random() * 100}%`;
+      star.style.animationDelay = `${Math.random() * 3}s`;
+      star.style.animationDuration = `${2 + Math.random() * 3}s`;
+      starsContainer.appendChild(star);
+    }
+  }
+
+  loadCart();
+});

@@ -3,69 +3,110 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>سلة المشتريات | iraq story game</title>
+    <title>مراجعة الطلب | iraq story game</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&family=Baloo+2:wght@600;700&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="/styles.css" />
   </head>
   <body>
-    <div class="bg-shape bg-shape-a"></div>
-    <div class="bg-shape bg-shape-b"></div>
+    <div class="stars" id="stars"></div>
 
-    <header class="store-header">
-      <div class="header-bar">
-        <div class="brand-wrap">
-          <div class="brand-mark">I</div>
-          <div class="brand-copy">
-            <strong>iraq story</strong>
-            <span>Game Store</span>
+    <div class="page cart-review-page">
+      <div class="steps" aria-label="خطوات الطلب">
+        <div class="step done"><span class="dot"></span>السلة</div>
+        <div class="step-line"></div>
+        <div class="step done"><span class="dot"></span>الشحن</div>
+        <div class="step-line"></div>
+        <div class="step active"><span class="dot"></span>المراجعة</div>
+        <div class="step-line"></div>
+        <div class="step"><span class="dot"></span>الدفع</div>
+      </div>
+
+      <h1>راجع طلبك قبل الإطلاق</h1>
+      <p class="page-sub">تأكد من التفاصيل، ثم اضغط تأكيد الطلب لإتمام العملية</p>
+
+      <div id="cartStatus" class="page-status" aria-live="polite"></div>
+
+      <div class="layout">
+        <div class="col-main">
+          <div class="card">
+            <div class="card-head">
+              <h2>عناصر الطلب</h2>
+              <a class="edit-link" href="/">تعديل</a>
+            </div>
+            <div id="cartList" class="item-list"></div>
+          </div>
+
+          <div class="card">
+            <div class="card-head">
+              <h2>معلومات الشحن</h2>
+            </div>
+            <div class="info-grid">
+              <div class="info-line">
+                <span class="label">اسم العميل</span>
+                <span id="customerName">-</span>
+              </div>
+              <div class="info-line">
+                <span class="label">رقم الهاتف</span>
+                <span id="customerPhone">-</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-head">
+              <h2>طريقة الدفع</h2>
+            </div>
+            <div class="pay-method"><span class="card-chip"></span> الدفع عند الاستلام</div>
           </div>
         </div>
 
-        <div class="header-actions" style="margin-right:auto;">
-          <a class="header-link muted" href="/">العودة للمتجر</a>
+        <div class="col-side">
+          <div class="card summary-card">
+            <div class="card-head">
+              <h2>ملخص الطلب</h2>
+            </div>
+
+            <div class="summary-row">
+              <span>المجموع</span>
+              <span id="summarySubtotal">0 د.ع</span>
+            </div>
+            <div class="summary-row">
+              <span>الشحن</span>
+              <span id="summaryShipping">0 د.ع</span>
+            </div>
+            <div class="summary-row total">
+              <span>الإجمالي</span>
+              <span id="summaryTotal">0 د.ع</span>
+            </div>
+
+            <div class="promo-row">
+              <input type="text" value="" placeholder="رمز الخصم" aria-label="رمز الخصم" />
+              <button type="button">تطبيق</button>
+            </div>
+
+            <div class="confirm-zone">
+              <div class="trail" id="trail"></div>
+              <div class="rocket-fly" id="rocketFly">🚀</div>
+              <button id="placeOrderBtn" class="confirm-btn" type="button">
+                <span class="btn-label">تأكيد الطلب</span>
+              </button>
+            </div>
+
+            <div id="successPanel" class="success-panel">
+              <div class="success-badge">✓</div>
+              <div class="success-title">تم إرسال الطلب بنجاح</div>
+              <div class="success-sub">سيتم التواصل معك عبر واتساب لتأكيد الطلب.</div>
+            </div>
+
+            <div class="summary-actions">
+              <button id="clearCartBtn" class="clear-btn" type="button">تفريغ السلة</button>
+            </div>
+          </div>
         </div>
       </div>
-    </header>
-
-    <main class="market-main cart-shell">
-      <div class="cart-toolbar">
-        <div>
-          <p class="hero-kicker">السلة</p>
-          <h1>سلة المشتريات</h1>
-        </div>
-      </div>
-
-      <section id="cartStatus" class="status" aria-live="polite"></section>
-
-      <div class="cart-layout">
-        <section class="cart-panel">
-          <div id="cartList" class="cart-items"></div>
-        </section>
-
-        <aside class="cart-summary">
-          <h2>ملخص الطلب</h2>
-          <div class="summary-row">
-            <span>المجموع</span>
-            <strong id="summarySubtotal">0 د.ع</strong>
-          </div>
-          <div class="summary-row">
-            <span>الشحن</span>
-            <strong id="summaryShipping">0 د.ع</strong>
-          </div>
-          <div class="summary-row total">
-            <span>الإجمالي</span>
-            <strong id="summaryTotal">0 د.ع</strong>
-          </div>
-
-          <div class="checkout-actions">
-            <button id="placeOrderBtn" class="btn-primary">إرسال الطلب عبر واتساب</button>
-            <button id="clearCartBtn" class="btn-secondary">تفريغ السلة</button>
-          </div>
-        </aside>
-      </div>
-    </main>
+    </div>
 
     <script src="/cart.js" defer></script>
   </body>
