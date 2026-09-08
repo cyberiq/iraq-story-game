@@ -154,15 +154,34 @@ function normalizeSlug(value) {
     .replace(/-+/g, "-");
 }
 
+async function getCsrfToken() {
+  const response = await fetch('/api/csrf-token', { credentials: 'same-origin' });
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok || !payload.csrfToken) {
+    throw new Error('فشل في تهيئة حماية الطلبات');
+  }
+  return payload.csrfToken;
+}
+
 async function fetchJson(url, options = {}) {
+  const method = String(options.method || 'GET').toUpperCase();
+  const headers = { ...(options.headers || {}) };
+  if (!headers['Content-Type'] && !(options.body instanceof FormData) && method !== 'GET' && method !== 'HEAD') {
+    headers['Content-Type'] = 'application/json';
+  }
+
+  if (method !== 'GET' && method !== 'HEAD' && method !== 'OPTIONS') {
+    const csrfToken = await getCsrfToken();
+    headers['X-CSRF-Token'] = csrfToken;
+  }
+
   const response = await fetch(url, {
-    headers: { "Content-Type": "application/json" },
     credentials: options.credentials || 'same-origin',
-    ...options
+    ...options,
+    headers
   });
 
   if (response.status === 401) {
-    // session likely expired — redirect to login
     try { window.location.href = '/login'; } catch (e) {}
     throw new Error('Unauthorized');
   }

@@ -6,6 +6,9 @@ const path = require("path");
 const fs = require("fs");
 const session = require("express-session");
 const multer = require("multer");
+const helmet = require("helmet");
+const rateLimit = require("express-rate-limit");
+const csrf = require("csurf");
 
 const {
   seedData,
@@ -27,6 +30,7 @@ const PORT = Number(process.env.PORT || 3000);
 const ADMIN_USERNAME = process.env.ADMIN_USERNAME || "admin";
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "admin";
 const SESSION_SECRET = process.env.SESSION_SECRET || "iraq-story-game-session-secret";
+const isProduction = String(process.env.NODE_ENV || "").toLowerCase() === "production";
 const allowedOrigins = [
   'https://www.iraqstorycard.tech',
   'https://iraqstorycard.tech',
@@ -152,6 +156,13 @@ const upload = multer({
 });
 
 app.disable('x-powered-by');
+app.use(helmet({
+  contentSecurityPolicy: false,
+  crossOriginResourcePolicy: { policy: 'same-origin' },
+  frameguard: { action: 'deny' },
+  noSniff: true,
+  referrerPolicy: { policy: 'strict-origin-when-cross-origin' }
+}));
 app.use((req, res, next) => {
   res.setHeader('X-Frame-Options', 'DENY');
   res.setHeader('X-Content-Type-Options', 'nosniff');
@@ -172,24 +183,68 @@ app.use(cors({
   },
   credentials: true
 }));
-app.use(express.json());
+app.use(express.json({ limit: '1mb' }));
 app.use(
   session({
+    name: 'igs_session',
     secret: SESSION_SECRET,
     resave: false,
     saveUninitialized: false,
+    rolling: true,
+    proxy: isProduction,
     cookie: {
       httpOnly: true,
-      sameSite: "lax",
-      secure: String(process.env.NODE_ENV || '').toLowerCase() === 'production',
+      sameSite: 'lax',
+      secure: isProduction,
       maxAge: 1000 * 60 * 60 * 12
     }
   })
 );
 // If running behind a proxy/load balancer in production, trust first proxy for secure cookies
-if (String(process.env.NODE_ENV || '').toLowerCase() === 'production') {
+if (isProduction) {
   app.set('trust proxy', 1);
 }
+
+const apiRateLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 180,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'تم تجاوز الحد المسموح للطلبات. حاول مرة أخرى بعد دقيقة.' },
+  keyGenerator: (req) => req.ip || req.socket?.remoteAddress || 'unknown'
+});
+
+const authRateLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'تم تجاوز عدد محاولات تسجيل الدخول. حاول لاحقًا.' },
+  keyGenerator: (req) => req.ip || req.socket?.remoteAddress || 'unknown'
+});
+
+const csrfProtection = csrf({
+  cookie: {
+    httpOnly: true,
+    sameSite: 'lax',
+    secure: isProduction,
+    maxAge: 60 * 60 * 1000
+  }
+});
+
+app.use('/api', apiRateLimiter);
+app.use('/api/auth/login', authRateLimiter);
+app.use((req, res, next) => {
+  if (req.method === 'GET' || req.method === 'HEAD' || req.method === 'OPTIONS') {
+    return next();
+  }
+
+  if (req.path.startsWith('/api')) {
+    return csrfProtection(req, res, next);
+  }
+
+  return next();
+});
 
 function requireAdminPage(req, res, next) {
   if (req.session && req.session.isAdmin === true) {
@@ -426,6 +481,10 @@ app.get("/api/health", (req, res) => {
 app.get("/api/auth/status", (req, res) => {
   const authenticated = Boolean(req.session && req.session.isAdmin === true);
   res.json({ authenticated });
+});
+
+app.get('/api/csrf-token', (req, res) => {
+  res.json({ csrfToken: req.csrfToken() });
 });
 
 // Simple IP-based login attempt tracking to mitigate brute-force

@@ -13,6 +13,15 @@ const buyBtn = document.getElementById('buyBtn');
 let currentGame = null;
 let activeCoupon = null;
 
+async function getCsrfToken() {
+  const response = await fetch('/api/csrf-token', { credentials: 'same-origin' });
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok || !payload.csrfToken) {
+    throw new Error('فشل في تهيئة حماية الطلبات');
+  }
+  return payload.csrfToken;
+}
+
 function formatPrice(value, currency = "IQD") {
   const numericValue = Number(value ?? 0);
   if (!Number.isFinite(numericValue) || numericValue <= 0) {
@@ -85,9 +94,14 @@ async function loadGameDetails() {
       }
 
       try {
+        const csrfToken = await getCsrfToken();
         const res = await fetch('/api/coupons/validate', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          credentials: 'same-origin',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-Token': csrfToken
+          },
           body: JSON.stringify({ code })
         });
 
@@ -120,9 +134,14 @@ async function loadGameDetails() {
 
       // Try adding to server-side session cart, then redirect to cart page
       try {
+        const csrfToken = await getCsrfToken();
         await fetch('/api/cart/add', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          credentials: 'same-origin',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-Token': csrfToken
+          },
           body: JSON.stringify({
             id: currentGame.id,
             name_ar: currentGame.name_ar,

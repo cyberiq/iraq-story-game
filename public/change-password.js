@@ -8,6 +8,15 @@ function setStatus(message) {
   statusNode.textContent = message;
 }
 
+async function getCsrfToken() {
+  const response = await fetch('/api/csrf-token', { credentials: 'same-origin' });
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok || !payload.csrfToken) {
+    throw new Error('فشل في تهيئة حماية الطلبات');
+  }
+  return payload.csrfToken;
+}
+
 async function ensureAuth() {
   const response = await fetch("/api/auth/status");
   const payload = await response.json().catch(() => ({}));
@@ -30,9 +39,14 @@ form.addEventListener("submit", async (event) => {
       return;
     }
 
+    const csrfToken = await getCsrfToken();
     const response = await fetch("/api/auth/change-password", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      credentials: 'same-origin',
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRF-Token": csrfToken
+      },
       body: JSON.stringify({
         currentPassword: currentPassword.value,
         newPassword: newPassword.value,

@@ -8,6 +8,15 @@ const clearCartBtn = document.getElementById('clearCartBtn');
 const successPanel = document.getElementById('successPanel');
 const waNumber = '7713377783';
 
+async function getCsrfToken() {
+  const response = await fetch('/api/csrf-token', { credentials: 'same-origin' });
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok || !payload.csrfToken) {
+    throw new Error('فشل في تهيئة حماية الطلبات');
+  }
+  return payload.csrfToken;
+}
+
 function formatPrice(value, currency = 'IQD') {
   const v = Number(value || 0);
   if (!Number.isFinite(v) || v <= 0) return 'مجانية';
@@ -101,10 +110,19 @@ placeOrderBtn.addEventListener('click', async () => {
     });
     message += `المجموع: ${formatPrice(total, 'IQD')}`;
 
-    setTimeout(() => {
+    setTimeout(async () => {
       placeOrderBtn.style.display = 'none';
       successPanel.classList.add('show');
-      fetch('/api/cart/clear', { method: 'POST' }).catch(() => {});
+      try {
+        const csrfToken = await getCsrfToken();
+        await fetch('/api/cart/clear', {
+          method: 'POST',
+          credentials: 'same-origin',
+          headers: { 'X-CSRF-Token': csrfToken }
+        });
+      } catch (err) {
+        console.warn('Failed to clear cart after order', err);
+      }
     }, 950);
 
     const waUrl = `https://wa.me/${waNumber}?text=${encodeURIComponent(message)}`;
@@ -117,7 +135,12 @@ placeOrderBtn.addEventListener('click', async () => {
 
 clearCartBtn.addEventListener('click', async () => {
   try {
-    await fetch('/api/cart/clear', { method: 'POST' });
+    const csrfToken = await getCsrfToken();
+    await fetch('/api/cart/clear', {
+      method: 'POST',
+      credentials: 'same-origin',
+      headers: { 'X-CSRF-Token': csrfToken }
+    });
     cartStatus.textContent = 'تم تفريغ السلة.';
     loadCart();
   } catch (err) {
