@@ -393,46 +393,10 @@
       <div class="card">
         <div class="card-head">
           <h2 id="itemsTitle">المنتجات</h2>
-          <a href="/cart" class="edit-link">تعديل السلة</a>
+          <button type="button" class="edit-link" id="toggleCartEditor" style="background:none;border:none;cursor:pointer;">تعديل السلة</button>
         </div>
 
         <div id="checkoutItems"></div>
-      </div>
-
-      <div class="card">
-        <div class="card-head">
-          <h2>عنوان الشحن</h2>
-          <a href="/contact" class="edit-link">تعديل</a>
-        </div>
-        <div class="info-grid">
-          <div class="info-line">
-            <span class="label">الاسم</span>
-            إسمك هنا
-          </div>
-          <div class="info-line">
-            <span class="label">العنوان</span>
-            بغداد / العراق
-          </div>
-          <div class="info-line">
-            <span class="label">الهاتف</span>
-            07713377783
-          </div>
-          <div class="info-line">
-            <span class="label">طريقة الشحن</span>
-            توصيل سريع · يوصل خلال 24-48 ساعة
-          </div>
-        </div>
-      </div>
-
-      <div class="card">
-        <div class="card-head">
-          <h2>طريقة الدفع</h2>
-          <a href="/contact" class="edit-link">تعديل</a>
-        </div>
-        <div class="pay-method">
-          <div class="card-chip"></div>
-          <span>الدفع عبر واتساب عند تأكيد الطلب</span>
-        </div>
       </div>
     </div>
 
@@ -524,6 +488,32 @@
     }
   }
 
+  function saveCartItems(items) {
+    localStorage.setItem('iraqGameCart', JSON.stringify(items));
+  }
+
+  function updateCartItem(id, delta) {
+    const items = getCartItems();
+    const next = items
+      .map((item) => {
+        if (String(item.id) === String(id)) {
+          const qty = Math.max(0, Number(item.qty || 1) + delta);
+          return qty > 0 ? { ...item, qty } : null;
+        }
+        return item;
+      })
+      .filter(Boolean);
+
+    saveCartItems(next);
+    renderCheckout();
+  }
+
+  function removeCartItem(id) {
+    const items = getCartItems().filter((item) => String(item.id) !== String(id));
+    saveCartItems(items);
+    renderCheckout();
+  }
+
   let couponPercent = 0;
 
   function renderCheckout() {
@@ -563,13 +553,29 @@
             <div class="item-name">${name}</div>
             <div class="item-meta">الكمية: ${qty}</div>
           </div>
-          <div class="item-qty">${qty}</div>
+          <div style="display:flex; align-items:center; gap:8px; margin-inline:10px;">
+            <button type="button" data-action="minus" data-id="${item.id}" style="width:28px;height:28px;border-radius:8px;border:1px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.04);color:#fff;cursor:pointer;">-</button>
+            <span class="item-qty" style="min-width:34px; text-align:center;">${qty}</span>
+            <button type="button" data-action="plus" data-id="${item.id}" style="width:28px;height:28px;border-radius:8px;border:1px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.04);color:#fff;cursor:pointer;">+</button>
+          </div>
+          <button type="button" data-action="remove" data-id="${item.id}" style="padding:7px 10px;border-radius:8px;border:1px solid rgba(239,91,107,0.25);background:rgba(239,91,107,0.12);color:#ffc7cc;cursor:pointer;">حذف</button>
           <div class="item-price">${priceFormat(price)}</div>
         </div>
       `;
     }).join('');
+
+    checkoutItemsWrap.querySelectorAll('[data-action]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const id = btn.dataset.id;
+        const action = btn.dataset.action;
+        if (action === 'plus') updateCartItem(id, 1);
+        if (action === 'minus') updateCartItem(id, -1);
+        if (action === 'remove') removeCartItem(id);
+      });
+    });
   }
 
+  applyCouponBtn.textContent = 'تفعيل كود الخصم';
   applyCouponBtn.addEventListener('click', async () => {
     const code = couponInput.value.trim();
     if (!code) {
@@ -593,6 +599,17 @@
     } catch (error) {
       alert(error.message || 'الكوبون غير صالح');
     }
+  });
+
+  document.getElementById('toggleCartEditor').addEventListener('click', () => {
+    const items = getCartItems();
+    if (!items.length) {
+      alert('السلة فارغة، لا يوجد شيء لتعديله');
+      return;
+    }
+    renderCheckout();
+    const first = checkoutItemsWrap.querySelector('[data-action="plus"]');
+    if (first) first.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
   });
 
   confirmBtn.addEventListener('click', () => {
