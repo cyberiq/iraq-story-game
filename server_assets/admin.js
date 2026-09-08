@@ -100,30 +100,39 @@ function setStatus(message) {
 }
 
 function showInlineConfirm({ message, onConfirm, onCancel }) {
-  adminStatus.innerHTML = `
-    <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:12px 16px;border-radius:12px;background:rgba(255,115,115,0.08);border:1px solid rgba(255,115,115,0.28);color:#fff;">
-      <span style="font-weight:600;">${message}</span>
-      <div style="display:flex;gap:8px;flex-wrap:wrap;">
-        <button type="button" class="btn-danger confirm-yes" style="padding:8px 14px;">نعم، حذف</button>
-        <button type="button" class="btn-secondary confirm-no" style="padding:8px 14px;">إلغاء</button>
-      </div>
+  document.querySelectorAll('.admin-inline-confirm-backdrop').forEach((node) => node.remove());
+
+  const backdrop = document.createElement('div');
+  backdrop.className = 'admin-inline-confirm-backdrop';
+
+  const modal = document.createElement('div');
+  modal.className = 'admin-inline-confirm';
+  modal.innerHTML = `
+    <div class="admin-inline-confirm-header">تأكيد الحذف</div>
+    <p>${message}</p>
+    <div class="admin-inline-confirm-actions">
+      <button type="button" class="btn-secondary confirm-no">إلغاء</button>
+      <button type="button" class="btn-danger confirm-yes">حذف</button>
     </div>
   `;
 
-  const confirmBtn = adminStatus.querySelector('.confirm-yes');
-  const cancelBtn = adminStatus.querySelector('.confirm-no');
+  backdrop.appendChild(modal);
+  document.body.appendChild(backdrop);
+
+  const confirmBtn = modal.querySelector('.confirm-yes');
+  const cancelBtn = modal.querySelector('.confirm-no');
+
+  const close = () => backdrop.remove();
 
   confirmBtn?.addEventListener('click', async () => {
-    adminStatus.innerHTML = '';
-    adminStatus.textContent = '';
+    close();
     if (typeof onConfirm === 'function') {
       await onConfirm();
     }
   });
 
   cancelBtn?.addEventListener('click', () => {
-    adminStatus.innerHTML = '';
-    adminStatus.textContent = '';
+    close();
     if (typeof onCancel === 'function') {
       onCancel();
     }
