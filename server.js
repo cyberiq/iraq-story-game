@@ -7,7 +7,7 @@ const fs = require("fs");
 const session = require("express-session");
 const multer = require("multer");
 const helmet = require("helmet");
-const rateLimit = require("express-rate-limit");
+const { rateLimit, ipKeyGenerator } = require("express-rate-limit");
 const csrf = require("csurf");
 
 const {
@@ -211,7 +211,10 @@ const apiRateLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   message: { error: 'تم تجاوز الحد المسموح للطلبات. حاول مرة أخرى بعد دقيقة.' },
-  keyGenerator: (req) => req.ip || req.socket?.remoteAddress || 'unknown'
+  keyGenerator: (req) => {
+    const ip = req.ip || req.socket?.remoteAddress || 'unknown';
+    return ipKeyGenerator(ip);
+  }
 });
 
 const authRateLimiter = rateLimit({
@@ -220,7 +223,10 @@ const authRateLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   message: { error: 'تم تجاوز عدد محاولات تسجيل الدخول. حاول لاحقًا.' },
-  keyGenerator: (req) => req.ip || req.socket?.remoteAddress || 'unknown'
+  keyGenerator: (req) => {
+    const ip = req.ip || req.socket?.remoteAddress || 'unknown';
+    return ipKeyGenerator(ip);
+  }
 });
 
 const csrfProtection = csrf({
