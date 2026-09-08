@@ -11,10 +11,43 @@ const cartCount = document.getElementById('cartCount');
 const companyTemplate = document.getElementById("companyTemplate");
 const gameTemplate = document.getElementById("gameTemplate");
 
+const STORAGE_NS = (() => {
+  try {
+    const existing = sessionStorage.getItem('iraqGameSessionNs');
+    if (existing) return existing;
+    const created = `iraqGame_${Date.now()}_${Math.random().toString(16).slice(2, 10)}`;
+    sessionStorage.setItem('iraqGameSessionNs', created);
+    return created;
+  } catch (error) {
+    console.warn('sessionStorage unavailable, falling back to single-session namespace');
+    return 'iraqGame_default';
+  }
+})();
+
+window.__IRAQ_GAME_SESSION_NS__ = STORAGE_NS;
+
+function getSessionValue(key, fallback) {
+  try {
+    const raw = sessionStorage.getItem(`${STORAGE_NS}:${key}`);
+    if (raw === null) return fallback;
+    return JSON.parse(raw);
+  } catch (error) {
+    return fallback;
+  }
+}
+
+function setSessionValue(key, value) {
+  try {
+    sessionStorage.setItem(`${STORAGE_NS}:${key}`, JSON.stringify(value));
+  } catch (error) {
+    console.warn('Unable to persist session state:', error);
+  }
+}
+
 let debounceTimer;
 let activeCategory = 'all';
-let cart = JSON.parse(localStorage.getItem('iraqGameCart') || '[]');
-let language = localStorage.getItem('iraqGameLang') || 'ar';
+let cart = getSessionValue('iraqGameCart', []);
+let language = getSessionValue('iraqGameLang', 'ar');
 
 const localFallbackCompanies = [
   {
@@ -515,7 +548,7 @@ function createGameNode(game) {
       });
     }
     cart = nextCart;
-    localStorage.setItem('iraqGameCart', JSON.stringify(cart));
+    setSessionValue('iraqGameCart', cart);
     renderCart();
     // animate a flying image to the cart if widget is available
     try { if (window.animateAddToCart) window.animateAddToCart(gameCover); } catch (e) {}
@@ -822,14 +855,14 @@ function renderCart() {
         alert(language === 'en' ? 'Your cart is empty!' : 'السلة فارغة!');
         return;
       }
-      localStorage.setItem('iraqGameCheckoutReview', JSON.stringify({ 
-        name: '', 
-        phone: '', 
-        email: '', 
+      setSessionValue('iraqGameCheckoutReview', {
+        name: '',
+        phone: '',
+        email: '',
         notes: '',
-        coupon: localStorage.getItem('iraqGameCoupon') || '',
-        discountPercent: Number(localStorage.getItem('iraqGameDiscountPercent') || 0)
-      }));
+        coupon: getSessionValue('iraqGameCoupon', ''),
+        discountPercent: Number(getSessionValue('iraqGameDiscountPercent', 0))
+      });
       window.location.href = '/checkout-review.html';
     });
 
@@ -840,7 +873,7 @@ function renderCart() {
       }
       if (confirm(language === 'en' ? 'Are you sure you want to clear the cart?' : 'هل تأكد من إفراغ السلة؟')) {
         cart = [];
-        localStorage.setItem('iraqGameCart', JSON.stringify(cart));
+        setSessionValue('iraqGameCart', cart);
         renderCart();
       }
     });
@@ -860,7 +893,7 @@ function renderCart() {
   }
 
   const subtotal = cart.reduce((sum, item) => sum + Number(item.price || 0) * Number(item.qty || 1), 0);
-  const discountPercent = Number(localStorage.getItem('iraqGameDiscountPercent') || 0);
+  const discountPercent = Number(getSessionValue('iraqGameDiscountPercent', 0));
   const discount = Math.round(subtotal * (discountPercent / 100));
   const total = Math.max(0, subtotal - discount);
 
@@ -899,7 +932,7 @@ function renderCart() {
     btn.addEventListener('click', (e) => {
       const idx = Number(e.target.dataset.index);
       cart = cart.filter((_, i) => i !== idx);
-      localStorage.setItem('iraqGameCart', JSON.stringify(cart));
+      setSessionValue('iraqGameCart', cart);
       renderCart();
     });
   });
@@ -998,7 +1031,7 @@ function applyLanguage() {
 
 languageToggle.addEventListener('click', () => {
   language = language === 'ar' ? 'en' : 'ar';
-  localStorage.setItem('iraqGameLang', language);
+  setSessionValue('iraqGameLang', language);
   applyLanguage();
   fetchCatalog();
 });

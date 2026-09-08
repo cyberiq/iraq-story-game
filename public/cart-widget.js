@@ -13,6 +13,15 @@
 
   const cartButton = () => document.getElementById('cartButton') || document.querySelector('.cart-button');
   const cartCount = () => document.getElementById('cartCount');
+  const getCartFromSession = () => {
+    try {
+      const ns = window.__IRAQ_GAME_SESSION_NS__ || sessionStorage.getItem('iraqGameSessionNs') || 'iraqGame_default';
+      const raw = sessionStorage.getItem(`${ns}:iraqGameCart`);
+      return raw ? JSON.parse(raw) : [];
+    } catch (error) {
+      return [];
+    }
+  };
 
   function bezier(t, p0, p1, p2){
     return (1 - t) * (1 - t) * p0 + 2 * (1 - t) * t * p1 + t * t * p2;
@@ -78,7 +87,7 @@
       function arrive(){
         // update visible count from localStorage (app.js already updated cart)
         try{
-          const cart = JSON.parse(localStorage.getItem('iraqGameCart') || '[]');
+          const cart = getCartFromSession();
           const count = cart.reduce((s,i)=>s+Number(i.qty||0),0);
           const badge = cartCount();
           if(badge) badge.textContent = String(count);
