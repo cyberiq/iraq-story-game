@@ -246,6 +246,7 @@
         border-radius: 18px;
         overflow: hidden;
         padding: 14px;
+        box-shadow: 0 16px 34px -18px rgba(139, 92, 246, 0.55);
       }
 
       .company-header {
@@ -254,6 +255,8 @@
         align-items: center;
         gap: 12px;
         margin-bottom: 14px;
+        padding-bottom: 12px;
+        border-bottom: 1px solid rgba(255,255,255,0.08);
       }
 
       .company-brand {
@@ -269,7 +272,8 @@
         display: grid;
         place-items: center;
         font-size: 22px;
-        background: rgba(255,255,255,0.06);
+        background: linear-gradient(135deg, rgba(139,92,246,0.15), rgba(51,224,200,0.10));
+        border: 1px solid rgba(255,255,255,0.08);
       }
 
       .company-name {
@@ -287,6 +291,7 @@
         border-radius: 999px;
         padding: 5px 10px;
         font-size: 11px;
+        color: var(--muted);
       }
 
       .games-list {
@@ -301,6 +306,13 @@
         overflow: hidden;
         display: flex;
         flex-direction: column;
+        transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
+      }
+
+      .game-card:hover {
+        transform: translateY(-4px);
+        border-color: rgba(139, 92, 246, 0.45);
+        box-shadow: 0 18px 30px -20px rgba(139, 92, 246, 0.6);
       }
 
       .game-cover {
@@ -308,10 +320,15 @@
         height: 140px;
         object-fit: cover;
         display: block;
+        background: linear-gradient(135deg, rgba(139,92,246,0.55), rgba(51,224,200,0.35));
       }
 
       .game-content {
         padding: 12px;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        flex: 1;
       }
 
       .game-name {
@@ -321,7 +338,7 @@
       }
 
       .game-meta {
-        margin-top: 6px;
+        margin-top: 0;
         color: var(--muted);
         font-size: 12px;
       }
@@ -331,7 +348,8 @@
         align-items: center;
         justify-content: space-between;
         gap: 8px;
-        margin-top: 12px;
+        margin-top: auto;
+        padding-top: 6px;
       }
 
       .game-price {
@@ -354,11 +372,17 @@
         color: var(--white);
         padding: 8px 12px;
         font-size: 12px;
+        transition: all 0.15s ease;
       }
 
       .add-to-cart {
         background: linear-gradient(135deg, var(--purple), #6d3fd4);
         border-color: transparent;
+        min-width: 104px;
+      }
+
+      .add-to-cart:hover {
+        filter: brightness(1.06);
       }
 
       .details-link {
@@ -410,6 +434,7 @@
         .header-bar {
           flex-wrap: wrap;
           justify-content: center;
+          padding-inline: 12px;
         }
         .brand-wrap {
           margin-inline-start: 0;
@@ -421,6 +446,19 @@
           max-width: none;
         }
         .company-grid { grid-template-columns: 1fr; }
+        .game-card { border-radius: 12px; }
+        .game-cover { height: 120px; }
+      }
+
+      @media (max-width: 420px) {
+        .market-main { padding: 0 12px; }
+        .market-hero { padding: 20px 16px; border-radius: 20px; }
+        .hero-subtitle { font-size: 14px; }
+        .company-grid { gap: 12px; }
+        .company-card { padding: 10px; }
+        .game-content { padding: 10px; }
+        .card-actions { gap: 6px; }
+        .add-to-cart, .details-link { padding: 7px 8px; font-size: 11px; }
       }
     </style>
   </head>
