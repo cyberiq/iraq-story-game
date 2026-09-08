@@ -18,8 +18,8 @@ const {
   createGame,
   updateGame,
   deleteCompany,
-  deleteGame
-  ,getCoupons, createCoupon, deleteCoupon, validateCoupon
+  deleteGame,
+  getCoupons, createCoupon, deleteCoupon, validateCoupon
 } = require("./db");
 
 const app = express();
@@ -738,7 +738,7 @@ app.post('/api/games', requireAdmin, upload.single('image'), async (req, res) =>
     const body = req.body || {};
     const coverImageUrl = req.file ? `/uploads/${req.file.filename}` : (body.cover_image_url || null);
     const payload = {
-      company_id: Number(body.company_id),
+      company_id: Number(body.company_id) || undefined,
       product_type: body.product_type || 'game',
       product_subtype: body.product_subtype || null,
       name_ar: body.name_ar || '',
@@ -765,7 +765,7 @@ app.put('/api/games/:id', requireAdmin, upload.single('image'), async (req, res)
     const body = req.body || {};
     const coverImageUrl = req.file ? `/uploads/${req.file.filename}` : (body.cover_image_url || body.current_cover_image_url || null);
     const payload = {
-      company_id: Number(body.company_id),
+      company_id: Number(body.company_id) || undefined,
       product_type: body.product_type || 'game',
       product_subtype: body.product_subtype || null,
       name_ar: body.name_ar || '',
@@ -797,18 +797,40 @@ app.delete('/api/games/:id', requireAdmin, async (req, res) => {
   }
 });
 
-// Start the HTTP server
-const server = app.listen(PORT, '0.0.0.0', () => {
-  console.log(`Server listening on port ${PORT} (env=${process.env.NODE_ENV || 'development'})`);
+async function startServer() {
+  try {
+    await initDatabase();
+    databaseReady = true;
+    console.log('Database initialized');
+  } catch (error) {
+    console.error('Database initialization failed:', error);
+    databaseReady = false;
+  }
+
+  return app.listen(PORT, '0.0.0.0', () => {
+    console.log(`Server listening on port ${PORT} (env=${process.env.NODE_ENV || 'development'})`);
+  });
+}
+
+let server;
+startServer().then((instance) => {
+  server = instance;
+}).catch((error) => {
+  console.error('Failed to start server', error);
+  process.exit(1);
 });
 
 // Graceful shutdown handlers
 function shutdown(signal) {
   console.log(`Received ${signal}, closing server...`);
-  server.close(() => {
-    console.log('Server closed, exiting');
-    process.exit(0);
-  });
+  if (server && typeof server.close === 'function') {
+    server.close(() => {
+      console.log('Server closed, exiting');
+      process.exit(0);
+    });
+    return;
+  }
+  process.exit(0);
 }
 
 process.on('SIGINT', () => shutdown('SIGINT'));

@@ -579,9 +579,11 @@ async function ensureDefaultCompany() {
 gameForm.addEventListener("submit", async (event) => {
   event.preventDefault();
 
-  const companyIdValue = gameCompany && gameCompany.value ? Number(gameCompany.value) : await ensureDefaultCompany();
+  const companyIdValue = (gameCompany && gameCompany.value) ? Number(gameCompany.value) : await ensureDefaultCompany();
   const formData = new FormData();
-  formData.append("company_id", String(companyIdValue));
+  if (companyIdValue) {
+    formData.append("company_id", String(companyIdValue));
+  }
   formData.append("name_ar", gameNameAr.value.trim());
   formData.append("name_en", gameNameEn.value.trim());
   formData.append("genre", gameGenre.value.trim());

@@ -1017,6 +1017,16 @@ async function createCompany({ slug, name_ar, name_en }) {
   return { id };
 }
 
+async function resolveDefaultCompanyId() {
+  const companies = await getCompaniesList();
+  if (companies.length) {
+    return Number(companies[0].id);
+  }
+
+  const created = await createCompany({ slug: 'default-store', name_ar: 'افتراضي', name_en: 'Default' });
+  return Number(created.id || 1);
+}
+
 async function updateCompany(id, { slug, name_ar, name_en }) {
   if (usePg) {
     const res = await pgPool.query('UPDATE companies SET slug=$1, name_ar=$2, name_en=$3 WHERE id=$4', [String(slug).trim(), String(name_ar).trim(), String(name_en).trim(), Number(id)]);
@@ -1035,10 +1045,12 @@ async function updateCompany(id, { slug, name_ar, name_en }) {
 }
 
 async function createGame({ company_id, product_type = 'game', product_subtype = null, name_ar, name_en, genre, release_year, price, currency, cover_image_url, description }) {
+  const safeCompanyId = Number(company_id) || await resolveDefaultCompanyId();
+
   if (usePg) {
     const res = await pgPool.query(
       'INSERT INTO games (company_id, product_type, product_subtype, name_ar, name_en, genre, release_year, price, currency, cover_image_url, description) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11) RETURNING id',
-      [Number(company_id), String(product_type || 'game'), product_subtype || null, String(name_ar).trim(), String(name_en).trim(), String(genre).trim(), Number(release_year), Number(price || 0), String(currency || 'IQD').toUpperCase(), (cover_image_url || '').trim() || null, (description || '').trim() || null]
+      [safeCompanyId, String(product_type || 'game'), product_subtype || null, String(name_ar).trim(), String(name_en).trim(), String(genre).trim(), Number(release_year), Number(price || 0), String(currency || 'IQD').toUpperCase(), (cover_image_url || '').trim() || null, (description || '').trim() || null]
     );
     return { id: res.rows[0].id };
   }
@@ -1047,7 +1059,7 @@ async function createGame({ company_id, product_type = 'game', product_subtype =
     const stmt = db.prepare('INSERT INTO games (company_id, product_type, product_subtype, name_ar, name_en, genre, release_year, price, currency, cover_image_url, description) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
     try {
       stmt.run([
-        Number(company_id),
+        safeCompanyId,
         String(product_type || 'game'),
         product_subtype || null,
         String(name_ar).trim(),
@@ -1067,7 +1079,7 @@ async function createGame({ company_id, product_type = 'game', product_subtype =
     const stmt2 = db.prepare('INSERT INTO games (company_id, name_ar, name_en, genre, release_year, price, cover_image_url, description) VALUES (?, ?, ?, ?, ?, ?, ?, ?)');
     try {
       stmt2.run([
-        Number(company_id),
+        safeCompanyId,
         String(name_ar).trim(),
         String(name_en).trim(),
         String(genre).trim(),
@@ -1087,14 +1099,16 @@ async function createGame({ company_id, product_type = 'game', product_subtype =
 }
 
 async function updateGame(id, { company_id, product_type = 'game', product_subtype = null, name_ar, name_en, genre, release_year, price, currency, cover_image_url, description }) {
+  const safeCompanyId = Number(company_id) || await resolveDefaultCompanyId();
+
   if (usePg) {
-    const res = await pgPool.query('UPDATE games SET company_id=$1, product_type=$2, product_subtype=$3, name_ar=$4, name_en=$5, genre=$6, release_year=$7, price=$8, currency=$9, cover_image_url=$10, description=$11 WHERE id=$12', [Number(company_id), String(product_type || 'game'), product_subtype || null, String(name_ar).trim(), String(name_en).trim(), String(genre).trim(), Number(release_year), Number(price || 0), String(currency || 'IQD').toUpperCase(), (cover_image_url || '').trim() || null, (description || '').trim() || null, Number(id)]);
+    const res = await pgPool.query('UPDATE games SET company_id=$1, product_type=$2, product_subtype=$3, name_ar=$4, name_en=$5, genre=$6, release_year=$7, price=$8, currency=$9, cover_image_url=$10, description=$11 WHERE id=$12', [safeCompanyId, String(product_type || 'game'), product_subtype || null, String(name_ar).trim(), String(name_en).trim(), String(genre).trim(), Number(release_year), Number(price || 0), String(currency || 'IQD').toUpperCase(), (cover_image_url || '').trim() || null, (description || '').trim() || null, Number(id)]);
     return res.rowCount || 0;
   }
   const stmt = db.prepare('UPDATE games SET company_id = ?, product_type = ?, product_subtype = ?, name_ar = ?, name_en = ?, genre = ?, release_year = ?, price = ?, currency = ?, cover_image_url = ?, description = ? WHERE id = ?');
   try {
     stmt.run([
-      Number(company_id),
+      safeCompanyId,
       String(product_type || 'game'),
       product_subtype || null,
       String(name_ar).trim(),
@@ -1119,7 +1133,7 @@ async function updateGame(id, { company_id, product_type = 'game', product_subty
     const stmt2 = db.prepare('UPDATE games SET company_id = ?, name_ar = ?, name_en = ?, genre = ?, release_year = ?, price = ?, cover_image_url = ?, description = ? WHERE id = ?');
     try {
       stmt2.run([
-        Number(company_id),
+        safeCompanyId,
         String(name_ar).trim(),
         String(name_en).trim(),
         String(genre).trim(),
