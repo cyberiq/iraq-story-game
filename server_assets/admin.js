@@ -1,10 +1,4 @@
 const adminStatus = document.getElementById("adminStatus");
-const companyForm = document.getElementById("companyForm");
-const companyId = document.getElementById("companyId");
-const companySlug = document.getElementById("companySlug");
-const companyNameAr = document.getElementById("companyNameAr");
-const companyNameEn = document.getElementById("companyNameEn");
-const companyReset = document.getElementById("companyReset");
 
 const gameForm = document.getElementById("gameForm");
 const gameId = document.getElementById("gameId");
@@ -151,6 +145,7 @@ async function checkAuth() {
 }
 
 function fillCompaniesSelect(companies) {
+  if (!gameCompany) return;
   gameCompany.innerHTML = "";
   companies.forEach((company) => {
     const option = document.createElement("option");
@@ -207,13 +202,6 @@ if (gameCurrency) {
 }
 
 // Helper: format price for display according to currency
-function clearCompanyForm() {
-  companyId.value = "";
-  companySlug.value = "";
-  companyNameAr.value = "";
-  companyNameEn.value = "";
-}
-
 function clearGameForm() {
   gameId.value = "";
   gameNameAr.value = "";
@@ -240,89 +228,61 @@ function clearGameForm() {
 function renderAdminCatalog(companies) {
   adminCatalog.innerHTML = "";
 
-  if (!companies.length) {
-    adminCatalog.textContent = "لا توجد بيانات.";
+  const flatGames = [];
+  companies.forEach((company) => {
+    (company.games || []).forEach((game) => {
+      flatGames.push({
+        ...game,
+        companyNameAr: company.name_ar,
+        companyNameEn: company.name_en,
+        companyId: company.id
+      });
+    });
+  });
+
+  if (!flatGames.length) {
+    adminCatalog.textContent = "لا توجد بطاقات.";
     return;
   }
 
-  companies.forEach((company) => {
-    const companyBlock = document.createElement("div");
-    companyBlock.className = "admin-company-block";
+  flatGames.forEach((game) => {
+    const item = document.createElement("div");
+    item.className = "admin-game-item";
 
-    const header = document.createElement("div");
-    header.className = "admin-company-header";
+    const title = document.createElement('strong');
+    title.textContent = `${game.name_ar} / ${game.name_en}`;
 
-    const h3 = document.createElement('h3');
-    h3.textContent = `${company.name_ar} / ${company.name_en}`;
-    const p = document.createElement('p');
-    p.textContent = company.slug;
+    const meta = document.createElement('span');
+    const currency = game.currency || "IQD";
+    const rawPrice = Number(game.price ?? 0);
+    const priceLabel = rawPrice > 0
+      ? (currency === 'USD'
+          ? `${rawPrice.toFixed(2)} $`
+          : `${rawPrice.toLocaleString('en-US')} د.ع`)
+      : "مجانية";
+    meta.textContent = `${game.genre || 'بطاقة'} • ${game.release_year || '-'} • ${priceLabel}`;
 
-    const headerActions = document.createElement('div');
-    headerActions.className = 'inline-actions';
-    const editCompanyBtn = document.createElement('button');
-    editCompanyBtn.type = 'button';
-    editCompanyBtn.className = 'btn-secondary';
-    editCompanyBtn.setAttribute('data-edit-company', String(company.id));
-    editCompanyBtn.textContent = 'تعديل الشركة';
-    const deleteCompanyBtn = document.createElement('button');
-    deleteCompanyBtn.type = 'button';
-    deleteCompanyBtn.className = 'btn-danger';
-    deleteCompanyBtn.setAttribute('data-delete-company', String(company.id));
-    deleteCompanyBtn.textContent = 'حذف الشركة';
+    const actions = document.createElement('div');
+    actions.className = 'inline-actions';
+    const editBtn = document.createElement('button');
+    editBtn.type = 'button';
+    editBtn.className = 'btn-secondary';
+    editBtn.setAttribute('data-edit-game', String(game.id));
+    editBtn.textContent = 'تعديل';
+    const delBtn = document.createElement('button');
+    delBtn.type = 'button';
+    delBtn.className = 'btn-danger';
+    delBtn.setAttribute('data-delete-game', String(game.id));
+    delBtn.textContent = 'حذف';
 
-    headerActions.appendChild(editCompanyBtn);
-    headerActions.appendChild(deleteCompanyBtn);
+    actions.appendChild(editBtn);
+    actions.appendChild(delBtn);
 
-    header.appendChild(h3);
-    header.appendChild(p);
-    header.appendChild(headerActions);
+    item.appendChild(title);
+    item.appendChild(meta);
+    item.appendChild(actions);
 
-    const games = document.createElement("div");
-    games.className = "admin-games-list";
-
-    company.games.forEach((game) => {
-      const item = document.createElement("div");
-      item.className = "admin-game-item";
-
-      const title = document.createElement('strong');
-      title.textContent = `${game.name_ar} / ${game.name_en}`;
-
-      const meta = document.createElement('span');
-      const currency = game.currency || "IQD";
-      const rawPrice = Number(game.price ?? 0);
-      const priceLabel = rawPrice > 0
-        ? (currency === 'USD'
-            ? `${rawPrice.toFixed(2)} $`
-            : `${rawPrice.toLocaleString('en-US')} د.ع`)
-        : "مجانية";
-      meta.textContent = `${game.genre} - ${game.release_year} • ${priceLabel}`;
-
-      const actions = document.createElement('div');
-      actions.className = 'inline-actions';
-      const editBtn = document.createElement('button');
-      editBtn.type = 'button';
-      editBtn.className = 'btn-secondary';
-      editBtn.setAttribute('data-edit-game', String(game.id));
-      editBtn.textContent = 'تعديل اللعبة';
-      const delBtn = document.createElement('button');
-      delBtn.type = 'button';
-      delBtn.className = 'btn-danger';
-      delBtn.setAttribute('data-delete-game', String(game.id));
-      delBtn.textContent = 'حذف اللعبة';
-
-      actions.appendChild(editBtn);
-      actions.appendChild(delBtn);
-
-      item.appendChild(title);
-      item.appendChild(meta);
-      item.appendChild(actions);
-
-      games.appendChild(item);
-    });
-
-    companyBlock.appendChild(header);
-    companyBlock.appendChild(games);
-    adminCatalog.appendChild(companyBlock);
+    adminCatalog.appendChild(item);
   });
 }
 
@@ -517,24 +477,6 @@ couponForm && couponForm.addEventListener('submit', async (e) => {
 });
 
 function bindEditButtons(companies, catalogCompanies) {
-  const companyButtons = document.querySelectorAll("[data-edit-company]");
-  companyButtons.forEach((button) => {
-    button.addEventListener("click", () => {
-      const id = Number(button.getAttribute("data-edit-company"));
-      const company = companies.find((entry) => entry.id === id);
-      if (!company) {
-        return;
-      }
-
-      companyId.value = company.id;
-      companySlug.value = company.slug;
-      companyNameAr.value = company.name_ar;
-      companyNameEn.value = company.name_en;
-      setStatus(`وضع تعديل الشركة: ${company.name_en}`);
-      window.scrollTo({ top: 0, behavior: "smooth" });
-    });
-  });
-
   const gameButtons = document.querySelectorAll("[data-edit-game]");
   gameButtons.forEach((button) => {
     button.addEventListener("click", () => {
@@ -556,7 +498,9 @@ function bindEditButtons(companies, catalogCompanies) {
       }
 
       gameId.value = selected.id;
-      gameCompany.value = selectedCompany.id;
+      if (gameCompany) {
+        gameCompany.value = selectedCompany.id;
+      }
       gameNameAr.value = selected.name_ar;
       gameNameEn.value = selected.name_en;
       gameGenre.value = selected.genre;
@@ -592,26 +536,6 @@ function bindEditButtons(companies, catalogCompanies) {
     });
   });
 
-  const deleteCompanyButtons = document.querySelectorAll("[data-delete-company]");
-  deleteCompanyButtons.forEach((button) => {
-    button.addEventListener("click", async () => {
-      const id = Number(button.getAttribute("data-delete-company"));
-      const confirmed = window.confirm("تأكيد حذف الشركة وكل ألعابها؟");
-      if (!confirmed) {
-        return;
-      }
-
-      try {
-        await fetchJson(`/api/companies/${id}`, { method: "DELETE" });
-        setStatus("تم حذف الشركة بنجاح.");
-        await loadData();
-      } catch (error) {
-        console.error(error);
-        setStatus(`خطأ: ${error.message}`);
-      }
-    });
-  });
-
   const deleteGameButtons = document.querySelectorAll("[data-delete-game]");
   deleteGameButtons.forEach((button) => {
     button.addEventListener("click", async () => {
@@ -633,43 +557,31 @@ function bindEditButtons(companies, catalogCompanies) {
   });
 }
 
-companyForm.addEventListener("submit", async (event) => {
-  event.preventDefault();
-
-  const payload = {
-    slug: normalizeSlug(companySlug.value),
-    name_ar: companyNameAr.value.trim(),
-    name_en: companyNameEn.value.trim()
-  };
-
+async function ensureDefaultCompany() {
   try {
-    if (companyId.value) {
-      await fetchJson(`/api/companies/${companyId.value}`, {
-        method: "PUT",
-        body: JSON.stringify(payload)
-      });
-      setStatus("تم تعديل الشركة بنجاح.");
-    } else {
-      await fetchJson("/api/companies", {
-        method: "POST",
-        body: JSON.stringify(payload)
-      });
-      setStatus("تمت إضافة الشركة بنجاح.");
+    const payload = await fetchJson('/api/companies');
+    const companies = payload.companies || [];
+    if (companies.length) {
+      return Number(companies[0].id);
     }
 
-    clearCompanyForm();
-    await loadData();
+    const created = await fetchJson('/api/companies', {
+      method: 'POST',
+      body: JSON.stringify({ slug: 'default-store', name_ar: 'افتراضي', name_en: 'Default' })
+    });
+    return Number(created.id || 1);
   } catch (error) {
     console.error(error);
-    setStatus(`خطأ: ${error.message}`);
+    return 1;
   }
-});
+}
 
 gameForm.addEventListener("submit", async (event) => {
   event.preventDefault();
 
+  const companyIdValue = gameCompany && gameCompany.value ? Number(gameCompany.value) : await ensureDefaultCompany();
   const formData = new FormData();
-  formData.append("company_id", String(Number(gameCompany.value)));
+  formData.append("company_id", String(companyIdValue));
   formData.append("name_ar", gameNameAr.value.trim());
   formData.append("name_en", gameNameEn.value.trim());
   formData.append("genre", gameGenre.value.trim());
@@ -775,11 +687,6 @@ gameForm.addEventListener("submit", async (event) => {
     console.error(error);
     setStatus(`خطأ: ${error.message}`);
   }
-});
-
-companyReset.addEventListener("click", () => {
-  clearCompanyForm();
-  setStatus("تم تفريغ نموذج الشركة.");
 });
 
 gameReset.addEventListener("click", () => {

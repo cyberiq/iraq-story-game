@@ -27,42 +27,15 @@
 
       <section class="admin-grid">
         <article class="admin-card">
-          <h2>إضافة / تعديل شركة</h2>
-          <form id="companyForm" class="form-grid">
-            <input id="companyId" type="hidden" />
-            <label>
-              <span>Slug</span>
-              <input id="companySlug" required placeholder="example-company" />
-            </label>
-            <label>
-              <span>اسم الشركة عربي</span>
-              <input id="companyNameAr" required placeholder="اسم الشركة" />
-            </label>
-            <label>
-              <span>اسم الشركة إنجليزي</span>
-              <input id="companyNameEn" required placeholder="Company Name" />
-            </label>
-            <div class="form-actions">
-              <button type="submit" class="btn-primary">حفظ الشركة</button>
-              <button type="button" id="companyReset" class="btn-secondary">تفريغ</button>
-            </div>
-          </form>
-        </article>
-
-        <article class="admin-card">
-          <h2>إضافة / تعديل لعبة</h2>
+          <h2>إضافة / تعديل بطاقة</h2>
           <form id="gameForm" class="form-grid">
             <input id="gameId" type="hidden" />
             <label>
-              <span>الشركة</span>
-              <select id="gameCompany" required></select>
-            </label>
-            <label>
-              <span>اسم اللعبة عربي</span>
+              <span>اسم البطاقة عربي</span>
               <input id="gameNameAr" required />
             </label>
             <label>
-              <span>اسم اللعبة إنجليزي</span>
+              <span>اسم البطاقة إنجليزي</span>
               <input id="gameNameEn" required />
             </label>
             <label>
@@ -127,8 +100,8 @@
       </section>
 
       <section class="admin-card">
-        <h2>الشركات والألعاب الحالية</h2>
-        <p class="hint-text">ملاحظة: حذف شركة سيحذف جميع ألعابها.</p>
+        <h2>البطاقات الحالية</h2>
+        <p class="hint-text">يمكنك تعديل أو حذف أي بطاقة مباشرة من القائمة التالية.</p>
         <div id="adminCatalog" class="admin-catalog"></div>
       </section>
       <section class="admin-card">
