@@ -947,11 +947,11 @@ function applyLanguage() {
   }
 
   const heroKicker = document.querySelector('.hero-kicker');
-  if (heroKicker) heroKicker.textContent = isEnglish ? 'Best offers' : 'أفضل العروض';
+  if (heroKicker) heroKicker.textContent = isEnglish ? 'Game catalog' : 'كل الألعاب';
   const heroTitle = document.querySelector('.market-hero h1');
-  if (heroTitle) heroTitle.textContent = isEnglish ? 'Iraq Game Store' : 'متجر ألعاب عراقي بتصميم عصري';
+  if (heroTitle) heroTitle.textContent = isEnglish ? 'All Games' : 'كل الألعاب';
   const heroSubtitle = document.querySelector('.hero-subtitle');
-  if (heroSubtitle) heroSubtitle.textContent = isEnglish ? 'Discover game studios and subscriptions at great prices with a smooth and professional shopping experience.' : 'اكتشف شركات الألعاب والاشتراكات بأسعار مناسبة، تجربة احترافية، وتجربة شراء سريعة وواضحة.';
+  if (heroSubtitle) heroSubtitle.textContent = isEnglish ? 'Browse the full catalog of games and subscriptions in one clean storefront.' : 'تصفح جميع الألعاب والاشتراكات في واجهة متجر واحدة واضحة وسهلة.';
 
   renderCart();
 }
