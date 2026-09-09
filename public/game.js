@@ -125,6 +125,7 @@ async function loadGameDetails() {
 
     buyBtn.addEventListener('click', async () => {
       if (!currentGame) return;
+
       const code = (couponInput.value || '').trim();
       const priceValue = Number(currentGame.price || 0);
       let finalPrice = priceValue;
@@ -132,15 +133,12 @@ async function loadGameDetails() {
         finalPrice = Math.round(priceValue * (1 - Number(activeCoupon.percent) / 100));
       }
 
-      // Show the purchase theme overlay instead of immediate redirect
-      try {
-        showPurchaseTheme(currentGame, finalPrice, code, activeCoupon);
-      } catch (err) {
-        console.error('Failed to open purchase theme, falling back to WhatsApp:', err);
-        const displayPrice = formatPrice(finalPrice, currentGame.currency || 'IQD');
-        const message = `أرغب بشراء: ${currentGame.name_ar} / ${currentGame.name_en} (ID:${currentGame.id})\nالسعر: ${displayPrice}\nرمز الكوبون: ${code || 'لا يوجد'}`;
-        const waNumber = '7713377783';
-        const waUrl = `https://wa.me/${waNumber}?text=${encodeURIComponent(message)}`;
+      const displayPrice = formatPrice(finalPrice, currentGame.currency || 'IQD');
+      const message = `أرغب بشراء: ${currentGame.name_ar} / ${currentGame.name_en} (ID:${currentGame.id})\nالسعر: ${displayPrice}\nرمز الكوبون: ${code || 'لا يوجد'}`;
+      const waNumber = '7713377783';
+      const waUrl = `https://wa.me/${waNumber}?text=${encodeURIComponent(message)}`;
+      const opened = window.open(waUrl, '_blank', 'noopener,noreferrer');
+      if (!opened) {
         window.location.href = waUrl;
       }
     });
