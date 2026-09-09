@@ -229,14 +229,10 @@ const authRateLimiter = rateLimit({
   }
 });
 
-const csrfProtection = csrf({
-  cookie: {
-    httpOnly: true,
-    sameSite: 'lax',
-    secure: isProduction,
-    maxAge: 60 * 60 * 1000
-  }
-});
+// Use session-based CSRF protection (requires `express-session` middleware)
+// Cookie-based mode was causing misconfiguration in production; session mode
+// attaches `req.csrfToken()` reliably when session is present.
+const csrfProtection = csrf();
 
 app.use('/api', apiRateLimiter);
 app.use('/api/auth/login', authRateLimiter);
@@ -489,7 +485,9 @@ app.get("/api/auth/status", (req, res) => {
   res.json({ authenticated });
 });
 
-app.get('/api/csrf-token', (req, res) => {
+// Return CSRF token for client-side requests. Protect this route with the
+// csrf middleware so `req.csrfToken()` is available.
+app.get('/api/csrf-token', csrfProtection, (req, res) => {
   res.json({ csrfToken: req.csrfToken() });
 });
 
