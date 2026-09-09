@@ -42,12 +42,6 @@ function setStatus(message) {
   statusNode.textContent = message;
 }
 
-function applyBackgroundOnlyMode() {
-  document.body.classList.add('background-only');
-  if (cardNode) cardNode.classList.add('hidden');
-  if (statusNode) statusNode.textContent = '';
-}
-
 function getGameIdFromQuery() {
   const params = new URLSearchParams(window.location.search);
   return Number(params.get("id"));
@@ -67,7 +61,6 @@ async function loadGameDetails() {
     if (!response.ok) {
       if (response.status === 404) {
         setStatus("لم يتم العثور على اللعبة المطلوبة.");
-        applyBackgroundOnlyMode();
         return;
       }
 
@@ -157,7 +150,6 @@ async function loadGameDetails() {
   } catch (error) {
     console.error(error);
     setStatus("تعذر تحميل التفاصيل. حاول مرة أخرى.");
-    applyBackgroundOnlyMode();
   }
 }
 
