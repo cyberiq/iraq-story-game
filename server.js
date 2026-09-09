@@ -242,7 +242,12 @@ function requireCsrf(req, res, next) {
     return res.status(400).json({ error: 'Session required for CSRF' });
   }
 
-  return csrfProtection(req, res, next);
+  try {
+    return csrfProtection(req, res, next);
+  } catch (err) {
+    console.error('[requireCsrf] csrfProtection threw', { path: req.path, method: req.method, ip: req.ip || req.socket?.remoteAddress, error: err && (err.stack || err.message) });
+    return res.status(400).json({ error: 'CSRF middleware error' });
+  }
 }
 
 app.use('/api', apiRateLimiter);
