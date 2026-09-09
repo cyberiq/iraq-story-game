@@ -234,6 +234,17 @@ const authRateLimiter = rateLimit({
 // attaches `req.csrfToken()` reliably when session is present.
 const csrfProtection = csrf();
 
+// Safe wrapper: only invoke csurf when a session exists. If no session is
+// present, log and return a 400 so we don't throw uncaught 'misconfigured csrf'.
+function requireCsrf(req, res, next) {
+  if (!req.session) {
+    console.warn('[requireCsrf] skipping csrf for request without session', { method: req.method, path: req.path, ip: req.ip || req.socket?.remoteAddress });
+    return res.status(400).json({ error: 'Session required for CSRF' });
+  }
+
+  return csrfProtection(req, res, next);
+}
+
 app.use('/api', apiRateLimiter);
 app.use('/api/auth/login', authRateLimiter);
 
@@ -489,7 +500,7 @@ app.get('/api/csrf-token', (req, res, next) => {
     return res.json({ csrfToken: null, warning: 'no-session' });
   }
   return next();
-}, csrfProtection, (req, res) => {
+}, requireCsrf, (req, res) => {
   try {
     return res.json({ csrfToken: req.csrfToken() });
   } catch (err) {
@@ -538,7 +549,7 @@ app.post("/api/auth/login", (req, res) => {
   return res.status(401).json({ error: "اسم المستخدم أو كلمة المرور غير صحيحة" });
 });
 
-app.post("/api/auth/change-password", requireAdmin, csrfProtection, (req, res) => {
+app.post("/api/auth/change-password", requireAdmin, requireCsrf, (req, res) => {
   const { currentPassword = "", newPassword = "", confirmPassword = "" } = req.body || {};
   const current = String(currentPassword).trim();
   const next = String(newPassword).trim();
@@ -565,7 +576,7 @@ app.post("/api/auth/change-password", requireAdmin, csrfProtection, (req, res) =
   return res.json({ ok: true, message: "تم تحديث كلمة المرور بنجاح." });
 });
 
-app.post("/api/auth/logout", csrfProtection, (req, res) => {
+app.post("/api/auth/logout", requireCsrf, (req, res) => {
   if (!req.session) {
     return res.json({ ok: true });
   }
@@ -649,7 +660,7 @@ app.delete('/api/coupons/:code', requireAdmin, async (req, res) => {
   }
 });
 
-app.post('/api/coupons/validate', csrfProtection, async (req, res) => {
+app.post('/api/coupons/validate', requireCsrf, async (req, res) => {
   const code = String(req.body?.code || '').trim();
   if (!code) {
     return res.status(400).json({ error: 'رمز الكوبون مطلوب.' });
@@ -956,7 +967,7 @@ app.use((req, res) => {
 });
 
 // --- Simple cart API using server-side session ---
-app.post('/api/cart/add', csrfProtection, (req, res) => {
+app.post('/api/cart/add', requireCsrf, (req, res) => {
   try {
     const payload = req.body || {};
     if (!req.session) return res.status(500).json({ error: 'Session missing' });
