@@ -237,38 +237,11 @@ const csrfProtection = csrf();
 app.use('/api', apiRateLimiter);
 app.use('/api/auth/login', authRateLimiter);
 
-// Apply CSRF protection to mutating API routes, but only when a session
-// object exists on the request. This prevents csurf from throwing
-// 'misconfigured csrf' when requests arrive with no session (e.g.,
-// health checks, bots, or probes).
-app.use((req, res, next) => {
-  if (req.method === 'GET' || req.method === 'HEAD' || req.method === 'OPTIONS') {
-    return next();
-  }
-
-  if (req.path.startsWith('/api')) {
-    if (!req.session) {
-      console.warn(`[csrf-guard] skipping csrf for no-session request ${req.method} ${req.path} from ${req.ip || req.socket?.remoteAddress}`);
-      return next();
-    }
-
-    try {
-      return csrfProtection(req, res, next);
-    } catch (err) {
-      console.error('[csrf-guard] csrfProtection threw synchronously', {
-        path: req.path,
-        method: req.method,
-        hasSession: !!req.session,
-        ip: req.ip || req.socket?.remoteAddress,
-        error: err && (err.stack || err.message)
-      });
-      // Don't block the request path — move on and let route handlers decide.
-      return next();
-    }
-  }
-
-  return next();
-});
+// NOTE: we intentionally do NOT apply csrfProtection globally because
+// some probes and static requests can arrive without a session and
+// csurf will throw 'misconfigured csrf'. Instead we apply `csrfProtection`
+// explicitly to specific mutating routes below. This minimizes the attack
+// surface while avoiding global errors in logs.
 
 function requireAdminPage(req, res, next) {
   if (req.session && req.session.isAdmin === true) {
@@ -507,10 +480,22 @@ app.get("/api/auth/status", (req, res) => {
   res.json({ authenticated });
 });
 
-// Return CSRF token for client-side requests. Protect this route with the
-// csrf middleware so `req.csrfToken()` is available.
-app.get('/api/csrf-token', csrfProtection, (req, res) => {
-  res.json({ csrfToken: req.csrfToken() });
+// Return CSRF token for client-side requests.
+// If the request has no session, respond with null and log details so
+// we can diagnose why clients are not establishing sessions.
+app.get('/api/csrf-token', (req, res, next) => {
+  if (!req.session) {
+    console.warn('[csrf-token] request without session', { ip: req.ip || req.socket?.remoteAddress, path: req.path });
+    return res.json({ csrfToken: null, warning: 'no-session' });
+  }
+  return next();
+}, csrfProtection, (req, res) => {
+  try {
+    return res.json({ csrfToken: req.csrfToken() });
+  } catch (err) {
+    console.error('[csrf-token] failed to generate token', { error: err && (err.stack || err.message) });
+    return res.status(500).json({ error: 'failed to generate csrf token' });
+  }
 });
 
 // Simple IP-based login attempt tracking to mitigate brute-force
@@ -553,7 +538,7 @@ app.post("/api/auth/login", (req, res) => {
   return res.status(401).json({ error: "اسم المستخدم أو كلمة المرور غير صحيحة" });
 });
 
-app.post("/api/auth/change-password", requireAdmin, (req, res) => {
+app.post("/api/auth/change-password", requireAdmin, csrfProtection, (req, res) => {
   const { currentPassword = "", newPassword = "", confirmPassword = "" } = req.body || {};
   const current = String(currentPassword).trim();
   const next = String(newPassword).trim();
@@ -580,7 +565,7 @@ app.post("/api/auth/change-password", requireAdmin, (req, res) => {
   return res.json({ ok: true, message: "تم تحديث كلمة المرور بنجاح." });
 });
 
-app.post("/api/auth/logout", (req, res) => {
+app.post("/api/auth/logout", csrfProtection, (req, res) => {
   if (!req.session) {
     return res.json({ ok: true });
   }
@@ -664,7 +649,7 @@ app.delete('/api/coupons/:code', requireAdmin, async (req, res) => {
   }
 });
 
-app.post('/api/coupons/validate', async (req, res) => {
+app.post('/api/coupons/validate', csrfProtection, async (req, res) => {
   const code = String(req.body?.code || '').trim();
   if (!code) {
     return res.status(400).json({ error: 'رمز الكوبون مطلوب.' });
@@ -971,7 +956,7 @@ app.use((req, res) => {
 });
 
 // --- Simple cart API using server-side session ---
-app.post('/api/cart/add', (req, res) => {
+app.post('/api/cart/add', csrfProtection, (req, res) => {
   try {
     const payload = req.body || {};
     if (!req.session) return res.status(500).json({ error: 'Session missing' });
