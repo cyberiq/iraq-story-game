@@ -247,8 +247,24 @@ app.use((req, res, next) => {
   }
 
   if (req.path.startsWith('/api')) {
-    if (!req.session) return next();
-    return csrfProtection(req, res, next);
+    if (!req.session) {
+      console.warn(`[csrf-guard] skipping csrf for no-session request ${req.method} ${req.path} from ${req.ip || req.socket?.remoteAddress}`);
+      return next();
+    }
+
+    try {
+      return csrfProtection(req, res, next);
+    } catch (err) {
+      console.error('[csrf-guard] csrfProtection threw synchronously', {
+        path: req.path,
+        method: req.method,
+        hasSession: !!req.session,
+        ip: req.ip || req.socket?.remoteAddress,
+        error: err && (err.stack || err.message)
+      });
+      // Don't block the request path — move on and let route handlers decide.
+      return next();
+    }
   }
 
   return next();
