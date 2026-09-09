@@ -245,7 +245,16 @@ function requireCsrf(req, res, next) {
   try {
     return csrfProtection(req, res, next);
   } catch (err) {
-    console.error('[requireCsrf] csrfProtection threw', { path: req.path, method: req.method, ip: req.ip || req.socket?.remoteAddress, error: err && (err.stack || err.message) });
+    console.error('[requireCsrf] csrfProtection threw', {
+      path: req.path,
+      method: req.method,
+      ip: req.ip || req.socket?.remoteAddress,
+      hasSession: !!req.session,
+      sessionId: req.sessionID || null,
+      sessionKeys: Object.keys(req.session || {}).slice(0, 10),
+      cookieHeader: (req.headers && String(req.headers.cookie || '')).substring(0, 200),
+      error: err && (err.stack || err.message)
+    });
     return res.status(400).json({ error: 'CSRF middleware error' });
   }
 }
