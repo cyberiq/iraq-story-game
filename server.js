@@ -236,12 +236,18 @@ const csrfProtection = csrf();
 
 app.use('/api', apiRateLimiter);
 app.use('/api/auth/login', authRateLimiter);
+
+// Apply CSRF protection to mutating API routes, but only when a session
+// object exists on the request. This prevents csurf from throwing
+// 'misconfigured csrf' when requests arrive with no session (e.g.,
+// health checks, bots, or probes).
 app.use((req, res, next) => {
   if (req.method === 'GET' || req.method === 'HEAD' || req.method === 'OPTIONS') {
     return next();
   }
 
   if (req.path.startsWith('/api')) {
+    if (!req.session) return next();
     return csrfProtection(req, res, next);
   }
 
