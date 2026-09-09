@@ -1,9 +1,11 @@
 {
-  "appId": "com.iraqstory.game",
-  "appName": "iraq story game",
+  "appId": "com.storyiq.app",
+  "appName": "story IQ",
   "webDir": "public",
   "bundledWebRuntime": false,
   "server": {
-    "androidScheme": "https"
+    "url": "https://www.iraqstorycard.tech",
+    "androidScheme": "https",
+    "cleartext": false
   }
 }
