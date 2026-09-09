@@ -24,8 +24,16 @@ function formatPrice(value, currency = 'IQD') {
   return `${v.toLocaleString('en-US')} ${label}`;
 }
 
+function getLocalCartItems() {
+  try {
+    return JSON.parse(localStorage.getItem('iraqGameCart') || '[]');
+  } catch (error) {
+    return [];
+  }
+}
+
 function renderSummary(items) {
-  const subtotal = items.reduce((sum, item) => sum + Number(item.price || 0), 0);
+  const subtotal = items.reduce((sum, item) => sum + Number(item.price || 0) * Number(item.qty || 1), 0);
   const shipping = items.length ? 2500 : 0;
   const total = subtotal + shipping;
   summarySubtotal.textContent = formatPrice(subtotal, 'IQD');
@@ -45,50 +53,41 @@ function createItemThumb(item) {
 }
 
 async function loadCart() {
-  try {
-    const res = await fetch('/api/cart');
-    const payload = await res.json();
-    const items = payload.cart || [];
+  const items = getLocalCartItems();
 
-    if (!items.length) {
-      cartList.innerHTML = `
-        <div class="empty-cart">
-          <div class="empty-icon">🛒</div>
-          <h3>السلة فارغة حاليًا</h3>
-          <p>أضف بعض الألعاب المفضلة واسترجعها عندما تكون جاهزًا.</p>
-          <a class="btn-primary" href="/">تصفح المتجر</a>
-        </div>
-      `;
-      renderSummary([]);
-      cartStatus.textContent = 'لا توجد عناصر في السلة.';
-      return;
-    }
-
-    cartStatus.textContent = `${items.length} عنصر في السلة`;
-    cartList.innerHTML = items.map((item, index) => `
-      <div class="item-row" style="animation-delay:${index * 0.05}s; --thumb-a:${createItemThumb(item).split(',')[0].replace('linear-gradient(135deg, ', '').trim()}; --thumb-b:${createItemThumb(item).split(',')[1].trim()};">
-        <div class="thumb" style="background:${createItemThumb(item)}"></div>
-        <div class="item-info">
-          <div class="item-name">${item.name_ar || item.name_en || 'منتج'}</div>
-          <div class="item-meta">${item.name_en || 'Game'}</div>
-        </div>
-        <div class="item-qty">1 ×</div>
-        <div class="item-price">${formatPrice(item.price, item.currency || 'IQD')}</div>
+  if (!items.length) {
+    cartList.innerHTML = `
+      <div class="empty-cart">
+        <div class="empty-icon">🛒</div>
+        <h3>السلة فارغة حاليًا</h3>
+        <p>أضف بعض الألعاب المفضلة واسترجعها عندما تكون جاهزًا.</p>
+        <a class="btn-primary" href="/">تصفح المتجر</a>
       </div>
-    `).join('');
-
-    renderSummary(items);
-  } catch (err) {
-    console.error(err);
-    cartStatus.textContent = 'فشل تحميل سلة المشتريات.';
+    `;
+    renderSummary([]);
+    cartStatus.textContent = 'لا توجد عناصر في السلة.';
+    return;
   }
+
+  cartStatus.textContent = `${items.length} عنصر في السلة`;
+  cartList.innerHTML = items.map((item, index) => `
+    <div class="item-row" style="animation-delay:${index * 0.05}s; --thumb-a:${createItemThumb(item).split(',')[0].replace('linear-gradient(135deg, ', '').trim()}; --thumb-b:${createItemThumb(item).split(',')[1].trim()};">
+      <div class="thumb" style="background:${createItemThumb(item)}"></div>
+      <div class="item-info">
+        <div class="item-name">${item.name_ar || item.name_en || item.name || 'منتج'}</div>
+        <div class="item-meta">${item.name_en || item.name || 'Game'}</div>
+      </div>
+      <div class="item-qty">${Number(item.qty || 1)} ×</div>
+      <div class="item-price">${formatPrice(Number(item.price || 0) * Number(item.qty || 1), item.currency || 'IQD')}</div>
+    </div>
+  `).join('');
+
+  renderSummary(items);
 }
 
 placeOrderBtn.addEventListener('click', async () => {
   try {
-    const res = await fetch('/api/cart');
-    const payload = await res.json();
-    const items = payload.cart || [];
+    const items = getLocalCartItems();
 
     if (!items.length) {
       cartStatus.textContent = 'السلة فارغة.';
@@ -105,28 +104,34 @@ placeOrderBtn.addEventListener('click', async () => {
     let message = 'طلب شراء من iraq story:\n';
     let total = 0;
     items.forEach((it, i) => {
-      message += `${i + 1}. ${it.name_ar || it.name_en} (${it.id || 'N/A'}) — ${formatPrice(it.price, it.currency || 'IQD')}\n`;
-      total += Number(it.price || 0);
+      const qty = Number(it.qty || 1);
+      const lineTotal = Number(it.price || 0) * qty;
+      message += `${i + 1}. ${it.name_ar || it.name_en || it.name} (${it.id || 'N/A'}) × ${qty} — ${formatPrice(lineTotal, it.currency || 'IQD')}\n`;
+      total += lineTotal;
     });
     message += `المجموع: ${formatPrice(total, 'IQD')}`;
 
-    setTimeout(async () => {
-      placeOrderBtn.style.display = 'none';
-      successPanel.classList.add('show');
-      try {
-        const csrfToken = await getCsrfToken();
-        await fetch('/api/cart/clear', {
-          method: 'POST',
-          credentials: 'same-origin',
-          headers: { 'X-CSRF-Token': csrfToken }
-        });
-      } catch (err) {
-        console.warn('Failed to clear cart after order', err);
-      }
-    }, 950);
-
     const waUrl = `https://wa.me/${waNumber}?text=${encodeURIComponent(message)}`;
-    window.open(waUrl, '_blank', 'noopener');
+    const opened = window.open(waUrl, '_blank', 'noopener,noreferrer');
+    if (!opened) {
+      window.location.href = waUrl;
+    }
+
+    placeOrderBtn.style.display = 'none';
+    successPanel.classList.add('show');
+
+    try {
+      const csrfToken = await getCsrfToken();
+      await fetch('/api/cart/clear', {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: { 'X-CSRF-Token': csrfToken }
+      });
+    } catch (err) {
+      console.warn('Failed to clear cart after order', err);
+    }
+
+    localStorage.removeItem('iraqGameCart');
   } catch (err) {
     console.error(err);
     cartStatus.textContent = 'خطأ أثناء تجهيز الطلب.';
@@ -135,6 +140,7 @@ placeOrderBtn.addEventListener('click', async () => {
 
 clearCartBtn.addEventListener('click', async () => {
   try {
+    localStorage.removeItem('iraqGameCart');
     const csrfToken = await getCsrfToken();
     await fetch('/api/cart/clear', {
       method: 'POST',

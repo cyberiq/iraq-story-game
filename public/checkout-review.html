@@ -692,7 +692,11 @@
     const total = subtotal + shipping - discount;
     const fullMessage = `طلب شراء جديد:\n${message}\n\nالمجموع الفرعي: ${subtotal} د.ع\nالشحن: ${shipping} د.ع\nالخصم: ${discount} د.ع\nالإجمالي: ${total} د.ع`;
     const url = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(fullMessage)}`;
-    window.open(url, '_blank');
+    const opened = window.open(url, '_blank', 'noopener,noreferrer');
+    if (!opened) {
+      window.location.href = url;
+    }
+    localStorage.removeItem('iraqGameCart');
   });
 
   renderCheckout();

@@ -1,263 +1,309 @@
 # 🔍 Project Decisions & Architecture Constraints
 
-This document defines all key decisions made in the Iraq Game Store project. **DO NOT invent details or guess implementation specifics that aren't documented here.** If you encounter a feature request that conflicts with these decisions, flag it explicitly.
+This document records the implementation decisions that are actually used by the Iraq Story Game project as of 2026-09-09. It is the source of truth for architecture and behavior. If a feature request conflicts with this document, it must be called out explicitly.
 
 ---
 
-## 📦 Data & Content Model
+## 1) Project Scope
 
-### Product Types (Valid Values ONLY)
-- **game** - Standard games and video games
-- **subscription** - Recurring/monthly services (PlayStation Plus, Xbox Game Pass, ChatGPT Plus, etc.)
-- **REJECTED**: Digital books, music, movies, courses (use games/subscriptions only)
+This project is a storefront and admin panel for selling game products and related digital offers. It is implemented as a Node.js + Express application with static HTML pages, server-side API routes, and a JSON fallback dataset used when the database is unavailable.
 
-### Company Structure
-- Companies are containers for products
-- Each company has an `id`, `slug`, `name_ar`, `name_en`, and list of games/products
-- Companies are rendered as cards with a company name, icon/emoji, and count of items
-- **No sub-categories within companies** - all items are flat lists per company
+The project currently supports:
+- public storefront browsing
+- search and sorting of company/game catalog
+- cart and checkout flow via localStorage
+- coupon validation
+- admin login and protected routes
+- game/company CRUD for the admin dashboard
+- image upload support for products
+- runtime data fallback files under `data/`
+- Android wrap via Capacitor
 
-### Product Fields (Required)
+---
+
+## 2) Data Model
+
+### 2.1 Company Model
+Each company is a container for games and has the following primary fields:
+- `id` — numeric unique identifier
+- `slug` — URL-safe slug
+- `name_ar` — Arabic display name
+- `name_en` — English display name
+- `games` — array of game objects
+
+Company records are stored in:
+- database tables when DB is initialized
+- fallback JSON data in `data/fallback-data.json`
+
+### 2.2 Game Model
+Supported game fields in the runtime implementation include:
 ```json
 {
-  "id": "unique integer",
-  "name_ar": "Arabic name",
-  "name_en": "English name",
-  "product_type": "game|subscription",
-  "genre": "Category/Type",
-  "release_year": "number",
-  "price": "number (price in currency)",
-  "currency": "IQD|USD",
-  "description": "Text",
-  "cover_image_url": "URL"
+  "id": 101,
+  "company_id": 1,
+  "product_type": "game",
+  "product_subtype": null,
+  "name_ar": "اسم اللعبة",
+  "name_en": "Game Name",
+  "genre": "Shooter",
+  "release_year": 2023,
+  "price": 179,
+  "currency": "IQD",
+  "cover_image_url": "/uploads/filename.jpg",
+  "description": "وصف اللعبة"
 }
 ```
 
-### Languages Supported
-- **Arabic (ar)** - Right-to-left (RTL), default language
-- **English (en)** - Left-to-right (LTR)
-- **Toggle via UI button** - "AR / EN" button in header
-- **Persistence** - Language choice stored in `localStorage` as `iraqGameLanguage`
-- **No database translation** - all text stored as `name_ar` and `name_en` fields
+Notes:
+- `product_type` is treated as `game` in the current app, but the code supports other values and keeps the field nullable/optional in payloads.
+- `product_subtype` is accepted by admin create/update endpoints but is not the primary catalog filter in the public UI.
+- `cover_image_url` may be a remote URL or a local uploaded file path.
+
+### 2.3 Supported Catalog Types
+The implemented code supports the catalog values used in practice:
+- `game`
+- `subscription` (allowed by schema and fallback data handling)
+- legacy/optional values may still exist in existing data, but public storefront logic generally expects game-oriented entries
+
+The public filter logic uses `product_type` values as part of API requests, but it also performs client-side filtering for `playstation`, `xbox`, and `deals` in the browser when needed.
 
 ---
 
-## 🛒 Cart & Checkout Flow
+## 3) Storage Architecture
 
-### Cart Storage
-- **Location**: `localStorage` key `iraqGameCart`
-- **Format**: JSON array of `{ id, qty, name, price }`
-- **Persistence**: Across page reloads
-- **Max Items**: No limit (UX decision: show all items in panel)
+### 3.1 Primary Runtime Data Sources
+The application selects its data layer based on environment and database startup:
+- SQLite is the default local/fallback store
+- PostgreSQL support is available via `pg` and `db.js`
+- JSON files in `data/` are used for fallback and runtime admin settings
 
-### Cart Operations
-1. **Add to Cart**
-   - Updates `cart` array in memory
-   - Increments `qty` if item already exists
-   - Saves to `localStorage`
-   - Updates cart count badge immediately
-   
-2. **View Cart**
-   - Click "السلة" button in header
-   - Opens floating panel showing all items
-   - Displays item name + quantity + price
+### 3.2 Runtime Files
+The app writes/reads the following files during runtime:
+- `data/fallback-data.json` — fallback catalog
+- `data/admin-settings.json` — admin credentials/settings
+- `data/coupons.json` — coupon records
+- `data/today-offers.json` — offer records
+- `public/uploads/` — uploaded product images
 
-3. **Checkout Flow**
-   - Click "إتمام الطلب" button
-   - Saves cart + discount info to `localStorage` under `iraqGameCheckoutReview`
-   - Redirects to `/checkout-review.html`
-   - User fills customer form (name, phone, email, notes)
-   - Click "إتمام الشراء عبر WhatsApp" button
-   - Opens WhatsApp with formatted message
-   - Clears cart and review data from `localStorage`
-
-### Coupon/Discount System
-- **Storage**: `iraqGameCoupon` (code), `iraqGameDiscountPercent` (number 0-100)
-- **Validation**: `/api/coupons/validate` endpoint
-- **Application**: Discount shown on checkout-review page
-- **WhatsApp Message**: Includes original price, discount amount, and final total
+Important: these files are runtime state, not just static fixtures.
 
 ---
 
-## 🎨 Category Filtering
+## 4) Authentication and Admin Protection
 
-### Valid Categories (Client-Side Matching)
-```javascript
-{
-  'all': 'Show all companies',
-  'games': 'Filter to product_type === "game"',
-  'subscriptions': 'Filter to product_type === "subscription"',
-  'playstation': 'Client-side: matches product_name or genre containing "PlayStation|PS"',
-  'xbox': 'Client-side: matches product_name or genre containing "Xbox|XB"',
-  'deals': 'Show products from today-offers.json only'
-}
-```
+### 4.1 Admin Identity Model
+- Authentication is session-based using `express-session`
+- Session cookie name: `igs_session`
+- Session flag: `req.session.isAdmin === true`
+- Default admin credentials are:
+  - username: `admin`
+  - password: `admin`
+- Values may be overridden by environment variables `ADMIN_USERNAME`, `ADMIN_PASSWORD`, and `SESSION_SECRET`
 
-### API Filtering Rule
-- **Server supports only**: `product_type=all|game|subscription`
-- **Client-side handles**: `playstation`, `xbox`, `deals` (NO server filtering)
-- **Implementation**: 
-  - Send only valid `product_type` values to `/api/catalog`
-  - For non-server categories, fetch full catalog and filter in browser using `filterCompaniesByCategory()`
+### 4.2 Protection Rules
+The server enforces admin restrictions using `requireAdmin` and route guards:
+- `/admin`
+- `/admin.html`
+- `/change-password.html`
+- `/admin.js`
+- `/admin-assets/admin.js`
+- `/admin/password`
+
+Unauthenticated access to protected admin resources returns a 404 or 401 depending on route type.
+
+### 4.3 Security Hardening Already Implemented
+- `helmet` middleware enabled with CSP relaxed to avoid breaking the app
+- rate limiting on `/api` and `/api/auth/login`
+- IP-based login lockout with `LOGIN_MAX_ATTEMPTS` and `LOGIN_LOCK_MS`
+- CSRF token handling for mutating requests via `/api/csrf-token`
+- session cookies use `httpOnly`, `sameSite: 'lax'`, and `secure` in production
 
 ---
 
-## 📢 Today's Offers
+## 5) Catalog and Search Behavior
 
-### Data Structure
-- **File**: `data/today-offers.json` (runtime, not in version control)
-- **Format**: 
+### 5.1 Public Catalog Endpoint
+Public API endpoint:
+- `GET /api/catalog`
+
+Supported query parameters:
+- `search`
+- `sort`
+- `product_type`
+
+Behavior:
+- if the database is ready, data comes from the DB layer
+- if DB is not ready, fallback catalog is served from `data/fallback-data.json`
+- `product_type` may be used as a server-side filter when values are valid
+- additional non-server filters such as `playstation`, `xbox`, and `deals` are handled client-side by the browser
+
+### 5.2 Search Strategy
+Search works against catalog fields such as:
+- company name in Arabic/English
+- game name in Arabic/English
+- genre
+- maybe product type and other text fields depending on DB implementation
+
+---
+
+## 6) Cart and Checkout
+
+### 6.1 Cart Storage
+- client-side cart stored in `localStorage`
+- key used by the app: `iraqGameCart`
+- stored structure is effectively a list of cart entries with item id, quantity, name, and price
+
+### 6.2 Checkout Review
+The app saves checkout-related data into localStorage before redirecting to the review page. This includes cart and discount data and then constructs a WhatsApp message for customer purchase confirmation.
+
+### 6.3 Coupon Validation
+- coupon validation endpoint: `POST /api/coupons/validate`
+- the server checks the supplied code against the active coupons list
+- coupon percentage is returned and used during checkout review
+
+---
+
+## 7) Today's Offers and Promotions
+
+### 7.1 Data Model
+The runtime current offer structure is:
 ```json
 {
-  "offers": [
-    {
-      "id": "uuid",
-      "title": "Custom offer name (e.g., 'سوبر بلص')",
-      "product_type": "game|subscription|all",
-      "percent": "discount percentage",
-      "price": "alternative price (optional)",
-      "createdAt": "timestamp"
-    }
-  ]
+  "id": "offer-...",
+  "title": "عرض اليوم",
+  "product_type": "game",
+  "percent": 20,
+  "price": 0,
+  "active": true,
+  "created_at": "2026-09-09T00:00:00.000Z"
 }
 ```
 
-### Admin Panel (Today's Offers)
-- Form with fields:
-  - Custom Title (text input)
-  - Product Type (dropdown: game, subscription, all)
-  - Discount Percent (number input)
-  - (Optional) Select existing product as reference
-- **Edit**: Click on an offer to load into form
-- **Delete**: Remove button beside each offer
-- **Save**: POST to `/api/today-offers`
-- **Empty State**: If no offers, show nothing (not "Best offers" label)
+### 7.2 Endpoints
+- `GET /api/today-offers`
+- `POST /api/today-offers` (admin only)
+- `DELETE /api/today-offers/:id` (admin only)
+
+### 7.3 Access Rule
+- Admin users can fetch active and inactive items
+- Public users see only active offers
 
 ---
 
-## 💳 Admin Panel & Authentication
+## 8) Admin CRUD Operations
 
-### Admin Auth
-- **Location**: Express session-based
-- **Default Credentials**: username=`admin`, password=`admin` (env configurable)
-- **Session Key**: `express-session` middleware
-- **Protected Routes**: Any endpoint with `requireAdmin` middleware
+The current implementation exposes the following admin API operations:
 
-### Admin Endpoints
-| Method | Path | Purpose |
-|--------|------|---------|
-| GET | `/admin` | Admin dashboard HTML |
-| POST | `/api/auth/login` | Login (sets session) |
-| POST | `/api/auth/logout` | Logout (clears session) |
-| GET | `/api/auth/status` | Check auth status |
-| POST | `/api/auth/change-password` | Change admin password |
-| GET/POST/DELETE | `/api/coupons` | Manage coupons |
-| GET/POST/DELETE | `/api/today-offers` | Manage today's offers |
-| GET | `/api/admin/settings` | Read WhatsApp number & config |
-| POST | `/api/admin/settings` | Update settings |
+### 8.1 Companies
+- `GET /api/companies`
+- `POST /api/companies`
+- `PUT /api/companies/:id`
+- `DELETE /api/companies/:id`
 
-### Settings Storage
-- **File**: `data/admin-settings.json`
-- **Keys**:
-  - `whatsappNumber`: Phone number for WhatsApp integration (format: +964xxxxxxxxx)
-  - `storeName`: Store name (optional, for future use)
-  - `currency`: Default currency (IQD|USD)
+### 8.2 Games
+- `GET /api/games/:id`
+- `POST /api/games`
+- `PUT /api/games/:id`
+- `DELETE /api/games/:id`
+
+### 8.3 Coupons
+- `GET /api/coupons`
+- `POST /api/coupons`
+- `DELETE /api/coupons/:code`
+- `POST /api/coupons/validate`
+
+### 8.4 Settings
+The server includes settings handling for admin configuration and is intended to support WhatsApp settings and store metadata stored in JSON.
 
 ---
 
-## 📡 API Endpoints Reference
+## 9) Frontend Structure
 
-### Catalog & Product Endpoints
-| Endpoint | Method | Query Params | Purpose |
-|----------|--------|--------------|---------|
-| `/api/catalog` | GET | `search`, `sort`, `product_type` | Fetch companies & games |
-| `/api/games/:id` | GET | - | Get single game details |
-| `/api/companies` | GET | - | List all companies (admin) |
+### 9.1 Public UI
+Frontend pages served from `public/`:
+- `/` and `/index.html`
+- `/game`
+- `/checkout-review.html`
+- `/login`
+- `/contact`
+- `/cart`
 
-### Today's Offers Endpoints
-| Endpoint | Method | Body | Purpose |
-|----------|--------|------|---------|
-| `/api/today-offers` | GET | - | Fetch all offers |
-| `/api/today-offers` | POST | `{ title, product_type, percent, price }` | Create/update offer |
-| `/api/today-offers/:id` | DELETE | - | Delete offer |
+### 9.2 Admin UI
+Admin pages and assets:
+- `/admin`
+- `/admin.html`
+- `/change-password.html`
+- `/admin.js` or `/admin-assets/admin.js`
 
-### Checkout Endpoint
-| Endpoint | Method | Purpose |
-|----------|--------|---------|
-| `/checkout-review` | GET | Serve checkout review page (static HTML) |
-
-### Authentication Endpoints
-| Endpoint | Method | Body | Purpose |
-|----------|--------|------|---------|
-| `/api/auth/login` | POST | `{ username, password }` | Login |
-| `/api/auth/logout` | POST | - | Logout |
-| `/api/auth/status` | GET | - | Check if logged in |
-
-### Coupon Endpoints
-| Endpoint | Method | Body | Purpose |
-|----------|--------|------|---------|
-| `/api/coupons` | GET | - | List all coupons (admin) |
-| `/api/coupons` | POST | `{ code, percent, maxUses }` | Create coupon |
-| `/api/coupons/:code` | DELETE | - | Delete coupon |
-| `/api/coupons/validate` | POST | `{ code }` | Validate & apply coupon |
+The admin dashboard is driven by `server_assets/admin.js` and uses the authenticated session to fetch and modify backend state.
 
 ---
 
-## 🌐 Frontend Routes
-
-| Path | Purpose | Auth Required |
-|------|---------|----------------|
-| `/` | Main storefront | No |
-| `/index.html` | Main storefront (explicit) | No |
-| `/admin` | Admin dashboard | Yes |
-| `/admin.html` | Admin dashboard (explicit) | Yes |
-| `/checkout-review.html` | Order review page | No |
-| `/game?id=:id` | Game detail page | No |
-| `/login.html` | Login page | No |
-| `/change-password.html` | Change password page | Yes |
-
----
-
-## 🔧 Technology Stack
+## 10) Technology Stack
 
 ### Backend
-- **Runtime**: Node.js
-- **Framework**: Express.js
-- **Session**: `express-session`
-- **Database**: SQLite (fallback) + PostgreSQL (production-ready via `db.js`)
-- **File-based Config**: JSON files in `data/` directory
+- Node.js
+- Express.js
+- express-session
+- express-rate-limit
+- csrf
+- multer
+- helmet
+- PostgreSQL client support (`pg`)
+- SQLite support via `sql.js`
 
 ### Frontend
-- **HTML5** (no build step)
-- **Vanilla JavaScript** (no frameworks)
-- **CSS3** (dark theme, premium app-store style)
-- **localStorage** for client-side state
+- static HTML
+- plain JavaScript
+- CSS styling in `public/styles.css`
+- localStorage for cart and language state
 
-### Styling Philosophy
-- **Dark theme**: `#1a1a2e` background, `#00d4ff` accent
-- **Premium look**: Similar to Steam/PlayStation Store
-- **Responsive**: Mobile-first approach
-- **RTL Support**: Full Arabic support with `dir="rtl"`
+### Mobile Packaging
+- Capacitor Android/iOS integration via `@capacitor/android`, `@capacitor/cli`, and the Android project under `/android`
 
 ---
 
-## 🔁 تحديثات النشر والتشغيل (Recent Deployment & Fixes) — 2026-09-07
+## 11) Deployment and Runtime Constraints
 
-- إصلاح مشكلة 502 Bad Gateway: الخادم الآن يستمع على `0.0.0.0` و`nginx` يوجّه إلى `127.0.0.1:3000` لضمان توافق IPv4.
-- تمّ إضافة/استعادة نقاط نهاية الإدارة والكتالوج التي يحتاجها واجهة `admin`:
-  - `GET /api/companies` (admin)
-  - `POST /api/companies`, `PUT /api/companies/:id`, `DELETE /api/companies/:id`
-  - `GET /api/catalog` (public) مع دعم `search`, `sort`, `product_type`
-  - `GET /api/games/:id`, `POST /api/games`, `PUT /api/games/:id`, `DELETE /api/games/:id`
-- إضافة مسار مساعد: `/admin/password` يُعيد توجيه مصادقًا إلى صفحة تغيير كلمة المرور (يتطلب جلسة أدمن).
-- حماية ملفات الموارد الإدارية: `admin.js`, `change-password.js` تُقدّم عبر مسارات محمية وتعيد 401 إذا لم يكن `req.session.isAdmin`.
-- تحسينات أمان وتشغيل:
-  - قفل محاولات تسجيل الدخول على مستوى IP: `LOGIN_MAX_ATTEMPTS` (افتراضي 5) و`LOGIN_LOCK_MS` (افتراضي 10 دقيقة).
-  - إعدادات الكوكي: `HttpOnly`, `SameSite=Lax`, و`secure` في بيئة الإنتاج.
-  - إعادة تشغيل pm2 يجب أن تستخدم `--cwd /var/www/iraqstorycard.tech` أو بدء العملية من مسار المشروع لإصلاح أخطاء MODULE_NOT_FOUND.
+### 11.1 Production Runtime
+The production deployment requires the app to run correctly from its project directory and to bind to `0.0.0.0` for compatibility with reverse proxies or container networking.
 
-### أوامر مفيدة (على الخادم)
-```bash
+Important operational rule:
+- when restarting with PM2 or similar process managers, the app must be started from the project directory or with `--cwd` configured so Node resolves modules correctly
+
+### 11.2 Common Deployment Considerations
+- `PORT` may be supplied by the environment
+- `SESSION_SECRET` must be set in production
+- admin credentials should be changed from default values in non-local environments
+- `NODE_ENV=production` enables production cookie settings
+
+### 11.3 Current Verified Runtime Notes
+- server startup checks DB initialization and falls back gracefully when DB initialization fails
+- public pages still load even when database access is unavailable
+- fallback JSON files keep the storefront operational in degraded mode
+
+---
+
+## 12) Current Rules for Future Changes
+
+1. Do not assume a feature exists unless it is implemented in the server or frontend code.
+2. When changing the data model, update both the database logic and the JSON fallback logic.
+3. Protected admin files must remain behind session checks.
+4. Any new API route should be documented in the server contract and mirrored in the frontend if it is used by the UI.
+5. Any change to auth, session, or permission logic must preserve the currently enforced admin guard.
+6. When editing the app for deployment, keep the startup path and PM2/CWD behavior consistent with production requirements.
+
+---
+
+## 13) Recent Production Notes (2026-09-09)
+
+- session-based admin access remains the primary security mechanism
+- admin pages are protected by guarded route handlers instead of relying only on static HTML checks
+- CSRF protection is now applied to relevant mutating endpoints without breaking the app’s public/static access pattern
+- the server keeps a graceful fallback to local JSON data when DB initialization is unavailable
+- login throttling and session hardening have been added to reduce brute-force abuse and insecure session behavior
+
+This document should be updated whenever architecture changes are introduced so the repo stays aligned with the real implementation.
 # إعادة تشغيل الخدمة (pm2)
 sudo pm2 restart iraq-story --cwd /var/www/iraqstorycard.tech -f
 

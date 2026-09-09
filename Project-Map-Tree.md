@@ -1,263 +1,290 @@
-# 🗺️ Iraq Game Store - Project Map & Architecture
+# 🗺️ Iraq Story Game - Project Map & Architecture
 
-## Visual Project Structure
+## 1) Runtime Layout Overview
 
-```
-┌─────────────────────────────────────────────────────────┐
-│         IRAQ GAME STORE - Architecture Overview          │
-└─────────────────────────────────────────────────────────┘
+```text
+┌───────────────────────────────────────────────────────────────┐
+│                    Iraq Story Game Project                    │
+└───────────────────────────────────────────────────────────────┘
 
-                    ┌──────────────────┐
-                    │   User Browser   │
-                    └────────┬─────────┘
-                             │
-        ┌────────────────────┼────────────────────┐
-        │                    │                    │
-    ┌───▼───┐          ┌────▼─────┐        ┌────▼──────┐
-    │ /      │          │ /admin   │        │ /checkout │
-    │ (Main  │          │ (Admin   │        │ -review   │
-    │ Store) │          │ Panel)   │        │ (Review)  │
-    └───┬───┘          └────┬─────┘        └────┬──────┘
-        │                   │                    │
-        │◄──────────────────┼────────────────────┤
-        │              Server (Node.js/Express)   │
-        │◄──────────────────┼────────────────────┤
-        │                   │                    │
-    ┌───▼──────────────────▼──────────────────▼───┐
-    │         File System (data/*.json)            │
-    ├─────────────────────────────────────────────┤
-    │ • fallback-data.json (companies & games)   │
-    │ • admin-settings.json (WhatsApp #)         │
-    │ • today-offers.json (offers list)          │
-    │ • coupons.json (coupon codes)              │
-    └─────────────────────────────────────────────┘
+      Browser / Mobile app
+              │
+              ▼
+    Node.js + Express server (server.js)
+              │
+      ┌───────┼───────────────────────────────────────┐
+      │       │                                       │
+      ▼       ▼                                       ▼
+  Public web app  Admin routes + APIs              Data layer
+  (public/*)      (protected routes)                (db.js + JSON files)
+      │       │                                      │
+      │       ├──── auth/session/security            │
+      │       ├──── catalog/companies/games         │
+      │       ├──── coupons/offers                  │
+      │       └──── uploads/media                  │
+      │
+      ▼
+  SQLite / PostgreSQL / JSON fallback
 ```
 
 ---
 
-## 📦 File-by-File Architecture Map
+## 2) Repository Structure
 
-### **Frontend Layer** (Browser)
-
-```
-public/
-├── index.html ◄──────────┐
-│  ├─ Header & Navigation │
-│  ├─ Category Buttons    │
-│  ├─ Search Bar          │
-│  ├─ Catalog Container   │
-│  └─ Templates (company, game)
-│
-├── app.js ◄──────────────── Main application logic
-│  ├─ fetchCatalog() ────────► /api/catalog
-│  ├─ fetchTodayOffers() ────► /api/today-offers
-│  ├─ renderCatalog() ───────► Renders companies/games from API
-│  ├─ renderCart() ─────────► Shows cart items
-│  ├─ applyLanguage() ──────► Switches AR/EN UI text
-│  ├─ toggleCart() ─────────► Open/close cart panel
-│  └─ Filter logic (playstation, xbox, deals)
-│
-├── styles.css
-│  └─ Dark theme styling (premium app-store look)
-│
-├── checkout-review.html ◄── Order review page
-│  └─ Shows cart items + total + customer form
-│
-├── admin.html ◄───────────── Admin dashboard
-│  ├─ Today's Offers section ─► today-offers admin
-│  ├─ Coupons section ───────► coupons admin
-│  ├─ WhatsApp Settings ────► admin-settings
-│  └─ Password Change ──────► change password
-│
-├── admin.js (in server_assets/) ◄─ Admin panel logic
-│  ├─ loadOffers() ──────────► GET /api/today-offers
-│  ├─ saveOffer() ───────────► POST /api/today-offers
-│  ├─ deleteOffer() ─────────► DELETE /api/today-offers/:id
-│  └─ loadCoupons() ─────────► GET /api/coupons
-│
-└── game.html ◄───────────── Game detail page
-   └─ Shows single game info
-```
-
----
-
-### **Backend Layer** (Node.js/Express)
-
-```
-server.js ◄─ Main server entry point
-│
-├─ Session Middleware (express-session)
-│  └─ requireAdmin middleware ◄─ Protects admin routes
-│
-├─ Static Routes
-│  ├─ GET / ─────────────► public/index.html
-│  ├─ GET /admin ────────► public/admin.html (requires auth)
-│  ├─ GET /*.html ──────► Serve public static files
-│  └─ GET /static ──────► Serve public assets
-│
-├─ API Routes (RESTful)
-│  │
-│  ├─ Catalog & Products
-│  │  ├─ GET /api/catalog ◄─────────────────┐
-│  │  │  ├─ Query params: search, sort      │
-│  │  │  ├─ Query params: product_type      │
-│  │  │  ├─ Calls db.getCatalog()           │
-│  │  │  └─ Returns: { companies: [...] }   │
-│  │  │                                      │
-│  │  └─ GET /api/games/:id ────────────────┤
-│  │     ├─ Calls db.getGameDetailsById()   │
-│  │     └─ Returns: game object            │
-│  │                                         │
-│  ├─ Today's Offers ◄──────────────────────┤
-│  │  ├─ GET /api/today-offers             │
-│  │  │  ├─ Reads data/today-offers.json    │
-│  │  │  └─ Returns: { offers: [...] }     │
-│  │  │                                     │
-│  │  ├─ POST /api/today-offers ◄──┐       │
-│  │  │  ├─ Body: { title, ...}    │       │
-│  │  │  ├─ Saves to .json file    │       │
-│  │  │  └─ Returns: saved offer   │       │
-│  │  │                            │       │
-│  │  └─ DELETE /api/today-offers/:id      │
-│  │     ├─ Removes offer from .json       │
-│  │     └─ Returns success msg   │       │
-│  │                              │       │
-│  ├─ Coupons ◄────────────────────┤       │
-│  │  ├─ GET /api/coupons (admin)  │       │
-│  │  ├─ POST /api/coupons (admin) │       │
-│  │  └─ POST /api/coupons/validate (public)
-│  │     └─ Checks coupon validity │       │
-│  │                               │       │
-│  ├─ Authentication ◄─────────────┤       │
-│  │  ├─ POST /api/auth/login      │       │
-│  │  │  ├─ Sets session cookie    │       │
-│  │  │  └─ Returns: { success }   │       │
-│  │  │                            │       │
-│  │  ├─ POST /api/auth/logout     │       │
-│  │  │  └─ Clears session         │       │
-│  │  │                            │       │
-│  │  ├─ GET /api/auth/status      │       │
-│  │  │  └─ Returns: { loggedIn }  │       │
-│  │  │                            │       │
-│  │  └─ POST /api/auth/change-password ◄─┤
-│  │     └─ Updates admin password │       │
-│  │                               │       │
-│  ├─ Settings (Admin) ◄───────────┤       │
-│  │  ├─ GET /api/admin/settings  │       │
-│  │  │  └─ Reads admin-settings.json      │
-│  │  │                            │       │
-│  │  └─ POST /api/admin/settings │       │
-│  │     └─ Updates WhatsApp #    │       │
-│  │                              │       │
-│  └─ Checkout ◄──────────────────┘
-│     └─ GET /checkout-review
-│        └─ Serves static review page
-│
-└─ Database Layer
-   │
-   └─ db.js (imported)
-      ├─ getCatalog(filter) ─────────────► Returns filtered companies
-      ├─ getGameDetailsById(id) ─────────► Returns single game
-      ├─ seedData ───────────────────────► Initial catalog
-      ├─ createCoupon() / validateCoupon()
-      └─ getCompaniesList() ──────────────► Returns all companies
+```text
+.
+├── android/                        # Capacitor Android project
+├── artifacts/                     # build or report artifacts
+├── data/                          # runtime JSON data files
+│   ├── admin-settings.json
+│   ├── coupons.json
+│   ├── fallback-data.json
+│   └── today-offers.json
+├── public/                        # storefront and static pages
+│   ├── 403.html
+│   ├── 404.html
+│   ├── admin.html
+│   ├── app.js
+│   ├── cart.html
+│   ├── cart.js
+│   ├── change-password.html
+│   ├── change-password.js
+│   ├── contact.html
+│   ├── game.html
+│   ├── game.js
+│   ├── index.html
+│   ├── login.html
+│   ├── login.js
+│   ├── styles.css
+│   ├── uploads/                  # uploaded product images
+│   └── ...
+├── scripts/                       # deployment and migration scripts
+│   ├── deploy.sh
+│   ├── import-fallback-to-db.js
+│   ├── migrate-sqlite-to-postgres.js
+│   ├── reset-render-db.sql
+│   ├── rollback.sh
+│   ├── seed-postgres.js
+│   └── visual-test.js
+├── server_assets/                 # server-served admin logic
+│   └── admin.js
+├── sql/                           # SQL setup scripts
+│   └── init.sql
+├── .env.example                   # env template (if present in project)
+├── capacitor.config.json
+├── cookie.txt
+├── db.js                          # database layer and catalog logic
+├── Decisions.md
+├── ecosystem.config.js
+├── package.json
+├── Project-Map-Tree.md
+├── README.md
+├── server.js                      # Express app entry point
+└── ...
 ```
 
 ---
 
-## 🔗 Data Flow Diagrams
+## 3) Major Runtime Components
 
-### **User Views Catalog**
+### Public storefront
+This part is served by `public/` and delivered through static routes in `server.js`:
+- `/` and `/index.html`
+- `/game`
+- `/contact`
+- `/cart`
+- `/login`
 
+The main storefront logic is centered around:
+- `public/app.js` → catalog rendering, cart flow, search/filter logic, language switching
+- `public/game.js` → single-game details page logic
+- `public/styles.css` → dark theme, responsive layout, RTL styling
+
+### Admin panel
+Admin pages are protected and served from:
+- `/admin`
+- `/admin.html`
+- `/change-password.html`
+- `/admin/password`
+
+The admin UI logic is in:
+- `server_assets/admin.js`
+
+This file manages:
+- company CRUD
+- game CRUD with image upload support
+- coupon management
+- offer management
+- admin password updates
+- auth status checks
+
+### Backend API layer
+The route logic lives in `server.js` and includes:
+- auth: `/api/auth/login`, `/api/auth/logout`, `/api/auth/status`, `/api/auth/change-password`
+- catalog: `/api/catalog`, `/api/games/:id`, `/api/companies`
+- coupons: `/api/coupons`, `/api/coupons/:code`, `/api/coupons/validate`
+- offers: `/api/today-offers`
+- upload handling via `multer`
+- static file protection and admin guard middleware
+
+### Database and fallback layer
+The database layer is in `db.js` and contains:
+- database initialization
+- seed data definitions
+- catalog queries
+- company/game CRUD functions
+- coupon validation and creation helpers
+- PostgreSQL and SQLite compatibility logic
+
+If database setup fails, the app falls back to JSON-based data stored under `data/`.
+
+---
+
+## 4) Request Flow Examples
+
+### Storefront catalog request
+```text
+User requests /
+        ↓
+public/index.html loads
+        ↓
+public/app.js fetches /api/catalog
+        ↓
+server.js routes request
+        ↓
+db.js or fallback-data.json returns catalog data
+        ↓
+renderCatalog() populates cards and game lists
 ```
-User Opens / ─────► app.js loads ─────► fetchCatalog()
-                                            │
-                                    GET /api/catalog
-                                            │
-                                    db.getCatalog()
-                                            │
-                                    ┌───────▼──────────┐
-                                    │ fallback-data   │
-                                    │ or database      │
-                                    └────────┬────────┘
-                                            │
-                                    Returns companies[]
-                                            │
-                                    renderCatalog()
-                                            │
-                                    DOM renders cards
-                                            │
-                                    User sees stores
+
+### Admin login flow
+```text
+User opens /login
+        ↓
+POST /api/auth/login
+        ↓
+server.js validates session credentials
+        ↓
+req.session.isAdmin = true
+        ↓
+UI redirects to /admin
 ```
 
-### **User Adds to Cart**
-
-```
-Click "إضافة للسلة"
-    │
-    └─► addToCartBtn click listener
-        │
-        ├─ Update cart[] in memory
-        ├─ Save to localStorage 'iraqGameCart'
-        └─► renderCart()
-            │
-            ├─ Update cart count badge
-            ├─ Create/update cart panel HTML
-            └─► User sees item in cart
-```
-
-### **User Completes Order**
-
-```
-Click "إتمام الطلب"
-    │
-    ├─ Validate cart not empty
-    ├─ Save to localStorage 'iraqGameCheckoutReview'
-    └─► Redirect to /checkout-review.html
-        │
-        ├─ Load cart from localStorage
-        ├─ Load discount from localStorage
-        ├─ Show items + total
-        ├─ Show customer form
-        │
-        └─ Click "إتمام الشراء عبر WhatsApp"
-            │
-            ├─ GET /api/admin/settings (get WhatsApp #)
-            ├─ Build WhatsApp message from cart + discount
-            ├─ Open WhatsApp web link
-            └─ Clear localStorage
-```
-
-### **Admin Manages Offers**
-
-```
+### Product create/update flow
+```text
 Admin opens /admin
-    │
-    ├─ POST /api/auth/login (if not logged in)
-    │
-    ├─► app.js loads offers
-    │   │
-    │   └─► GET /api/today-offers
-    │       │
-    │       └─ server.js reads data/today-offers.json
-    │
-    ├─ Admin fills form (title, type, percent)
-    │
-    ├─ Click "Save"
-    │   │
-    │   └─► POST /api/today-offers
-    │       │
-    │       └─ server.js saves to data/today-offers.json
-    │
-    └─ Main page auto-fetches new offers via fetchTodayOffers()
+        ↓
+server_assets/admin.js loads company list
+        ↓
+Submit form
+        ↓
+POST /api/games or PUT /api/games/:id
+        ↓
+server.js validates admin session and body
+        ↓
+db.js creates or updates product record
+        ↓
+UI refreshes data list
 ```
 
-### **User Applies Coupon**
-
+### Cart checkout flow
+```text
+User adds item to cart
+        ↓
+localStorage key iraqGameCart updated
+        ↓
+User clicks checkout
+        ↓
+checkout review page reads saved cart + discount data
+        ↓
+WhatsApp message created and opened
+        ↓
+localStorage cleared after order submission
 ```
-User enters coupon code in cart
-    │
-    └─► POST /api/coupons/validate
+
+---
+
+## 5) Important Files and Responsibilities
+
+```text
+server.js
+  ├── Express app setup
+  ├── session + security middleware
+  ├── admin route guards
+  ├── API endpoints
+  ├── image upload handling
+  └── server startup and shutdown
+
+db.js
+  ├── seed data
+  ├── DB initialization
+  ├── catalog queries
+  ├── company/game CRUD
+  ├── coupon logic
+  └── PostgreSQL/SQLite compatibility
+
+public/app.js
+  ├── catalog loading
+  ├── cart logic
+  ├── search/filter behavior
+  ├── deal rendering
+  └── storefront interactions
+
+server_assets/admin.js
+  ├── admin auth checks
+  ├── coupon list/save/delete
+  ├── offer list/save/delete
+  ├── company/game forms + actions
+  └── admin UI behavior
+
+public/uploads/
+  └── images uploaded by admin for product covers
+
+data/
+  ├── fallback-data.json
+  ├── admin-settings.json
+  ├── coupons.json
+  └── today-offers.json
+```
+
+---
+
+## 6) Deployment Notes
+
+The app is designed to run as a Node service behind a reverse proxy or host platform. In production:
+- the server binds to `0.0.0.0`
+- environment variables are important for auth and session security
+- PM2 and similar process managers should run the app from the project root or with the correct `--cwd`
+- JSON data files inside `data/` remain part of the runtime state and must not be ignored during deployment
+
+---
+
+## 7) Architectural Rule
+
+When making changes, preserve this layered split:
+- static public pages remain in `public/`
+- server logic remains in `server.js`
+- DB and data access remain in `db.js`
+- admin UI logic stays in `server_assets/admin.js`
+- runtime data files stay under `data/`
+
+This separation keeps the app predictable and prevents the storefront logic, admin logic, and database layer from mixing responsibilities.
+
+---
+
+## 8) Current Status Snapshot
+
+The app currently includes:
+- catalog browsing and filtering
+- single game page
+- cart and checkout review flow
+- admin authentication and protected UI
+- daily offers and coupon system
+- image upload for game covers
+- fallback JSON mode for resilience
+- Android packaging support via Capacitor
+
+This map should be updated any time major routes, files, or architecture patterns change.
         │
         ├─ server.js checks coupon validity
         ├─ Reads data/coupons.json

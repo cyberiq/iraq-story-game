@@ -42,6 +42,12 @@ function setStatus(message) {
   statusNode.textContent = message;
 }
 
+function applyBackgroundOnlyMode() {
+  document.body.classList.add('background-only');
+  if (cardNode) cardNode.classList.add('hidden');
+  if (statusNode) statusNode.textContent = '';
+}
+
 function getGameIdFromQuery() {
   const params = new URLSearchParams(window.location.search);
   return Number(params.get("id"));
@@ -50,7 +56,7 @@ function getGameIdFromQuery() {
 async function loadGameDetails() {
   const gameId = getGameIdFromQuery();
   if (!Number.isInteger(gameId) || gameId <= 0) {
-    setStatus("معرف اللعبة غير صالح.");
+    applyBackgroundOnlyMode();
     return;
   }
 
@@ -61,6 +67,7 @@ async function loadGameDetails() {
     if (!response.ok) {
       if (response.status === 404) {
         setStatus("لم يتم العثور على اللعبة المطلوبة.");
+        applyBackgroundOnlyMode();
         return;
       }
 
@@ -150,6 +157,7 @@ async function loadGameDetails() {
   } catch (error) {
     console.error(error);
     setStatus("تعذر تحميل التفاصيل. حاول مرة أخرى.");
+    applyBackgroundOnlyMode();
   }
 }
 
@@ -246,6 +254,9 @@ function showPurchaseTheme(game, finalPrice, couponCode, couponObj) {
     const message = `أرغب بشراء: ${game.name_ar} / ${game.name_en} (ID:${game.id})\nالسعر: ${displayPrice}\nرمز الكوبون: ${code || 'لا يوجد'}`;
     const waNumber = '7713377783';
     const waUrl = `https://wa.me/${waNumber}?text=${encodeURIComponent(message)}`;
-    window.location.href = waUrl;
+    const opened = window.open(waUrl, '_blank', 'noopener,noreferrer');
+    if (!opened) {
+      window.location.href = waUrl;
+    }
   });
 }
