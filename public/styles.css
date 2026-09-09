@@ -351,6 +351,21 @@ body {
   color: #111111;
 }
 
+/* Purchase theme styles (overlay) */
+.scene-bg{ position: fixed; inset: 0; z-index: 99990; overflow: hidden; pointer-events: none; background-image: url('/assets/mountain-bg.jpg'); background-size: cover; background-position: center 62%; background-repeat: no-repeat; animation: scenePan 26s ease-in-out infinite alternate; }
+@keyframes scenePan{ 0%{ background-position: center 58%; transform: scale(1.02); } 100%{ background-position: center 66%; transform: scale(1.08); } }
+.scene-dim{ position: fixed; inset: 0; z-index: 99991; background: linear-gradient(180deg, rgba(5,6,10,.55) 0%, rgba(5,6,10,.30) 35%, rgba(5,6,10,.55) 100%); pointer-events: none; }
+.purchase-theme { width: min(980px, 96vw); max-width: 1120px; background: linear-gradient(180deg, rgba(6,8,12,0.92), rgba(8,12,18,0.96)); border-radius: 18px; box-shadow: 0 30px 80px rgba(0,0,0,0.7); border: 1px solid rgba(255,255,255,0.04); padding: 18px; display: grid; grid-template-columns: 420px 1fr; gap: 18px; align-items: start; }
+.purchase-theme .detail-image{ width: 100%; height: 100%; object-fit: cover; border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.6); }
+.purchase-theme .detail-content{ padding: 8px 12px; }
+.purchase-theme .detail-price{ font-weight: 900; color: var(--brand); font-size: 1.2rem; margin-top: 10px; }
+.purchase-theme .purchase-row{ display:flex; flex-direction:column; gap:8px; }
+.purchase-theme input{ height:44px; }
+.purchase-theme .btn-primary{ width: 100%; height:48px; border-radius: 12px; }
+.purchase-theme .btn-secondary{ width: auto; }
+
+@media (max-width: 900px){ .purchase-theme{ grid-template-columns: 1fr; } .scene-bg, .scene-dim{ display:block; } }
+
 @keyframes adminConfirmRise {
   from {
     opacity: 0;
