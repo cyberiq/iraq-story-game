@@ -132,30 +132,11 @@ async function loadGameDetails() {
         finalPrice = Math.round(priceValue * (1 - Number(activeCoupon.percent) / 100));
       }
 
-      // Try adding to server-side session cart, then redirect to cart page
+      // Show the purchase theme overlay instead of immediate redirect
       try {
-        const csrfToken = await getCsrfToken();
-        await fetch('/api/cart/add', {
-          method: 'POST',
-          credentials: 'same-origin',
-          headers: {
-            'Content-Type': 'application/json',
-            'X-CSRF-Token': csrfToken
-          },
-          body: JSON.stringify({
-            id: currentGame.id,
-            name_ar: currentGame.name_ar,
-            name_en: currentGame.name_en,
-            price: finalPrice,
-            currency: currentGame.currency || 'IQD',
-            coupon: code || null
-          })
-        });
-
-        window.location.href = '/cart';
+        showPurchaseTheme(currentGame, finalPrice, code, activeCoupon);
       } catch (err) {
-        console.error('Failed to add to cart, falling back to WhatsApp:', err);
-        // Fallback: open WhatsApp link
+        console.error('Failed to open purchase theme, falling back to WhatsApp:', err);
         const displayPrice = formatPrice(finalPrice, currentGame.currency || 'IQD');
         const message = `أرغب بشراء: ${currentGame.name_ar} / ${currentGame.name_en} (ID:${currentGame.id})\nالسعر: ${displayPrice}\nرمز الكوبون: ${code || 'لا يوجد'}`;
         const waNumber = '7713377783';
@@ -173,3 +154,98 @@ async function loadGameDetails() {
 }
 
 document.addEventListener("DOMContentLoaded", loadGameDetails);
+
+/* Purchase theme overlay builder ------------------------------------------------- */
+function showPurchaseTheme(game, finalPrice, couponCode, couponObj) {
+  // Prevent multiple overlays
+  if (document.getElementById('purchase-theme-backdrop')) return;
+
+  const backdrop = document.createElement('div');
+  backdrop.id = 'purchase-theme-backdrop';
+  backdrop.className = 'admin-inline-confirm-backdrop';
+  backdrop.style.zIndex = 99999;
+
+  const wrapper = document.createElement('div');
+  wrapper.className = 'purchase-theme';
+  wrapper.innerHTML = `
+    <div class="scene-bg" aria-hidden="true"></div>
+    <div class="scene-dim" aria-hidden="true"></div>
+    <main class="detail-wrap" dir="rtl">
+      <div class="detail-topbar">
+        <a class="btn-secondary" href="/">عودة للرئيسية</a>
+      </div>
+      <a class="contact-manager" href="/contact" aria-label="صفحة تواصل">
+        <img src="https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/whatsapp.svg" alt="wa" />
+        تواصل مع المدير
+      </a>
+      <section id="detailStatusTheme" class="status" aria-live="polite"></section>
+      <article id="detailCardTheme" class="detail-card">
+        <img id="detailImageTheme" class="detail-image" alt="غلاف اللعبة" src="${game.cover_image_url || ''}" />
+        <div class="detail-content">
+          <h1 id="detailNameTheme">${game.name_ar} / ${game.name_en}</h1>
+          <p id="detailCompanyTheme" class="detail-company">الشركة: ${game.company.name_ar} / ${game.company.name_en}</p>
+          <p id="detailMetaTheme" class="detail-meta">النوع: ${game.genre} - سنة الإصدار: ${game.release_year}</p>
+          <p id="detailDescriptionTheme" class="detail-description">${game.description || ''}</p>
+          <p id="detailPriceTheme" class="detail-price">${formatPrice(finalPrice, game.currency)}</p>
+          <div class="purchase-row">
+            <label style="display:block;margin-bottom:6px">كود الخصم</label>
+            <input id="couponInputTheme" placeholder="رمز الكوبون (اختياري)" value="${couponCode || ''}" />
+            <button id="applyCouponBtnTheme" class="btn-secondary" type="button">تطبيق الكوبون</button>
+            <div id="discountInfoTheme" style="margin-top:8px;color:#aaffaa">${couponObj && couponObj.percent ? `تم تطبيق: ${couponObj.percent}%` : ''}</div>
+            <button id="buyBtnTheme" class="btn-primary" style="margin-top:12px">شراء عبر واتساب</button>
+            <button id="closeTheme" class="btn-secondary" style="margin-top:12px;margin-left:8px">إغلاق</button>
+          </div>
+        </div>
+      </article>
+    </main>
+  `;
+
+  backdrop.appendChild(wrapper);
+  document.body.appendChild(backdrop);
+
+  // Wire up buttons
+  const closeBtn = document.getElementById('closeTheme');
+  const buyThemeBtn = document.getElementById('buyBtnTheme');
+  const applyThemeBtn = document.getElementById('applyCouponBtnTheme');
+  const couponInputTheme = document.getElementById('couponInputTheme');
+
+  function removeOverlay() {
+    const el = document.getElementById('purchase-theme-backdrop');
+    if (el) el.remove();
+  }
+
+  closeBtn.addEventListener('click', () => removeOverlay());
+
+  applyThemeBtn.addEventListener('click', async () => {
+    const code = (couponInputTheme.value || '').trim();
+    if (!code) return;
+    try {
+      const csrfToken = await getCsrfToken();
+      const res = await fetch('/api/coupons/validate', {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken },
+        body: JSON.stringify({ code })
+      });
+      if (!res.ok) {
+        const p = await res.json().catch(() => ({}));
+        document.getElementById('discountInfoTheme').textContent = p.error || 'الكوبون غير صالح.';
+        return;
+      }
+      const p = await res.json();
+      document.getElementById('discountInfoTheme').textContent = `تم تطبيق: ${p.percent || 0}%`;
+    } catch (e) {
+      console.error(e);
+      document.getElementById('discountInfoTheme').textContent = 'خطأ في التحقق من الكوبون.';
+    }
+  });
+
+  buyThemeBtn.addEventListener('click', () => {
+    const code = (couponInputTheme.value || '').trim();
+    const displayPrice = formatPrice(finalPrice, game.currency || 'IQD');
+    const message = `أرغب بشراء: ${game.name_ar} / ${game.name_en} (ID:${game.id})\nالسعر: ${displayPrice}\nرمز الكوبون: ${code || 'لا يوجد'}`;
+    const waNumber = '7713377783';
+    const waUrl = `https://wa.me/${waNumber}?text=${encodeURIComponent(message)}`;
+    window.location.href = waUrl;
+  });
+}
