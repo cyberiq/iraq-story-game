@@ -47,7 +47,7 @@ function getEffectivePriceForItem(game, quantityOverride = null) {
   const basePrice = Number(game?.price ?? 0);
   const quantity = Number(quantityOverride ?? getRequestedServiceQuantity());
   if (String(game?.product_type || '').toLowerCase() === 'service') {
-    return Math.round(basePrice * (quantity / 1000));
+    return Math.round(basePrice * quantity);
   }
   return Math.round(basePrice);
 }
@@ -96,7 +96,7 @@ async function loadGameDetails() {
     });
 
     const isService = String(game.product_type || '').toLowerCase() === 'service';
-    const baseQuantity = Math.max(1000, Number(game?.quantity || 1000));
+    const baseQuantity = Math.max(1, Number(game?.quantity || 1));
 
     nameNode.textContent = `${game.name_ar} / ${game.name_en}`;
     companyNode.textContent = `الشركة: ${game.company.name_ar} / ${game.company.name_en}`;
@@ -108,15 +108,15 @@ async function loadGameDetails() {
     }
     if (serviceQuantityInput) {
       serviceQuantityInput.value = String(baseQuantity);
-      serviceQuantityInput.min = '1000';
-      serviceQuantityInput.step = '1000';
+      serviceQuantityInput.min = '1';
+      serviceQuantityInput.step = '1';
     }
     if (serviceQuantityMeta) {
-      serviceQuantityMeta.textContent = isService ? 'وحدة (يتم حساب السعر على أساس كل 1000 وحدة)' : 'وحدة';
+      serviceQuantityMeta.textContent = isService ? 'عدد وحدات 1000 متابع' : 'وحدة';
     }
     if (servicePriceSummary) {
       servicePriceSummary.textContent = isService
-        ? `السعر: ${formatPrice(Number(game.price ?? 0), game.currency || 'IQD')} لكل 1000 وحدة`
+        ? `السعر: ${formatPrice(Number(game.price ?? 0), game.currency || 'IQD')} لكل وحدة (1000 متابع)`
         : '';
     }
 
@@ -184,7 +184,7 @@ async function loadGameDetails() {
       const isServiceItem = String(currentGame.product_type || '').toLowerCase() === 'service';
       const quantity = isServiceItem ? getRequestedServiceQuantity() : 1;
       const basePrice = Number(currentGame.price || 0);
-      const priceValue = isServiceItem ? Math.round(basePrice * (quantity / 1000)) : basePrice;
+      const priceValue = isServiceItem ? Math.round(basePrice * quantity) : basePrice;
       let finalPrice = priceValue;
       if (activeCoupon && Number(activeCoupon.percent || 0) > 0) {
         finalPrice = Math.round(priceValue * (1 - Number(activeCoupon.percent) / 100));

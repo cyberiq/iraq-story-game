@@ -652,7 +652,7 @@
     const qty = Number(item?.qty || 1);
     const unitPrice = Number(item?.price || 0);
     const isServiceItem = String(item?.product_type || '').toLowerCase() === 'service';
-    return isServiceItem ? unitPrice * (qty / 1000) : unitPrice * qty;
+    return isServiceItem ? unitPrice * qty : unitPrice * qty;
   }
 
   function renderCheckout() {
@@ -779,7 +779,7 @@
       const qty = Number(item.qty || 1);
       const name = item.name_ar || item.name_en || item.name || 'منتج';
       const isServiceItem = String(item.product_type || '').toLowerCase() === 'service';
-      const price = isServiceItem ? Number(item.price || 0) * (qty / 1000) : Number(item.price || 0) * qty;
+      const price = Number(item.price || 0) * qty;
       const suffix = isServiceItem ? ` × ${qty.toLocaleString('en-US')} وحدة` : ` × ${qty}`;
       return `${index + 1}. ${name}${suffix} — ${price} د.ع`;
     }).join('\n');

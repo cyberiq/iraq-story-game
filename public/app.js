@@ -947,7 +947,7 @@ function getLineTotalForItem(item) {
   const qty = Number(item?.qty || 1);
   const unitPrice = Number(item?.price || 0);
   const isService = String(item?.product_type || '').toLowerCase() === 'service';
-  return isService ? unitPrice * (qty / 1000) : unitPrice * qty;
+  return isService ? unitPrice * qty : unitPrice * qty;
 }
 
 function renderCart() {
