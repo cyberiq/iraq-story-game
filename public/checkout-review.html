@@ -561,18 +561,22 @@
     for (const item of Array.isArray(items) ? items : []) {
       if (!item || (!item.id && !item.name)) continue;
       const key = String(item.id || item.name || 'item');
+      const nextItem = { ...item, qty: Number(item.qty || 1) };
+
       if (!merged.has(key)) {
-        merged.set(key, { ...item, qty: Number(item.qty || 1) });
+        merged.set(key, nextItem);
         continue;
       }
 
       const existing = merged.get(key);
-      existing.qty = Number(existing.qty || 0) + Number(item.qty || 1);
-      existing.price = Number(item.price || existing.price || 0);
-      if (item.name) existing.name = item.name;
-      if (item.product_type) existing.product_type = item.product_type;
-      if (item.product_subtype) existing.product_subtype = item.product_subtype;
-      if (item.cover_image_url) existing.cover_image_url = item.cover_image_url;
+      const existingQty = Number(existing.qty || 1);
+      const nextQty = Number(nextItem.qty || 1);
+      existing.qty = Math.max(existingQty, nextQty);
+      existing.price = Number(nextItem.price || existing.price || 0);
+      if (nextItem.name) existing.name = nextItem.name;
+      if (nextItem.product_type) existing.product_type = nextItem.product_type;
+      if (nextItem.product_subtype) existing.product_subtype = nextItem.product_subtype;
+      if (nextItem.cover_image_url) existing.cover_image_url = nextItem.cover_image_url;
     }
     return Array.from(merged.values());
   }
