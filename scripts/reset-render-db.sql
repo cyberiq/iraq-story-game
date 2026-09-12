@@ -14,7 +14,7 @@ INSERT INTO companies (id, slug, name_ar, name_en) VALUES
   (4, 'medal-of-honor', 'ميدل أوف هونر', 'Medal of Honor'),
   (5, 'god-of-war', 'جود أوف وور', 'God of War'),
   (6, 'gaming-platforms', 'منصات الألعاب', 'Gaming Platforms'),
-  (7, 'ai-subscriptions', 'اشتراكات الذكاء الاصطناعي', 'AI Subscriptions');
+  (7, 'digital-subscriptions', 'الاشتراكات الرقمية', 'Digital Subscriptions');
 
 ALTER SEQUENCE companies_id_seq RESTART WITH 8;
 

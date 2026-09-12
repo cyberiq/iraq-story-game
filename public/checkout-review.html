@@ -526,9 +526,51 @@
 
   const priceFormat = (value) => `${Number(value || 0).toLocaleString('en-US')} د.ع`;
 
+  async function syncCartItemsWithCatalog() {
+    try {
+      const response = await fetch('/api/catalog');
+      if (!response.ok) return;
+      const payload = await response.json();
+      const catalogMap = new Map();
+      for (const company of payload.companies || []) {
+        for (const game of company.games || []) {
+          catalogMap.set(String(game.id), game);
+        }
+      }
+
+      const items = getCartItems().map((item) => {
+        const latest = catalogMap.get(String(item.id));
+        if (!latest) return item;
+        return {
+          ...item,
+          price: Number(latest.price ?? item.price ?? 0),
+          currency: latest.currency || item.currency || 'IQD'
+        };
+      });
+
+      if (items.length !== getCartItems().length || JSON.stringify(items) !== JSON.stringify(getCartItems())) {
+        saveCartItems(items);
+      }
+    } catch (error) {
+      console.warn('Unable to sync checkout prices with catalog:', error);
+    }
+  }
+
   function getCartItems() {
     try {
-      return JSON.parse(localStorage.getItem('iraqGameCart') || '[]');
+      const localItems = JSON.parse(localStorage.getItem('iraqGameCart') || '[]');
+      if (Array.isArray(localItems) && localItems.length) return localItems;
+
+      const rawSessionCart = sessionStorage.getItem('iraqGameCart');
+      if (rawSessionCart) {
+        const sessionItems = JSON.parse(rawSessionCart);
+        if (Array.isArray(sessionItems)) {
+          localStorage.setItem('iraqGameCart', JSON.stringify(sessionItems));
+          return sessionItems;
+        }
+      }
+
+      return [];
     } catch (error) {
       return [];
     }
@@ -536,6 +578,11 @@
 
   function saveCartItems(items) {
     localStorage.setItem('iraqGameCart', JSON.stringify(items));
+    try {
+      sessionStorage.setItem('iraqGameCart', JSON.stringify(items));
+    } catch (error) {
+      // Ignore storage write issues in restrictive browsers.
+    }
   }
 
   function updateCartItem(id, delta) {
@@ -699,7 +746,7 @@
     localStorage.removeItem('iraqGameCart');
   });
 
-  renderCheckout();
+  void syncCartItemsWithCatalog().finally(() => renderCheckout());
 </script>
 </body>
 </html>

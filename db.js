@@ -480,9 +480,9 @@ const seedData = [
     ]
   },
   {
-    slug: 'ai-subscriptions',
-    name_ar: 'اشتراكات الذكاء الاصطناعي',
-    name_en: 'AI Subscriptions',
+    slug: 'digital-subscriptions',
+    name_ar: 'الاشتراكات الرقمية',
+    name_en: 'Digital Subscriptions',
     games: [
       { name_ar: 'ChatGPT Plus', name_en: 'ChatGPT Plus', product_type: 'subscription', genre: 'AI', release_year: 2024, price: 20, currency: 'USD', cover_image_url: 'https://images.unsplash.com/photo-1677442136019-21780ecad995?auto=format&fit=crop&w=800&q=80', description: 'خطة OpenAI التي تعطي وصولاً إلى النماذج الحديثة ومزايا إنتاجية محسّنة.' },
       { name_ar: 'Claude Pro', name_en: 'Claude Pro', product_type: 'subscription', genre: 'AI', release_year: 2024, price: 20, currency: 'USD', cover_image_url: 'https://images.unsplash.com/photo-1531482615713-2afd69097998?auto=format&fit=crop&w=800&q=80', description: 'اشتراك Anthropic لدعم نماذج Claude مع حدود أعلى ومعالجة نصوص وطويلة.' },

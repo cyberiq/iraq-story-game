@@ -26,7 +26,16 @@ function formatPrice(value, currency = 'IQD') {
 
 function getLocalCartItems() {
   try {
-    return JSON.parse(localStorage.getItem('iraqGameCart') || '[]');
+    const localItems = JSON.parse(localStorage.getItem('iraqGameCart') || '[]');
+    if (Array.isArray(localItems) && localItems.length) return localItems;
+
+    const sessionItems = JSON.parse(sessionStorage.getItem('iraqGameCart') || '[]');
+    if (Array.isArray(sessionItems) && sessionItems.length) {
+      localStorage.setItem('iraqGameCart', JSON.stringify(sessionItems));
+      return sessionItems;
+    }
+
+    return [];
   } catch (error) {
     return [];
   }

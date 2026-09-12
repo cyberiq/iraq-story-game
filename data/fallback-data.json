@@ -817,9 +817,9 @@
   },
   {
     "id": 7,
-    "slug": "ai-subscriptions",
-    "name_ar": "اشتراكات الذكاء الاصطناعي",
-    "name_en": "AI Subscriptions",
+    "slug": "digital-subscriptions",
+    "name_ar": "الاشتراكات الرقمية",
+    "name_en": "Digital Subscriptions",
     "games": [
       {
         "id": 701,

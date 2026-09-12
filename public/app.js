@@ -29,9 +29,17 @@ window.__IRAQ_GAME_SESSION_NS__ = STORAGE_NS;
 function getSessionValue(key, fallback) {
   try {
     const raw = sessionStorage.getItem(`${STORAGE_NS}:${key}`);
-    if (raw === null) return fallback;
+    if (raw === null) {
+      const legacyRaw = localStorage.getItem(key);
+      if (legacyRaw === null) return fallback;
+      return JSON.parse(legacyRaw);
+    }
     return JSON.parse(raw);
   } catch (error) {
+    try {
+      const legacyRaw = localStorage.getItem(key);
+      if (legacyRaw !== null) return JSON.parse(legacyRaw);
+    } catch (_) {}
     return fallback;
   }
 }
@@ -42,11 +50,69 @@ function setSessionValue(key, value) {
   } catch (error) {
     console.warn('Unable to persist session state:', error);
   }
+
+  try {
+    localStorage.setItem(key, JSON.stringify(value));
+  } catch (error) {
+    console.warn('Unable to persist cart in localStorage:', error);
+  }
+}
+
+function loadCartFromStorage() {
+  const sessionCart = getSessionValue('iraqGameCart', []);
+  if (Array.isArray(sessionCart) && sessionCart.length) {
+    return sessionCart;
+  }
+
+  try {
+    const legacyRaw = localStorage.getItem('iraqGameCart');
+    if (!legacyRaw) return [];
+    const parsed = JSON.parse(legacyRaw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch (error) {
+    return [];
+  }
+}
+
+async function syncCartWithLatestPrices() {
+  try {
+    const response = await fetch('/api/catalog');
+    if (!response.ok) return;
+
+    const payload = await response.json();
+    const catalogMap = new Map();
+    for (const company of payload.companies || []) {
+      for (const game of company.games || []) {
+        catalogMap.set(String(game.id), game);
+      }
+    }
+
+    if (!catalogMap.size) return;
+
+    const updated = cart.map((item) => {
+      const latest = catalogMap.get(String(item.id));
+      if (!latest) return item;
+      return {
+        ...item,
+        price: Number(latest.price ?? item.price ?? 0),
+        currency: latest.currency || item.currency || 'IQD',
+        name: item.name || `${latest.name_ar || latest.name_en || ''}`
+      };
+    });
+
+    if (JSON.stringify(updated) !== JSON.stringify(cart)) {
+      cart = updated;
+      setSessionValue('iraqGameCart', cart);
+      localStorage.setItem('iraqGameCart', JSON.stringify(cart));
+    }
+  } catch (error) {
+    console.warn('Unable to sync cart prices with latest catalog:', error);
+  }
 }
 
 let debounceTimer;
 let activeCategory = 'all';
-let cart = getSessionValue('iraqGameCart', []);
+let cart = loadCartFromStorage();
 let language = getSessionValue('iraqGameLang', 'ar');
 
 const localFallbackCompanies = [
@@ -386,9 +452,9 @@ const localFallbackCompanies = [
   },
   {
     id: 9,
-    slug: "ai-subscriptions",
-    name_ar: "اشتراكات الذكاء الاصطناعي",
-    name_en: "AI Subscriptions",
+    slug: "digital-subscriptions",
+    name_ar: "الاشتراكات الرقمية",
+    name_en: "Digital Subscriptions",
     games: [
       {
         id: 901,
@@ -495,7 +561,7 @@ const companyBrandMap = {
   "medal-of-honor": { icon: "🏅", accent: "#c4b5fd", soft: "rgba(196, 181, 253, 0.18)", border: "rgba(196, 181, 253, 0.32)", glow: "rgba(196, 181, 253, 0.22)", panel: "linear-gradient(180deg, rgba(36, 30, 58, 0.96), rgba(17, 22, 31, 0.98))" },
   "god-of-war": { icon: "🗡️", accent: "#fda4af", soft: "rgba(253, 164, 175, 0.18)", border: "rgba(253, 164, 175, 0.28)", glow: "rgba(253, 164, 175, 0.20)", panel: "linear-gradient(180deg, rgba(50, 25, 32, 0.96), rgba(17, 24, 30, 0.98))" },
   "gaming-platforms": { icon: "🕹️", accent: "#86efac", soft: "rgba(134, 239, 172, 0.18)", border: "rgba(134, 239, 172, 0.28)", glow: "rgba(134, 239, 172, 0.22)", panel: "linear-gradient(180deg, rgba(19, 41, 28, 0.96), rgba(17, 22, 30, 0.98))" },
-  "ai-subscriptions": { icon: "🤖", accent: "#a5b4fc", soft: "rgba(165, 180, 252, 0.18)", border: "rgba(165, 180, 252, 0.28)", glow: "rgba(165, 180, 252, 0.20)", panel: "linear-gradient(180deg, rgba(23, 28, 58, 0.96), rgba(17, 22, 30, 0.98))" },
+  "digital-subscriptions": { icon: "⚡", accent: "#a5b4fc", soft: "rgba(165, 180, 252, 0.18)", border: "rgba(165, 180, 252, 0.28)", glow: "rgba(165, 180, 252, 0.20)", panel: "linear-gradient(180deg, rgba(23, 28, 58, 0.96), rgba(17, 22, 30, 0.98))" },
   riot: { icon: "🔥", accent: "#f97316", soft: "rgba(249, 115, 22, 0.18)", border: "rgba(249, 115, 22, 0.32)", glow: "rgba(249, 115, 22, 0.20)", panel: "linear-gradient(180deg, rgba(51, 30, 15, 0.96), rgba(17, 23, 31, 0.98))" },
   epic: { icon: "🚀", accent: "#22d3ee", soft: "rgba(34, 211, 238, 0.18)", border: "rgba(34, 211, 238, 0.28)", glow: "rgba(34, 211, 238, 0.20)", panel: "linear-gradient(180deg, rgba(15, 39, 47, 0.96), rgba(17, 22, 30, 0.98))" },
   default: { icon: "🎯", accent: "#f3c98b", soft: "rgba(243, 201, 139, 0.18)", border: "rgba(243, 201, 139, 0.28)", glow: "rgba(243, 201, 139, 0.20)", panel: "linear-gradient(180deg, rgba(41, 30, 20, 0.96), rgba(17, 22, 30, 0.98))" }
@@ -549,6 +615,7 @@ function createGameNode(game) {
     }
     cart = nextCart;
     setSessionValue('iraqGameCart', cart);
+    localStorage.setItem('iraqGameCart', JSON.stringify(cart));
     renderCart();
     // animate a flying image to the cart if widget is available
     try { if (window.animateAddToCart) window.animateAddToCart(gameCover); } catch (e) {}
@@ -830,6 +897,7 @@ async function fetchSuggestions() {
 }
 
 function renderCart() {
+  void syncCartWithLatestPrices();
   const count = cart.reduce((sum, item) => sum + Number(item.qty || 0), 0);
   if (cartCount) cartCount.textContent = String(count);
 
@@ -874,6 +942,7 @@ function renderCart() {
       if (confirm(language === 'en' ? 'Are you sure you want to clear the cart?' : 'هل تأكد من إفراغ السلة؟')) {
         cart = [];
         setSessionValue('iraqGameCart', cart);
+        localStorage.setItem('iraqGameCart', JSON.stringify(cart));
         renderCart();
       }
     });
