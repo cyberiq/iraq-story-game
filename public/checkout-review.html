@@ -558,16 +558,48 @@
 
   function getCartItems() {
     try {
-      const localItems = JSON.parse(localStorage.getItem('iraqGameCart') || '[]');
-      if (Array.isArray(localItems) && localItems.length) return localItems;
+      const seen = new Set();
+      const merged = [];
+      const storageKeys = [
+        `${sessionStorage.getItem('iraqGameSessionNs') || 'iraqGame_default'}:iraqGameCart`,
+        'iraqGameCart',
+        'iraqGameCart'
+      ];
 
-      const rawSessionCart = sessionStorage.getItem('iraqGameCart');
-      if (rawSessionCart) {
-        const sessionItems = JSON.parse(rawSessionCart);
-        if (Array.isArray(sessionItems)) {
-          localStorage.setItem('iraqGameCart', JSON.stringify(sessionItems));
-          return sessionItems;
+      for (const key of storageKeys) {
+        const rawLocal = localStorage.getItem(key);
+        if (rawLocal) {
+          const parsed = JSON.parse(rawLocal);
+          if (Array.isArray(parsed)) {
+            for (const item of parsed) {
+              const signature = `${item.id || item.name || 'item'}:${item.qty || 1}`;
+              if (!seen.has(signature)) {
+                seen.add(signature);
+                merged.push(item);
+              }
+            }
+          }
         }
+
+        const rawSession = sessionStorage.getItem(key);
+        if (rawSession) {
+          const parsed = JSON.parse(rawSession);
+          if (Array.isArray(parsed)) {
+            for (const item of parsed) {
+              const signature = `${item.id || item.name || 'item'}:${item.qty || 1}`;
+              if (!seen.has(signature)) {
+                seen.add(signature);
+                merged.push(item);
+              }
+            }
+          }
+        }
+      }
+
+      if (merged.length) {
+        localStorage.setItem('iraqGameCart', JSON.stringify(merged));
+        try { sessionStorage.setItem('iraqGameCart', JSON.stringify(merged)); } catch (_) {}
+        return merged;
       }
 
       return [];
@@ -577,9 +609,12 @@
   }
 
   function saveCartItems(items) {
+    const namespacedKey = `${sessionStorage.getItem('iraqGameSessionNs') || 'iraqGame_default'}:iraqGameCart`;
     localStorage.setItem('iraqGameCart', JSON.stringify(items));
+    localStorage.setItem(namespacedKey, JSON.stringify(items));
     try {
       sessionStorage.setItem('iraqGameCart', JSON.stringify(items));
+      sessionStorage.setItem(namespacedKey, JSON.stringify(items));
     } catch (error) {
       // Ignore storage write issues in restrictive browsers.
     }

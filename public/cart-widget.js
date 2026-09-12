@@ -16,8 +16,19 @@
   const getCartFromSession = () => {
     try {
       const ns = window.__IRAQ_GAME_SESSION_NS__ || sessionStorage.getItem('iraqGameSessionNs') || 'iraqGame_default';
-      const raw = sessionStorage.getItem(`${ns}:iraqGameCart`);
-      return raw ? JSON.parse(raw) : [];
+      const candidates = [
+        sessionStorage.getItem(`${ns}:iraqGameCart`),
+        localStorage.getItem(`${ns}:iraqGameCart`),
+        sessionStorage.getItem('iraqGameCart'),
+        localStorage.getItem('iraqGameCart')
+      ];
+
+      for (const raw of candidates) {
+        if (!raw) continue;
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed)) return parsed;
+      }
+      return [];
     } catch (error) {
       return [];
     }

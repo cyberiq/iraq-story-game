@@ -26,52 +26,77 @@ const STORAGE_NS = (() => {
 
 window.__IRAQ_GAME_SESSION_NS__ = STORAGE_NS;
 
-function getSessionValue(key, fallback) {
+function readStorageJson(key, storage) {
   try {
-    const raw = sessionStorage.getItem(`${STORAGE_NS}:${key}`);
-    if (raw === null) {
-      const legacyRaw = localStorage.getItem(key);
-      if (legacyRaw === null) return fallback;
-      return JSON.parse(legacyRaw);
-    }
+    const raw = storage.getItem(key);
+    if (raw === null) return null;
     return JSON.parse(raw);
   } catch (error) {
-    try {
-      const legacyRaw = localStorage.getItem(key);
-      if (legacyRaw !== null) return JSON.parse(legacyRaw);
-    } catch (_) {}
-    return fallback;
+    return null;
   }
 }
 
-function setSessionValue(key, value) {
-  try {
-    sessionStorage.setItem(`${STORAGE_NS}:${key}`, JSON.stringify(value));
-  } catch (error) {
-    console.warn('Unable to persist session state:', error);
+function getSessionValue(key, fallback) {
+  const candidates = [
+    `${STORAGE_NS}:${key}`,
+    key,
+    `iraqGameCart`
+  ];
+
+  for (const candidate of candidates) {
+    const rawSession = readStorageJson(candidate, sessionStorage);
+    if (rawSession !== null) return rawSession;
+    const rawLocal = readStorageJson(candidate, localStorage);
+    if (rawLocal !== null) return rawLocal;
   }
 
-  try {
-    localStorage.setItem(key, JSON.stringify(value));
-  } catch (error) {
-    console.warn('Unable to persist cart in localStorage:', error);
+  return fallback;
+}
+
+function setSessionValue(key, value) {
+  const storageCandidates = [
+    `${STORAGE_NS}:${key}`,
+    key
+  ];
+
+  for (const storageKey of storageCandidates) {
+    try {
+      sessionStorage.setItem(storageKey, JSON.stringify(value));
+    } catch (error) {
+      console.warn('Unable to persist session state:', error);
+    }
+
+    try {
+      localStorage.setItem(storageKey, JSON.stringify(value));
+    } catch (error) {
+      console.warn('Unable to persist cart in localStorage:', error);
+    }
   }
 }
 
 function loadCartFromStorage() {
-  const sessionCart = getSessionValue('iraqGameCart', []);
-  if (Array.isArray(sessionCart) && sessionCart.length) {
-    return sessionCart;
+  const merged = [];
+  const seen = new Set();
+
+  const sources = [
+    readStorageJson(`${STORAGE_NS}:iraqGameCart`, sessionStorage),
+    readStorageJson('iraqGameCart', sessionStorage),
+    readStorageJson('iraqGameCart', localStorage),
+    readStorageJson(`${STORAGE_NS}:iraqGameCart`, localStorage)
+  ];
+
+  for (const candidate of sources) {
+    if (!Array.isArray(candidate)) continue;
+    for (const item of candidate) {
+      const signature = `${item.id || item.name || 'item'}:${item.qty || 1}`;
+      if (!seen.has(signature)) {
+        seen.add(signature);
+        merged.push(item);
+      }
+    }
   }
 
-  try {
-    const legacyRaw = localStorage.getItem('iraqGameCart');
-    if (!legacyRaw) return [];
-    const parsed = JSON.parse(legacyRaw);
-    return Array.isArray(parsed) ? parsed : [];
-  } catch (error) {
-    return [];
-  }
+  return merged;
 }
 
 async function syncCartWithLatestPrices() {

@@ -26,13 +26,34 @@ function formatPrice(value, currency = 'IQD') {
 
 function getLocalCartItems() {
   try {
-    const localItems = JSON.parse(localStorage.getItem('iraqGameCart') || '[]');
-    if (Array.isArray(localItems) && localItems.length) return localItems;
+    const seen = new Set();
+    const merged = [];
+    const namespacedKey = `${sessionStorage.getItem('iraqGameSessionNs') || 'iraqGame_default'}:iraqGameCart`;
+    const sources = [
+      localStorage.getItem('iraqGameCart'),
+      sessionStorage.getItem('iraqGameCart'),
+      localStorage.getItem(namespacedKey),
+      sessionStorage.getItem(namespacedKey)
+    ];
 
-    const sessionItems = JSON.parse(sessionStorage.getItem('iraqGameCart') || '[]');
-    if (Array.isArray(sessionItems) && sessionItems.length) {
-      localStorage.setItem('iraqGameCart', JSON.stringify(sessionItems));
-      return sessionItems;
+    for (const raw of sources) {
+      if (!raw) continue;
+      const parsed = JSON.parse(raw);
+      if (!Array.isArray(parsed)) continue;
+      for (const item of parsed) {
+        const signature = `${item.id || item.name || 'item'}:${item.qty || 1}`;
+        if (!seen.has(signature)) {
+          seen.add(signature);
+          merged.push(item);
+        }
+      }
+    }
+
+    if (merged.length) {
+      localStorage.setItem('iraqGameCart', JSON.stringify(merged));
+      sessionStorage.setItem('iraqGameCart', JSON.stringify(merged));
+      sessionStorage.setItem(namespacedKey, JSON.stringify(merged));
+      return merged;
     }
 
     return [];
