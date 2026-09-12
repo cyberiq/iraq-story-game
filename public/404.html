@@ -1,64 +1,1158 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>404 — Page Not Found</title>
-    <!-- Use local copy of the Black Box style -->
-    <link rel="stylesheet" href="/assets/blackbox-style.css">
-    <style>
-      /* minimal overrides to ensure readability on our site */
-          body { margin:0; background: #07070a; color: #fff; font-family: 'Tajawal', sans-serif; }
-      a.back-btn { display:inline-block; margin-top:18px; padding:10px 18px; background:#ff6b6b; color:#fff; border-radius:8px; text-decoration:none }
-          .overlay{ position:fixed; inset:0; display:flex; align-items:center; justify-content:center; }
-          .overlay .content{ text-align:center; padding:18px 28px; background:rgba(0,0,0,0.4); border-radius:10px }
-          .overlay h1{ font-size:36px; margin:0 0 8px }
-          .overlay p{ margin:0 0 12px; color:#cbd5e1 }
-          canvas{ position:fixed; inset:0; width:100%; height:100%; display:block }
-    </style>
-</head>
-<body>
-<main id="main" class="main">
-    <div class="menu">
-<canvas id="canvas"></canvas>
-<div class="overlay">
-    <div class="content">
-        <h1>لم يتم العثور على شيء</h1>
-        <p>الصفحة أو العنصر الذي تبحث عنه غير متوفر.</p>
-        <a class="back-btn" href="/">العودة للرئيسية</a>
-    </div>
+<!DOCTYPE html><html dir="rtl" lang="ar" style=""><head></head><body><svg aria-hidden="true" class="inline-defs-container" style="position:absolute;width:0;height:0;overflow:hidden"></svg>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1" name="viewport">
+<title>الهدف مفقود — رمز الخطأ 404 | تشويش الإشارة وفقدان الاتصال</title>
+<link href="https://fonts.googleapis.com" rel="preconnect">
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect">
+<link href="https://fonts.googleapis.com/css2?family=Changa:wght@400;600;700;800;900&amp;family=Tajawal:wght@400;500;700;800&amp;family=Share+Tech+Mono&amp;display=swap" rel="stylesheet">
+<style>
+    :root {
+      --bg-dark: #040608;
+      --panel-bg: rgba(9, 13, 20, 0.88);
+      --red-alarm: #ff2a4b;
+      --red-glow: rgba(255, 42, 75, 0.65);
+      --amber-hazard: #ff9800;
+      --cyan-radar: #00f0ff;
+      --cyan-glow: rgba(0, 240, 255, 0.4);
+      --text-main: #f1f5f9;
+      --text-muted: #8492a6;
+      --line-grid: rgba(255, 255, 255, 0.05);
+      --border-hud: rgba(255, 42, 75, 0.45);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+    }
+
+    body {
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      font-family: 'Tajawal', sans-serif;
+      min-height: 100vh;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+
+    /* Interactive Military Canvas */
+    #warCanvas {
+      position: fixed;
+      inset: 0;
+      width: 100vw;
+      height: 100vh;
+      z-index: 1;
+      display: block;
+      pointer-events: auto;
+    }
+
+    /* CRT Animated Scanlines & Analog Distortion Overlay */
+    .screen-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 2;
+      pointer-events: none;
+      background: 
+        radial-gradient(circle at center, transparent 40%, rgba(2, 4, 7, 0.88) 92%),
+        repeating-linear-gradient(rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 2px, rgba(0, 0, 0, 0.35) 3px, rgba(0, 0, 0, 0.35) 4px);
+    }
+
+    /* Moving TV horizontal scanline */
+    .scanline-beam {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 8px;
+      background: linear-gradient(180deg, transparent, rgba(0, 240, 255, 0.15), rgba(255, 255, 255, 0.3), transparent);
+      z-index: 3;
+      pointer-events: none;
+      opacity: 0.65;
+      animation: scanlineMove 6s linear infinite;
+    }
+
+    @keyframes scanlineMove {
+      0% { transform: translateY(-10px); }
+      100% { transform: translateY(100vh); }
+    }
+
+    /* Static Signal Noise Canvas Overlay */
+    #noiseCanvas {
+      position: fixed;
+      inset: 0;
+      width: 100vw;
+      height: 100vh;
+      z-index: 4;
+      pointer-events: none;
+      opacity: 0.12;
+      mix-blend-mode: screen;
+    }
+
+    .red-flash-overlay {
+      position: fixed;
+      inset: 0;
+      background: radial-gradient(circle at top right, rgba(255, 42, 75, 0.18), transparent 70%);
+      z-index: 5;
+      pointer-events: none;
+      animation: emergencyPulse 3s ease-in-out infinite alternate;
+    }
+
+    @keyframes emergencyPulse {
+      0% { opacity: 0.25; }
+      50% { opacity: 0.65; }
+      100% { opacity: 0.35; }
+    }
+
+    /* Tactical HUD Corners */
+    .hud-frame {
+      position: fixed;
+      inset: 20px;
+      z-index: 6;
+      pointer-events: none;
+      border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .hud-corner {
+      position: absolute;
+      width: 28px;
+      height: 28px;
+      border-color: var(--red-alarm);
+      border-style: solid;
+      filter: drop-shadow(0 0 5px var(--red-alarm));
+    }
+    .hud-tl { top: -1px; left: -1px; border-width: 3px 0 0 3px; }
+    .hud-tr { top: -1px; right: -1px; border-width: 3px 3px 0 0; }
+    .hud-bl { bottom: -1px; left: -1px; border-width: 0 0 3px 3px; }
+    .hud-br { bottom: -1px; right: -1px; border-width: 0 3px 3px 0; }
+
+    .hud-topbar {
+      position: absolute;
+      top: 14px;
+      right: 24px;
+      left: 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-family: 'Share Tech Mono', 'Tajawal', monospace;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      letter-spacing: 1px;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(255, 42, 75, 0.14);
+      border: 1px solid rgba(255, 42, 75, 0.5);
+      padding: 5px 14px;
+      border-radius: 4px;
+      color: #ff5270;
+      font-weight: 700;
+      box-shadow: 0 0 12px rgba(255, 42, 75, 0.2);
+    }
+
+    .blinking-dot {
+      width: 9px;
+      height: 9px;
+      background: var(--red-alarm);
+      border-radius: 50%;
+      box-shadow: 0 0 10px var(--red-alarm);
+      animation: blink 0.8s infinite ease-in-out alternate;
+    }
+
+    @keyframes blink {
+      from { opacity: 0.2; }
+      to { opacity: 1; }
+    }
+
+    /* Live Jamming & Static Interference Banner */
+    .jamming-indicator {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      background: rgba(255, 152, 0, 0.12);
+      border: 1px solid rgba(255, 152, 0, 0.4);
+      padding: 4px 12px;
+      border-radius: 4px;
+      color: #ffb74d;
+      font-size: 0.8rem;
+      font-family: 'Share Tech Mono', monospace;
+      animation: jitter 3s infinite;
+    }
+
+    .interference-meter {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      height: 12px;
+    }
+
+    .inter-bar {
+      width: 3px;
+      height: 100%;
+      background: #ff9800;
+      border-radius: 1px;
+      animation: meterFluctuate 1.2s infinite ease-in-out alternate;
+    }
+    .inter-bar:nth-child(2) { animation-delay: 0.2s; height: 70%; }
+    .inter-bar:nth-child(3) { animation-delay: 0.4s; height: 95%; background: #ff2a4b; }
+    .inter-bar:nth-child(4) { animation-delay: 0.1s; height: 60%; }
+    .inter-bar:nth-child(5) { animation-delay: 0.5s; height: 85%; background: #ff2a4b; }
+
+    @keyframes meterFluctuate {
+      0% { transform: scaleY(0.4); opacity: 0.6; }
+      100% { transform: scaleY(1); opacity: 1; }
+    }
+
+    /* Main Center Card */
+    .container {
+      position: relative;
+      z-index: 10;
+      width: min(890px, 92vw);
+      max-height: 94vh;
+      background: var(--panel-bg);
+      border: 1px solid var(--border-hud);
+      border-radius: 20px;
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      box-shadow: 0 30px 70px rgba(0, 0, 0, 0.88), 0 0 45px rgba(255, 42, 75, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+      display: grid;
+      grid-template-columns: 1.15fr 0.85fr;
+      overflow: hidden;
+      animation: hudEnter 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    @keyframes hudEnter {
+      from { opacity: 0; transform: scale(0.96) translateY(20px); }
+      to { opacity: 1; transform: scale(1) translateY(0); }
+    }
+
+    /* CRT Glitch on container borders intermittently */
+    .container::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      border: 1px solid transparent;
+      border-top-color: rgba(0, 240, 255, 0.4);
+      border-bottom-color: rgba(255, 42, 75, 0.4);
+      opacity: 0.6;
+      animation: borderFlicker 4s infinite;
+    }
+
+    @keyframes borderFlicker {
+      0%, 96%, 100% { opacity: 0.5; transform: translate(0, 0); }
+      97% { opacity: 0.9; transform: translate(-2px, 1px); }
+      98% { opacity: 0.2; transform: translate(2px, -1px); }
+      99% { opacity: 0.8; transform: translate(1px, 2px); }
+    }
+
+    /* Left Side: Military Narrative & Action */
+    .content-pane {
+      padding: 42px 36px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      position: relative;
+    }
+
+    .warning-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--red-alarm);
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.86rem;
+      font-weight: 700;
+      letter-spacing: 2px;
+      margin-bottom: 8px;
+      text-transform: uppercase;
+      text-shadow: 0 0 8px rgba(255, 42, 75, 0.5);
+    }
+
+    /* Signal noise alert strip */
+    .signal-strip {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(255, 42, 75, 0.12);
+      border: 1px dashed rgba(255, 42, 75, 0.45);
+      padding: 5px 12px;
+      border-radius: 6px;
+      color: #ff6e87;
+      font-family: 'Share Tech Mono', 'Tajawal', monospace;
+      font-size: 0.8rem;
+      margin-bottom: 14px;
+      width: fit-content;
+      animation: signalPulse 2s infinite ease-in-out;
+    }
+
+    @keyframes signalPulse {
+      0%, 100% { opacity: 0.9; }
+      50% { opacity: 0.5; }
+    }
+
+    /* Glitch 404 with RGB Aberration */
+    .glitch-code-wrapper {
+      position: relative;
+      display: inline-block;
+      margin-bottom: 6px;
+    }
+
+    .glitch-code {
+      font-family: 'Changa', sans-serif;
+      font-size: clamp(4.2rem, 7.5vw, 6.2rem);
+      font-weight: 900;
+      line-height: 0.92;
+      color: #ffffff;
+      position: relative;
+      display: inline-block;
+      text-shadow: 0 0 25px var(--red-glow), 3px 3px 0 rgba(255, 42, 75, 0.7);
+      letter-spacing: -2px;
+    }
+
+    /* RGB Split Layers */
+    .glitch-code::before,
+    .glitch-code::after {
+      content: attr(data-text);
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      clip: rect(0, 0, 0, 0);
+    }
+
+    .glitch-code::before {
+      left: -2px;
+      text-shadow: 2px 0 #00f0ff;
+      animation: glitch-anim-1 2.8s infinite linear alternate-reverse;
+    }
+
+    .glitch-code::after {
+      left: 2px;
+      text-shadow: -2px 0 #ff2a4b;
+      animation: glitch-anim-2 2.1s infinite linear alternate-reverse;
+    }
+
+    @keyframes glitch-anim-1 {
+      0% { clip: rect(10px, 9999px, 35px, 0); transform: translate(-2px, -1px); }
+      15% { clip: rect(52px, 9999px, 78px, 0); transform: translate(1px, 2px); }
+      30% { clip: rect(20px, 9999px, 45px, 0); transform: translate(-1px, 1px); }
+      50% { clip: rect(70px, 9999px, 95px, 0); transform: translate(2px, -2px); }
+      70% { clip: rect(5px, 9999px, 30px, 0); transform: translate(-2px, 0px); }
+      90% { clip: rect(40px, 9999px, 80px, 0); transform: translate(1px, -1px); }
+      100% { clip: rect(18px, 9999px, 60px, 0); transform: translate(0px, 0px); }
+    }
+
+    @keyframes glitch-anim-2 {
+      0% { clip: rect(65px, 9999px, 95px, 0); transform: translate(2px, 1px); }
+      20% { clip: rect(15px, 9999px, 40px, 0); transform: translate(-1px, -2px); }
+      40% { clip: rect(80px, 9999px, 110px, 0); transform: translate(2px, 0px); }
+      60% { clip: rect(25px, 9999px, 50px, 0); transform: translate(-2px, 2px); }
+      80% { clip: rect(50px, 9999px, 75px, 0); transform: translate(1px, -1px); }
+      100% { clip: rect(5px, 9999px, 35px, 0); transform: translate(-1px, 1px); }
+    }
+
+    .main-title {
+      font-family: 'Changa', sans-serif;
+      font-size: 1.85rem;
+      font-weight: 800;
+      color: #ffffff;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      position: relative;
+    }
+
+    /* Subtle RGB Jitter on title text */
+    .chromatic-text {
+      display: inline-block;
+      position: relative;
+      animation: subtleJitter 4s infinite ease-in-out;
+    }
+
+    @keyframes subtleJitter {
+      0%, 93%, 97%, 100% { transform: translate(0, 0); text-shadow: none; }
+      94% { transform: translate(-1.5px, 0.5px); text-shadow: 1.5px 0 #ff2a4b, -1.5px 0 #00f0ff; }
+      96% { transform: translate(1px, -0.5px); text-shadow: -1.5px 0 #ff2a4b, 1.5px 0 #00f0ff; }
+    }
+
+    .main-title .shield-icon {
+      width: 32px;
+      height: 32px;
+      color: var(--red-alarm);
+      filter: drop-shadow(0 0 8px rgba(255, 42, 75, 0.6));
+    }
+
+    .description {
+      color: #b8c7db;
+      font-size: 1.05rem;
+      line-height: 1.75;
+      margin-bottom: 20px;
+    }
+
+    /* War impact report badge */
+    .incident-box {
+      background: rgba(255, 42, 75, 0.08);
+      border-right: 3px solid var(--red-alarm);
+      border-radius: 0 10px 10px 0;
+      padding: 12px 18px;
+      margin-bottom: 24px;
+      font-size: 0.92rem;
+      color: #e2e8f0;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .incident-box::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(255, 42, 75, 0.6), transparent);
+    }
+
+    .incident-title {
+      color: #ff9800;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .incident-detail {
+      font-family: 'Share Tech Mono', 'Tajawal', monospace;
+      font-size: 0.85rem;
+      color: #94a3b8;
+      direction: ltr;
+      text-align: right;
+    }
+
+    /* Action Buttons */
+    .actions-group {
+      display: flex;
+      gap: 14px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .btn-return {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      background: linear-gradient(135deg, #ff2a4b 0%, #b80024 100%);
+      color: #ffffff;
+      font-family: 'Changa', 'Tajawal', sans-serif;
+      font-size: 1.05rem;
+      font-weight: 700;
+      padding: 12px 26px;
+      border-radius: 12px;
+      text-decoration: none;
+      box-shadow: 0 8px 24px rgba(255, 42, 75, 0.45);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      transition: all 0.25s ease;
+      cursor: pointer;
+    }
+
+    .btn-return:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 12px 30px rgba(255, 42, 75, 0.65);
+      background: linear-gradient(135deg, #ff4361 0%, #d4052f 100%);
+    }
+
+    .btn-reconnect {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      background: rgba(255, 255, 255, 0.05);
+      color: #cbd5e1;
+      font-family: inherit;
+      font-size: 0.96rem;
+      font-weight: 700;
+      padding: 12px 20px;
+      border-radius: 12px;
+      text-decoration: none;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      transition: all 0.2s ease;
+      cursor: pointer;
+    }
+
+    .btn-reconnect:hover {
+      background: rgba(0, 240, 255, 0.1);
+      border-color: var(--cyan-radar);
+      color: #00f0ff;
+      transform: translateY(-2px);
+    }
+
+    /* Right Side: Interactive Severed Cable Visual & Radar */
+    .visual-pane {
+      background: linear-gradient(180deg, rgba(8, 12, 19, 0.94) 0%, rgba(4, 6, 10, 0.98) 100%);
+      border-right: 1px solid rgba(255, 255, 255, 0.08);
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 28px 22px;
+      overflow: hidden;
+    }
+
+    /* Screen static noise on visual pane */
+    .visual-pane::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background: repeating-linear-gradient(rgba(0,0,0,0) 0px, rgba(0,0,0,0.18) 2px, rgba(0,0,0,0) 4px);
+      opacity: 0.7;
+    }
+
+    .cable-canvas-box {
+      position: relative;
+      width: 100%;
+      height: 270px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* Cut Cable SVG Scene */
+    .cable-scene {
+      width: 100%;
+      height: 100%;
+      filter: drop-shadow(0 0 14px rgba(255, 60, 60, 0.4));
+    }
+
+    .tactical-stats {
+      width: 100%;
+      margin-top: 12px;
+      background: rgba(0, 0, 0, 0.55);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 10px;
+      padding: 12px 14px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      font-size: 0.8rem;
+    }
+
+    .stat-item {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .stat-lbl {
+      color: var(--text-muted);
+      font-size: 0.72rem;
+    }
+
+    .stat-val {
+      font-family: 'Share Tech Mono', monospace;
+      font-weight: 700;
+      color: #ff5270;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .stat-val.ok {
+      color: #00f0ff;
+    }
+
+    .stat-val.amber {
+      color: #ff9800;
+    }
+
+    /* Spark Particle generator style */
+    .spark-trigger-hint {
+      margin-top: 10px;
+      font-size: 0.76rem;
+      color: #718299;
+      text-align: center;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    /* Sound/Interact trigger button */
+    .sound-chip {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      z-index: 20;
+      background: rgba(15, 23, 42, 0.88);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      color: #94a3b8;
+      padding: 8px 16px;
+      border-radius: 30px;
+      font-size: 0.8rem;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      backdrop-filter: blur(8px);
+      transition: 0.2s;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.6);
+    }
+    .sound-chip:hover {
+      color: #fff;
+      border-color: var(--red-alarm);
+    }
+
+    /* Responsive */
+    @media (max-width: 860px) {
+      .container {
+        grid-template-columns: 1fr;
+        max-height: 90vh;
+        overflow-y: auto;
+      }
+      .visual-pane {
+        border-right: none;
+        border-top: 1px solid rgba(255, 255, 255, 0.08);
+        padding: 24px;
+      }
+      .cable-canvas-box {
+        height: 200px;
+      }
+      .content-pane {
+        padding: 30px 24px;
+      }
+      .hud-topbar {
+        position: static;
+        margin-bottom: 10px;
+      }
+    }
+  </style>
+<!-- Fullscreen Interactive Canvas: War Smoke, Embers, Sparks, Scan Radar & Dynamic Noise Bands -->
+<canvas height="713" id="warCanvas" width="1280"></canvas>
+<!-- Static TV Grain & Digital Glitch Noise Canvas -->
+<canvas id="noiseCanvas" width="512" height="285"></canvas>
+<!-- Moving CRT Scanline Beam & CRT Vignette -->
+<div class="scanline-beam"></div>
+<div class="screen-overlay"></div>
+<div class="red-flash-overlay"></div>
+<!-- HUD Framing Elements -->
+<div aria-hidden="true" class="hud-frame">
+<div class="hud-corner hud-tl"></div>
+<div class="hud-corner hud-tr"></div>
+<div class="hud-corner hud-bl"></div>
+<div class="hud-corner hud-br"></div>
+<div class="hud-topbar">
+<div class="status-badge"><span class="blinking-dot"></span> 404 - الهدف غير موجود: إحداثيات مفقودة</div>
+<!-- Live Jamming / Noise Status Meter -->
+<div class="jamming-indicator">
+<span class="">⚠ تشويش لاسلكي كثيف [JAMMING DETECTED]</span>
+<div class="interference-meter" title="نسبة تداخل وتشويش الإشارة">
+<span class="inter-bar"></span>
+<span class="inter-bar"></span>
+<span class="inter-bar"></span>
+<span class="inter-bar"></span>
+<span class="inter-bar"></span>
 </div>
-
+<span style="color: #ff5270; font-weight: bold;" class="">88% NOISE</span>
+</div>
+<div class="">DEFCON-1 // SECTOR-04 // LAT: 33.3152° N</div>
+</div>
+</div>
+<!-- Main Warning Terminal -->
+<main class="container" role="alert">
+<!-- Left narrative area -->
+<div class="content-pane">
+<div class="warning-tag"><br></div>
+<!-- Jamming alert ribbon -->
+<div class="signal-strip">
+<span class="">⚡</span>
+<span class="">تداخل إلكتروني: انقطاع حزمة البيانات</span>
+</div>
+<div class="glitch-code-wrapper">
+<div class="glitch-code" data-text="404">404</div>
+</div>
+<h1 class="main-title">
+<svg class="shield-icon" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+<circle cx="12" cy="12" r="10"></circle>
+<line x1="22" x2="18" y1="12" y2="12"></line>
+<line x1="6" x2="2" y1="12" y2="12"></line>
+<line x1="12" x2="12" y1="6" y2="2"></line>
+<line x1="12" x2="12" y1="22" y2="18"></line>
+</svg>
+<span class="chromatic-text">الهدف مفقود / تعذر التقاط الإشارة</span>
+</h1>
+<p class="description">عفواً، المنظومة الرادارية عاجزة عن رصد الإحداثيات المطلوبة في هذا القطاع. نتيجة انقطاع كابل الألياف المغذي للرادار جراء الضربة الجوية، فقدت قاعدة البيانات مسار الهدف ولم يعد له وجود تحت تأثير التشويش اللاسلكي الكثيف.</p>
+<div class="incident-box">
+<div class="incident-title"><span class="">💥</span> تقرير العمليات: انقطاع كابل التتبع وتشويش الإشارة</div>
+<div class="incident-detail">ERROR: TARGET_NOT_FOUND // SECTOR_COORDINATES_LOST // STATIC_JAM: 88%</div>
+</div>
+<div class="actions-group">
+<a class="btn-return" href="/">
+<svg fill="none" height="20" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" viewBox="0 0 24 24" width="20">
+<line x1="19" x2="5" y1="12" y2="12"></line>
+<polyline points="12 19 5 12 12 5"></polyline>
+</svg>
+          الانسحاب إلى الرئيسية
+        </a>
+<button class="btn-reconnect" id="reconnectBtn" type="button">
+<svg fill="none" height="18" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" width="18">
+<polyline points="23 4 23 10 17 10"></polyline>
+<polyline points="1 20 1 14 7 14"></polyline>
+<path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+</svg>
+          إعادة فحص الخط (Ping)
+        </button>
+</div>
+</div>
+<!-- Right visual area: Severed High-Voltage Fiber Cable, Glitch Sparks & Sensor Data -->
+<div class="visual-pane">
+<div class="cable-canvas-box" id="cableBox">
+<svg class="cable-scene" fill="none" viewBox="0 0 400 280" xmlns="http://www.w3.org/2000/svg">
+<!-- Background warning circular radar sweep -->
+<circle cx="200" cy="140" r="100" stroke="rgba(255, 42, 75, 0.18)" stroke-dasharray="4 4" stroke-width="1"></circle>
+<circle cx="200" cy="140" r="60" stroke="rgba(255, 42, 75, 0.22)" stroke-width="1"></circle>
+<circle cx="200" cy="140" r="20" stroke="rgba(255, 42, 75, 0.35)" stroke-width="1"></circle>
+<!-- Static interference jitter lines across the severed area -->
+<line stroke="rgba(0, 240, 255, 0.3)" stroke-dasharray="2 4" stroke-width="1" x1="160" x2="240" y1="105" y2="105"></line>
+<line stroke="rgba(255, 42, 75, 0.35)" stroke-dasharray="5 3" stroke-width="1" x1="150" x2="250" y1="145" y2="145"></line>
+<!-- Top Left incoming military cable sleeve -->
+<path d="M 20 50 C 90 90, 110 110, 160 125" stroke="#1e293b" stroke-linecap="round" stroke-width="18"></path>
+<path d="M 20 50 C 90 90, 110 110, 160 125" stroke="#0f172a" stroke-linecap="round" stroke-width="12"></path>
+<path d="M 20 50 C 90 90, 110 110, 160 125" stroke="#ff9800" stroke-dasharray="8 12" stroke-linecap="round" stroke-width="3"></path>
+<!-- Cut frayed wires (left severed tip) -->
+<path d="M 158 122 Q 172 115 185 118" stroke="#ff2a4b" stroke-linecap="round" stroke-width="3"></path>
+<path d="M 160 125 Q 178 126 192 124" stroke="#00f0ff" stroke-linecap="round" stroke-width="2.5"></path>
+<path d="M 158 128 Q 174 135 188 132" stroke="#ffeb3b" stroke-linecap="round" stroke-width="2"></path>
+<path d="M 157 124 Q 170 120 182 110" stroke="#a855f7" stroke-linecap="round" stroke-width="2"></path>
+<!-- Disconnected Gap (Air Strike blast point) -->
+<circle cx="195" cy="126" fill="url(#blastGlow)" opacity="0.85" r="14">
+<animate attributeName="r" dur="0.6s" repeatCount="indefinite" values="12;22;12"></animate>
+<animate attributeName="opacity" dur="0.6s" repeatCount="indefinite" values="0.9;0.35;0.9"></animate>
+</circle>
+<!-- Severed right side cable falling away -->
+<path d="M 235 158 Q 260 170 280 185" stroke="#ff2a4b" stroke-linecap="round" stroke-width="2"></path>
+<path d="M 230 162 Q 255 178 275 192" stroke="#00f0ff" stroke-linecap="round" stroke-width="2.5"></path>
+<path d="M 228 165 C 270 190, 310 215, 380 230" stroke="#1e293b" stroke-linecap="round" stroke-width="18"></path>
+<path d="M 228 165 C 270 190, 310 215, 380 230" stroke="#0f172a" stroke-linecap="round" stroke-width="12"></path>
+<path d="M 228 165 C 270 190, 310 215, 380 230" stroke="#ff9800" stroke-dasharray="8 12" stroke-linecap="round" stroke-width="3"></path>
+<!-- Blast debris & sparks -->
+<g id="sparkElements">
+<line stroke="#00f0ff" stroke-width="2" x1="188" x2="198" y1="120" y2="105">
+<animate attributeName="opacity" dur="0.2s" repeatCount="indefinite" values="1;0;1"></animate>
+</line>
+<line stroke="#ff2a4b" stroke-width="2.5" x1="192" x2="212" y1="130" y2="142">
+<animate attributeName="opacity" dur="0.15s" repeatCount="indefinite" values="0.2;1;0.2"></animate>
+</line>
+<line stroke="#ffeb3b" stroke-width="2" x1="190" x2="208" y1="118" y2="114">
+<animate attributeName="opacity" dur="0.28s" repeatCount="indefinite" values="1;0.1;1"></animate>
+</line>
+<line stroke="#ffffff" stroke-width="2" x1="185" x2="175" y1="128" y2="148">
+<animate attributeName="opacity" dur="0.18s" repeatCount="indefinite" values="0;1;0"></animate>
+</line>
+</g>
+<defs>
+<radialGradient cx="50%" cy="50%" id="blastGlow" r="50%">
+<stop offset="0%" stop-color="#ffffff"></stop>
+<stop offset="35%" stop-color="#ff9800"></stop>
+<stop offset="70%" stop-color="#ff2a4b"></stop>
+<stop offset="100%" stop-color="transparent"></stop>
+</radialGradient>
+</defs>
+</svg>
+</div>
+<div class="tactical-stats">
+<div class="stat-item">
+<span class="stat-lbl">حالة الكيبل العسكري</span>
+<span class="stat-val">مقطوع (100%)</span>
+</div>
+<div class="stat-item">
+<span class="stat-lbl">الجهد الكهربائي المفقود</span>
+<span class="stat-val">12.4 kV SPARKS</span>
+</div>
+<div class="stat-item">
+<span class="stat-lbl">مستوى التشويش (Static)</span>
+<span class="stat-val amber">88% NOISE / JAM</span>
+</div>
+<div class="stat-item">
+<span class="stat-lbl">حالة الإحداثيات (Target)</span>
+<span class="stat-val">مفقود (NOT_FOUND)</span>
+</div>
+</div>
+<div class="spark-trigger-hint">
+<span class="">⚡</span> حرك الماوس أو انقر لإنتاج شرارات إضافية وتشويش راداري
+      </div>
+</div>
+</main>
+<div class="sound-chip" id="alarmToggle" role="button" tabindex="0">
+<span id="alarmIcon" class="">🚨</span>
+<span id="alarmLabel" class="">صفارة الإنذار: نشطة</span>
+</div>
 <script>
-    // TV noise canvas adapted from the referenced template
-    const canvas = document.getElementById('canvas');
-    const ctx = canvas.getContext('2d');
+    // Audio synthesis for military siren / war alert
+    let audioCtx = null;
+    let sirenOsc = null;
+    let sirenGain = null;
+    let isSirenOn = false;
 
-    function resize() {
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
+    function initAudio() {
+      if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      }
     }
 
-    function draw() {
-        ctx.fillStyle = '#000';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-        const data = imageData.data;
-        for (let i = 0; i < data.length; i += 4) {
-            const color = Math.floor(Math.random() * 255);
-            data[i] = color;
-            data[i + 1] = color;
-            data[i + 2] = color;
-            data[i + 3] = 255;
+    function toggleSiren() {
+      initAudio();
+      if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+
+      if (isSirenOn) {
+        if (sirenGain) {
+          sirenGain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.3);
+          setTimeout(() => {
+            if (sirenOsc) { sirenOsc.stop(); sirenOsc.disconnect(); }
+          }, 350);
         }
-        ctx.putImageData(imageData, 0, 0);
-        requestAnimationFrame(draw);
+        isSirenOn = false;
+        document.getElementById('alarmLabel').textContent = 'صفارة الإنذار: متوقفة';
+        document.getElementById('alarmIcon').textContent = '🔇';
+      } else {
+        sirenOsc = audioCtx.createOscillator();
+        sirenGain = audioCtx.createGain();
+        sirenOsc.type = 'sawtooth';
+        
+        const now = audioCtx.currentTime;
+        sirenOsc.frequency.setValueAtTime(440, now);
+        
+        const lfo = audioCtx.createOscillator();
+        lfo.type = 'sine';
+        lfo.frequency.setValueAtTime(0.8, now);
+
+        const lfoGain = audioCtx.createGain();
+        lfoGain.gain.setValueAtTime(280, now);
+
+        lfo.connect(sirenOsc.frequency);
+        lfo.start();
+
+        sirenGain.gain.setValueAtTime(0.001, now);
+        sirenGain.gain.exponentialRampToValueAtTime(0.08, now + 0.3);
+
+        sirenOsc.connect(sirenGain);
+        sirenGain.connect(audioCtx.destination);
+        sirenOsc.start();
+
+        isSirenOn = true;
+        document.getElementById('alarmLabel').textContent = 'صفارة الإنذار: نشطة';
+        document.getElementById('alarmIcon').textContent = '🚨';
+      }
     }
 
-    resize();
-    draw();
-    window.addEventListener('resize', resize);
-</script>
+    document.getElementById('alarmToggle').addEventListener('click', toggleSiren);
 
-</body>
-</html>
+    // Dynamic TV Static Noise Canvas (Generates realistic analog snow/interference)
+    const noiseCanvas = document.getElementById('noiseCanvas');
+    const noiseCtx = noiseCanvas.getContext('2d');
+    let noiseW, noiseH;
+
+    function resizeNoiseCanvas() {
+      noiseW = noiseCanvas.width = Math.floor(window.innerWidth / 2.5); // Downscaled for authentic CRT retro grain
+      noiseH = noiseCanvas.height = Math.floor(window.innerHeight / 2.5);
+    }
+    resizeNoiseCanvas();
+
+    function drawNoise() {
+      const imgData = noiseCtx.createImageData(noiseW, noiseH);
+      const buffer32 = new Uint32Array(imgData.data.buffer);
+      const len = buffer32.length;
+      for (let i = 0; i < len; i++) {
+        // High-contrast grainy static noise
+        if (Math.random() < 0.12) {
+          const val = Math.random() < 0.5 ? 255 : 180;
+          buffer32[i] = (255 << 24) | (val << 16) | (val << 8) | val;
+        } else if (Math.random() < 0.015) {
+          // occasional cyan / red chromatic noise artifact
+          buffer32[i] = Math.random() < 0.5 ? 0xff00f0ff : 0xffff2a4b;
+        }
+      }
+      noiseCtx.putImageData(imgData, 0, 0);
+      requestAnimationFrame(drawNoise);
+    }
+    drawNoise();
+
+    // Canvas Background: Modern War War-zone Simulation
+    // (Smoke puffs, red falling embers, electrical sparks, sonar radar scan, and dynamic glitch bands)
+    const canvas = document.getElementById('warCanvas');
+    const ctx = canvas.getContext('2d');
+    let width, height;
+
+    const particles = [];
+    const maxParticles = 90;
+    const sparks = [];
+    const glitchBands = [];
+
+    function resizeCanvas() {
+      width = canvas.width = window.innerWidth;
+      height = canvas.height = window.innerHeight;
+      resizeNoiseCanvas();
+    }
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    class WarEmber {
+      constructor() {
+        this.reset();
+      }
+      reset() {
+        this.x = Math.random() * width;
+        this.y = Math.random() * height;
+        this.size = Math.random() * 2.8 + 0.8;
+        this.speedY = -(Math.random() * 1.6 + 0.4);
+        this.speedX = (Math.random() - 0.5) * 1.2;
+        this.alpha = Math.random() * 0.8 + 0.2;
+        this.decay = Math.random() * 0.005 + 0.002;
+        this.hue = Math.random() > 0.6 ? 12 : 38;
+      }
+      update() {
+        this.y += this.speedY;
+        this.x += this.speedX;
+        this.alpha -= this.decay;
+        if (this.alpha <= 0 || this.y < 0) {
+          this.reset();
+          this.y = height + 10;
+        }
+      }
+      draw() {
+        ctx.save();
+        ctx.globalAlpha = Math.max(0, this.alpha);
+        ctx.fillStyle = `hsl(${this.hue}, 100%, 60%)`;
+        ctx.shadowColor = `hsl(${this.hue}, 100%, 50%)`;
+        ctx.shadowBlur = 10;
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      }
+    }
+
+    class ElectricSpark {
+      constructor(x, y) {
+        this.x = x;
+        this.y = y;
+        this.vx = (Math.random() - 0.5) * 14;
+        this.vy = (Math.random() - 0.5) * 14;
+        this.life = 1;
+        this.decay = Math.random() * 0.04 + 0.03;
+        this.color = Math.random() > 0.4 ? '#00f0ff' : '#ffea00';
+      }
+      update() {
+        this.x += this.vx;
+        this.y += this.vy;
+        this.vy += 0.3; // gravity
+        this.life -= this.decay;
+      }
+      draw() {
+        ctx.save();
+        ctx.globalAlpha = Math.max(0, this.life);
+        ctx.strokeStyle = this.color;
+        ctx.lineWidth = 2;
+        ctx.shadowColor = this.color;
+        ctx.shadowBlur = 8;
+        ctx.beginPath();
+        ctx.moveTo(this.x, this.y);
+        ctx.lineTo(this.x - this.vx * 1.5, this.y - this.vy * 1.5);
+        ctx.stroke();
+        ctx.restore();
+      }
+    }
+
+    // Populate initial embers
+    for (let i = 0; i < maxParticles; i++) {
+      particles.push(new WarEmber());
+    }
+
+    // Interactive mouse clicks / moves create cable sparks
+    function spawnSparksAt(x, y, count = 12) {
+      for (let i = 0; i < count; i++) {
+        sparks.push(new ElectricSpark(x, y));
+      }
+    }
+
+    window.addEventListener('mousemove', (e) => {
+      if (Math.random() > 0.75) {
+        sparks.push(new ElectricSpark(e.clientX, e.clientY));
+      }
+    });
+
+    window.addEventListener('click', (e) => {
+      spawnSparksAt(e.clientX, e.clientY, 24);
+    });
+
+    // Auto spark intermittently from the cable cut area
+    setInterval(() => {
+      const box = document.getElementById('cableBox');
+      if (box) {
+        const rect = box.getBoundingClientRect();
+        const sparkX = rect.left + rect.width * 0.48;
+        const sparkY = rect.top + rect.height * 0.45;
+        spawnSparksAt(sparkX, sparkY, 12);
+      }
+    }, 1100);
+
+    // Dynamic horizontal interference glitch bands
+    function createGlitchBand() {
+      if (Math.random() > 0.65) {
+        glitchBands.push({
+          y: Math.random() * height,
+          h: Math.random() * 26 + 4,
+          life: 1,
+          decay: Math.random() * 0.12 + 0.08,
+          alpha: Math.random() * 0.25 + 0.08,
+          color: Math.random() > 0.5 ? 'rgba(0, 240, 255,' : 'rgba(255, 42, 75,'
+        });
+      }
+    }
+    setInterval(createGlitchBand, 200);
+
+    // Main animation loop
+    let radarAngle = 0;
+
+    function renderScene() {
+      // Clear background
+      ctx.fillStyle = '#040608';
+      ctx.fillRect(0, 0, width, height);
+
+      // Draw subtle tactical grid lines
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.025)';
+      ctx.lineWidth = 1;
+      const gridSize = 60;
+      for (let x = 0; x < width; x += gridSize) {
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, height);
+        ctx.stroke();
+      }
+      for (let y = 0; y < height; y += gridSize) {
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(width, y);
+        ctx.stroke();
+      }
+
+      // Draw sweeping air-defense radar line in corner
+      radarAngle += 0.022;
+      const radarX = width - 120;
+      const radarY = 120;
+      const radarR = 90;
+
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(radarX, radarY, radarR, 0, Math.PI * 2);
+      ctx.strokeStyle = 'rgba(255, 42, 75, 0.18)';
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.moveTo(radarX, radarY);
+      ctx.arc(radarX, radarY, radarR, radarAngle, radarAngle + 0.45);
+      ctx.closePath();
+      const sweepGrad = ctx.createRadialGradient(radarX, radarY, 0, radarX, radarY, radarR);
+      sweepGrad.addColorStop(0, 'rgba(255, 42, 75, 0)');
+      sweepGrad.addColorStop(1, 'rgba(255, 42, 75, 0.28)');
+      ctx.fillStyle = sweepGrad;
+      ctx.fill();
+      ctx.restore();
+
+      // Render Embers
+      for (let i = 0; i < particles.length; i++) {
+        particles[i].update();
+        particles[i].draw();
+      }
+
+      // Render Electric Sparks
+      for (let i = sparks.length - 1; i >= 0; i--) {
+        sparks[i].update();
+        sparks[i].draw();
+        if (sparks[i].life <= 0) {
+          sparks.splice(i, 1);
+        }
+      }
+
+      // Render Glitch Static Bands across monitor
+      for (let i = glitchBands.length - 1; i >= 0; i--) {
+        const b = glitchBands[i];
+        ctx.fillStyle = `${b.color} ${b.alpha * b.life})`;
+        ctx.fillRect(0, b.y, width, b.h);
+        b.life -= b.decay;
+        if (b.life <= 0) {
+          glitchBands.splice(i, 1);
+        }
+      }
+
+      requestAnimationFrame(renderScene);
+    }
+
+    renderScene();
+
+    // Ping / Reconnect action handling with tactical feed
+    const reconnectBtn = document.getElementById('reconnectBtn');
+    reconnectBtn.addEventListener('click', () => {
+      reconnectBtn.disabled = true;
+      reconnectBtn.innerHTML = `
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="spin">
+          <circle cx="12" cy="12" r="10" stroke-dasharray="32" stroke-dashoffset="12"></circle>
+        </svg>
+        جاري فحص الإشارة...
+      `;
+
+      // Trigger blast spark effect & static jitter
+      const box = document.getElementById('cableBox');
+      const rect = box.getBoundingClientRect();
+      spawnSparksAt(rect.left + rect.width * 0.48, rect.top + rect.height * 0.45, 40);
+
+      // Add intense glitch bands
+      for (let i = 0; i < 6; i++) {
+        glitchBands.push({
+          y: Math.random() * height,
+          h: Math.random() * 40 + 10,
+          life: 1,
+          decay: 0.05,
+          alpha: 0.4,
+          color: 'rgba(255, 42, 75,'
+        });
+      }
+
+      setTimeout(() => {
+        reconnectBtn.disabled = false;
+        reconnectBtn.innerHTML = `⚠ فشل الفحص: تشويش لاسلكي كثيف (88%)`;
+        reconnectBtn.style.color = '#ff2a4b';
+        reconnectBtn.style.borderColor = '#ff2a4b';
+        setTimeout(() => {
+          reconnectBtn.innerHTML = `
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="23 4 23 10 17 10"></polyline>
+              <polyline points="1 20 1 14 7 14"></polyline>
+              <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+            </svg>
+            إعادة فحص الخط (Ping)
+          `;
+          reconnectBtn.style.color = '';
+          reconnectBtn.style.borderColor = '';
+        }, 2400);
+      }, 1400);
+    });
+  </script>
+
+
+</body></html>
