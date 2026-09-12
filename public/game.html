@@ -34,6 +34,16 @@
           <p id="detailMeta" class="detail-meta"></p>
           <p id="detailDescription" class="detail-description"></p>
           <p id="detailPrice" class="detail-price">مجانية</p>
+
+          <div id="serviceQuantityWrap" style="display:none; margin:12px 0 8px;">
+            <label style="display:block;margin-bottom:6px">الكمية المطلوبة</label>
+            <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+              <input id="serviceQuantity" type="number" min="1000" step="1000" value="1000" style="max-width:180px;" />
+              <span id="serviceQuantityMeta" style="color:#b7c2ff; font-size:0.9rem;">وحدة</span>
+            </div>
+            <div id="servicePriceSummary" style="margin-top:8px; color:#8fe3a0; font-size:0.9rem;"></div>
+          </div>
+
           <div class="purchase-row">
             <label style="display:block;margin-bottom:6px">كود الخصم</label>
             <input id="couponInput" placeholder="رمز الكوبون (اختياري)" />

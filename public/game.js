@@ -10,6 +10,10 @@ const couponInput = document.getElementById('couponInput');
 const applyCouponBtn = document.getElementById('applyCouponBtn');
 const discountInfo = document.getElementById('discountInfo');
 const buyBtn = document.getElementById('buyBtn');
+const serviceQuantityWrap = document.getElementById('serviceQuantityWrap');
+const serviceQuantityInput = document.getElementById('serviceQuantity');
+const serviceQuantityMeta = document.getElementById('serviceQuantityMeta');
+const servicePriceSummary = document.getElementById('servicePriceSummary');
 let currentGame = null;
 let activeCoupon = null;
 
@@ -30,7 +34,22 @@ function formatPrice(value, currency = "IQD") {
 
   const normalizedCurrency = String(currency || "IQD").toUpperCase();
   const label = normalizedCurrency === "USD" ? "$" : "د.ع";
-  return `${numericValue} ${label}`;
+  return `${numericValue.toLocaleString('en-US')} ${label}`;
+}
+
+function getRequestedServiceQuantity() {
+  if (!serviceQuantityInput) return 1000;
+  const raw = Number(serviceQuantityInput.value || 0);
+  return Number.isFinite(raw) && raw > 0 ? raw : 1000;
+}
+
+function getEffectivePriceForItem(game, quantityOverride = null) {
+  const basePrice = Number(game?.price ?? 0);
+  const quantity = Number(quantityOverride ?? getRequestedServiceQuantity());
+  if (String(game?.product_type || '').toLowerCase() === 'service') {
+    return Math.round(basePrice * (quantity / 1000));
+  }
+  return Math.round(basePrice);
 }
 
 function fallbackImage(gameName) {
@@ -76,11 +95,46 @@ async function loadGameDetails() {
       imageNode.src = fallbackImage(game.name_en);
     });
 
+    const isService = String(game.product_type || '').toLowerCase() === 'service';
+    const baseQuantity = Math.max(1000, Number(game?.quantity || 1000));
+
     nameNode.textContent = `${game.name_ar} / ${game.name_en}`;
     companyNode.textContent = `الشركة: ${game.company.name_ar} / ${game.company.name_en}`;
-    metaNode.textContent = `النوع: ${game.genre} - سنة الإصدار: ${game.release_year}`;
-    descriptionNode.textContent = game.description || "لا يوجد وصف متاح لهذه اللعبة حاليًا.";
-    priceNode.textContent = formatPrice(game.price ?? 0, game.currency || "IQD");
+    metaNode.textContent = `النوع: ${game.genre || (game.product_subtype || 'خدمة')} - سنة الإصدار: ${game.release_year || '—'}`;
+    descriptionNode.textContent = game.description || "لا يوجد وصف متاح لهذه الخدمة حاليًا.";
+
+    if (serviceQuantityWrap) {
+      serviceQuantityWrap.style.display = isService ? 'block' : 'none';
+    }
+    if (serviceQuantityInput) {
+      serviceQuantityInput.value = String(baseQuantity);
+      serviceQuantityInput.min = '1000';
+      serviceQuantityInput.step = '1000';
+    }
+    if (serviceQuantityMeta) {
+      serviceQuantityMeta.textContent = isService ? 'وحدة (يتم حساب السعر على أساس كل 1000 وحدة)' : 'وحدة';
+    }
+    if (servicePriceSummary) {
+      servicePriceSummary.textContent = isService
+        ? `السعر: ${formatPrice(Number(game.price ?? 0), game.currency || 'IQD')} لكل 1000 وحدة`
+        : '';
+    }
+
+    const renderServiceSummary = () => {
+      if (!isService || !serviceQuantityInput || !servicePriceSummary) return;
+      const quantity = getRequestedServiceQuantity();
+      const total = getEffectivePriceForItem(game, quantity);
+      servicePriceSummary.textContent = `المجموع: ${quantity.toLocaleString('en-US')} وحدة × ${formatPrice(Number(game.price ?? 0), game.currency || 'IQD')} لكل 1000 = ${formatPrice(total, game.currency || 'IQD')}`;
+    };
+
+    if (isService && serviceQuantityInput) {
+      serviceQuantityInput.oninput = renderServiceSummary;
+      renderServiceSummary();
+    }
+
+    const quantityForDisplay = isService ? getRequestedServiceQuantity() : 1;
+    const displayPrice = isService ? getEffectivePriceForItem(game, quantityForDisplay) : Number(game.price ?? 0);
+    priceNode.textContent = formatPrice(displayPrice, game.currency || "IQD");
     activeCoupon = null;
     discountInfo.textContent = '';
     couponInput.value = '';
@@ -127,14 +181,18 @@ async function loadGameDetails() {
       if (!currentGame) return;
 
       const code = (couponInput.value || '').trim();
-      const priceValue = Number(currentGame.price || 0);
+      const isServiceItem = String(currentGame.product_type || '').toLowerCase() === 'service';
+      const quantity = isServiceItem ? getRequestedServiceQuantity() : 1;
+      const basePrice = Number(currentGame.price || 0);
+      const priceValue = isServiceItem ? Math.round(basePrice * (quantity / 1000)) : basePrice;
       let finalPrice = priceValue;
       if (activeCoupon && Number(activeCoupon.percent || 0) > 0) {
         finalPrice = Math.round(priceValue * (1 - Number(activeCoupon.percent) / 100));
       }
 
       const displayPrice = formatPrice(finalPrice, currentGame.currency || 'IQD');
-      const message = `أرغب بشراء: ${currentGame.name_ar} / ${currentGame.name_en} (ID:${currentGame.id})\nالسعر: ${displayPrice}\nرمز الكوبون: ${code || 'لا يوجد'}`;
+      const serviceText = isServiceItem ? `\nالكمية: ${quantity.toLocaleString('en-US')} ${currentGame.product_subtype || 'وحدة'}\nالسعر المحسوب: ${displayPrice}` : `\nالسعر: ${displayPrice}`;
+      const message = `أرغب بشراء: ${currentGame.name_ar} / ${currentGame.name_en} (ID:${currentGame.id})${serviceText}\nرمز الكوبون: ${code || 'لا يوجد'}`;
       const waNumber = '7713377783';
       const waUrl = `https://wa.me/${waNumber}?text=${encodeURIComponent(message)}`;
       const opened = window.open(waUrl, '_blank', 'noopener,noreferrer');

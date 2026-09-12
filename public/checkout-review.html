@@ -612,7 +612,12 @@
   function renderCheckout() {
     const items = getCartItems();
     const shipping = items.length ? 2500 : 0;
-    const subtotal = items.reduce((sum, item) => sum + Number(item.price || 0) * Number(item.qty || 1), 0);
+    const subtotal = items.reduce((sum, item) => {
+      const qty = Number(item.qty || 1);
+      const isServiceItem = String(item.product_type || '').toLowerCase() === 'service';
+      const lineTotal = isServiceItem ? Number(item.price || 0) * (qty / 1000) : Number(item.price || 0) * qty;
+      return sum + lineTotal;
+    }, 0);
     const discount = Math.round(subtotal * (couponPercent / 100));
     const total = subtotal + shipping - discount;
 
@@ -637,14 +642,15 @@
     checkoutItemsWrap.innerHTML = items.map((item, index) => {
       const name = item.name_ar || item.name_en || item.name || 'منتج';
       const qty = Number(item.qty || 1);
-      const price = Number(item.price || 0) * qty;
+      const isServiceItem = String(item.product_type || '').toLowerCase() === 'service';
+      const lineTotal = isServiceItem ? Number(item.price || 0) * (qty / 1000) : Number(item.price || 0) * qty;
       const thumb = item.cover_image_url || 'https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=800&q=80';
       return `
         <div class="item-row" style="animation-delay:${index * 0.08}s; --thumb-a:#3fa0d6; --thumb-b:#7d2fae;">
           <div class="thumb" style="background:linear-gradient(135deg, #3fa0d6, #7d2fae); background-image: url('${thumb}'); background-size:cover; background-position:center;"></div>
           <div class="item-info">
             <div class="item-name">${name}</div>
-            <div class="item-meta">الكمية: ${qty}</div>
+            <div class="item-meta">الكمية: ${qty.toLocaleString('en-US')}${isServiceItem ? ' وحدة' : ''}</div>
           </div>
           <div style="display:flex; align-items:center; gap:8px; margin-inline:10px;">
             <button type="button" data-action="minus" data-id="${item.id}" style="width:28px;height:28px;border-radius:8px;border:1px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.04);color:#fff;cursor:pointer;">-</button>
@@ -652,7 +658,7 @@
             <button type="button" data-action="plus" data-id="${item.id}" style="width:28px;height:28px;border-radius:8px;border:1px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.04);color:#fff;cursor:pointer;">+</button>
           </div>
           <button type="button" data-action="remove" data-id="${item.id}" style="padding:7px 10px;border-radius:8px;border:1px solid rgba(239,91,107,0.25);background:rgba(239,91,107,0.12);color:#ffc7cc;cursor:pointer;">حذف</button>
-          <div class="item-price">${priceFormat(price)}</div>
+          <div class="item-price">${priceFormat(lineTotal)}</div>
         </div>
       `;
     }).join('');
@@ -729,11 +735,17 @@
     const message = cartItems.map((item, index) => {
       const qty = Number(item.qty || 1);
       const name = item.name_ar || item.name_en || item.name || 'منتج';
-      const price = Number(item.price || 0) * qty;
-      return `${index + 1}. ${name} × ${qty} — ${price} د.ع`;
+      const isServiceItem = String(item.product_type || '').toLowerCase() === 'service';
+      const price = isServiceItem ? Number(item.price || 0) * (qty / 1000) : Number(item.price || 0) * qty;
+      const suffix = isServiceItem ? ` × ${qty.toLocaleString('en-US')} وحدة` : ` × ${qty}`;
+      return `${index + 1}. ${name}${suffix} — ${price} د.ع`;
     }).join('\n');
 
-    const subtotal = cartItems.reduce((sum, item) => sum + Number(item.price || 0) * Number(item.qty || 1), 0);
+    const subtotal = cartItems.reduce((sum, item) => {
+      const qty = Number(item.qty || 1);
+      const isServiceItem = String(item.product_type || '').toLowerCase() === 'service';
+      return sum + (isServiceItem ? Number(item.price || 0) * (qty / 1000) : Number(item.price || 0) * qty);
+    }, 0);
     const shipping = cartItems.length ? 2500 : 0;
     const discount = Math.round(subtotal * (couponPercent / 100));
     const total = subtotal + shipping - discount;

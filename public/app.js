@@ -670,6 +670,8 @@ function getCategoryMatches(game, category) {
       return !productType || productType === 'game';
     case 'subscriptions':
       return productType.includes('subscription') || productType.includes('sub') || genre.includes('ai') || genre.includes('platform');
+    case 'services':
+      return productType === 'service' || productType.includes('social') || name.includes('متابع') || name.includes('اعجاب') || name.includes('مشاهد');
     case 'playstation':
       return name.includes('playstation') || name.includes('ps ') || name.includes('sony');
     case 'xbox':

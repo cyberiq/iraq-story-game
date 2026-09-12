@@ -592,7 +592,8 @@ function bindEditButtons(companies, catalogCompanies) {
       // populate subtype/detail if present
       if (gameProductDetail) {
         gameProductDetail.value = selected.product_subtype || '';
-        productSubtypeLabel.style.display = selected.product_type === 'account' ? 'block' : 'none';
+        const shouldShowSubtype = selected.product_type === 'account' || selected.product_type === 'service';
+        productSubtypeLabel.style.display = shouldShowSubtype ? 'block' : 'none';
       }
       gameImageHint.textContent = currentGameImageUrl
         ? `الصورة الحالية: ${currentGameImageUrl}`
@@ -825,7 +826,7 @@ if (gameProductType) {
   gameProductType.addEventListener('change', () => {
     const v = String(gameProductType.value || '');
     if (productSubtypeLabel) {
-      productSubtypeLabel.style.display = v === 'account' ? 'block' : 'none';
+      productSubtypeLabel.style.display = (v === 'account' || v === 'service') ? 'block' : 'none';
     }
     // If product type is not a normal game, force IQD currency and update display
     if (v !== 'game') {
