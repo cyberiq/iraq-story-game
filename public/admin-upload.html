@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>رفع التطبيق | لوحة الإدارة</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="/styles.css" />
+    <style>
+      .upload-shell {
+        width: min(760px, 92vw);
+        margin: 42px auto 60px;
+        background: linear-gradient(180deg, rgba(12, 18, 25, 0.98), rgba(18, 25, 34, 0.98));
+        border: 1px solid rgba(148, 163, 184, 0.14);
+        border-radius: 24px;
+        box-shadow: 0 28px 60px rgba(0, 0, 0, 0.35);
+        padding: 24px;
+      }
+
+      .upload-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        flex-wrap: wrap;
+        margin-bottom: 18px;
+      }
+
+      #uploadForm {
+        display: grid;
+        gap: 16px;
+      }
+
+      .upload-form-grid {
+        display: grid;
+        gap: 14px;
+      }
+
+      .upload-list {
+        margin-top: 18px;
+        display: grid;
+        gap: 10px;
+      }
+
+      .upload-item {
+        border: 1px solid rgba(148, 163, 184, 0.12);
+        padding: 12px 14px;
+        border-radius: 14px;
+        background: rgba(15, 23, 31, 0.96);
+      }
+
+      .upload-item strong {
+        display: block;
+        margin-bottom: 4px;
+      }
+    </style>
+  </head>
+  <body>
+    <main class="upload-shell">
+      <div class="upload-header">
+        <h1>رفع التطبيق</h1>
+        <div class="topbar-actions">
+          <a class="btn-secondary" href="/admin-panel">العودة للواجهة الإدارية</a>
+          <a class="btn-secondary" href="/admin">لوحة الإدارة</a>
+        </div>
+      </div>
+
+      <section id="uploadStatus" class="status" aria-live="polite"></section>
+
+      <form id="uploadForm" enctype="multipart/form-data">
+        <div class="upload-form-grid">
+          <label>
+            <span>عنوان التطبيق</span>
+            <input name="title" id="appTitle" required placeholder="مثال: تطبيق متجر العراق" />
+          </label>
+
+          <label>
+            <span>وصف التطبيق</span>
+            <textarea name="description" id="appDescription" rows="4" placeholder="وصف مختصر للتطبيق"></textarea>
+          </label>
+
+          <label>
+            <span>رفع صورة أو ملف التطبيق</span>
+            <input type="file" name="appFile" id="appFile" accept="image/*" />
+          </label>
+
+          <label>
+            <span>أو رابط مباشر</span>
+            <input type="url" name="fileUrl" id="fileUrl" placeholder="https://example.com/app.png" />
+          </label>
+        </div>
+
+        <div class="form-actions">
+          <button type="submit" class="btn-primary">حفظ التطبيق</button>
+          <button type="button" id="resetUploadBtn" class="btn-secondary">إلغاء</button>
+        </div>
+      </form>
+
+      <div class="upload-list" id="uploadList"></div>
+    </main>
+
+    <script>
+      const statusNode = document.getElementById('uploadStatus');
+      const uploadForm = document.getElementById('uploadForm');
+      const uploadList = document.getElementById('uploadList');
+
+      function setStatus(message, isError = false) {
+        statusNode.textContent = message;
+        statusNode.style.color = isError ? '#fca5a5' : '#a7f3d0';
+      }
+
+      async function getCsrfToken() {
+        const response = await fetch('/api/csrf-token', { credentials: 'same-origin' });
+        const payload = await response.json().catch(() => ({}));
+        if (!response.ok || !payload.csrfToken) {
+          throw new Error('فشل في جلب رمز الحماية');
+        }
+        return payload.csrfToken;
+      }
+
+      async function loadUploads() {
+        try {
+          const response = await fetch('/api/admin/uploads', { credentials: 'same-origin' });
+          const payload = await response.json().catch(() => ({ uploads: [] }));
+          if (!response.ok) {
+            throw new Error(payload.error || 'فشل في تحميل التطبيقات');
+          }
+
+          const uploads = Array.isArray(payload.uploads) ? payload.uploads : [];
+          uploadList.innerHTML = uploads.length
+            ? uploads.map((item) => `
+                <div class="upload-item">
+                  <strong>${(item.title || 'تطبيق بدون عنوان').replace(/</g, '&lt;')}</strong>
+                  <div>${(item.description || 'بدون وصف').replace(/</g, '&lt;')}</div>
+                  <div style="margin-top:8px; word-break: break-all; color:#a9b4c7;">${(item.fileUrl || '').replace(/</g, '&lt;')}</div>
+                </div>
+              `).join('')
+            : '<div class="upload-item">لا توجد تطبيقات محفوظة بعد.</div>';
+        } catch (error) {
+          uploadList.innerHTML = '<div class="upload-item">تعذر تحميل قائمة التطبيقات.</div>';
+        }
+      }
+
+      uploadForm.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        setStatus('جاري حفظ التطبيق...');
+
+        try {
+          const csrfToken = await getCsrfToken();
+          const formData = new FormData(uploadForm);
+          const response = await fetch('/api/admin/upload-app', {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: { 'X-CSRF-Token': csrfToken },
+            body: formData
+          });
+
+          const payload = await response.json().catch(() => ({}));
+          if (!response.ok) {
+            throw new Error(payload.error || 'فشل في حفظ التطبيق');
+          }
+
+          setStatus('تم حفظ التطبيق بنجاح.');
+          uploadForm.reset();
+          await loadUploads();
+        } catch (error) {
+          setStatus(error.message || 'تعذر حفظ التطبيق.', true);
+        }
+      });
+
+      document.getElementById('resetUploadBtn').addEventListener('click', () => {
+        uploadForm.reset();
+        setStatus('تم إلغاء النموذج.');
+      });
+
+      loadUploads();
+    </script>
+  </body>
+</html>

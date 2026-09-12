@@ -41,6 +41,7 @@ const fallbackDataPath = path.join(__dirname, "data", "fallback-data.json");
 const adminSettingsPath = path.join(__dirname, "data", "admin-settings.json");
 const couponsPath = path.join(__dirname, "data", "coupons.json");
 const todayOffersPath = path.join(__dirname, "data", "today-offers.json");
+const appUploadsPath = path.join(__dirname, "data", "app-uploads.json");
 let databaseReady = false;
 
 
@@ -78,6 +79,10 @@ function ensureDataFiles() {
   if (!fs.existsSync(todayOffersPath)) {
     fs.writeFileSync(todayOffersPath, JSON.stringify([], null, 2));
   }
+
+  if (!fs.existsSync(appUploadsPath)) {
+    fs.writeFileSync(appUploadsPath, JSON.stringify([], null, 2));
+  }
 }
 
 function readJsonFile(filePath, fallbackValue) {
@@ -104,6 +109,7 @@ function saveAdminSettings() {
 
 let runtimeCoupons = readJsonFile(couponsPath, []);
 let runtimeTodayOffers = readJsonFile(todayOffersPath, []);
+let runtimeAppUploads = readJsonFile(appUploadsPath, []);
 
 function saveCouponsFile() {
   writeJsonFile(couponsPath, runtimeCoupons);
@@ -111,6 +117,10 @@ function saveCouponsFile() {
 
 function saveTodayOffersFile() {
   writeJsonFile(todayOffersPath, runtimeTodayOffers);
+}
+
+function saveAppUploadsFile() {
+  writeJsonFile(appUploadsPath, runtimeAppUploads);
 }
 
 function normalizeOfferRecord(item) {
@@ -219,10 +229,22 @@ const apiRateLimiter = rateLimit({
 
 const authRateLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 10,
+  max: 20,
   standardHeaders: true,
   legacyHeaders: false,
   message: { error: 'تم تجاوز عدد محاولات تسجيل الدخول. حاول لاحقًا.' },
+  keyGenerator: (req) => {
+    const ip = req.ip || req.socket?.remoteAddress || 'unknown';
+    return ipKeyGenerator(ip);
+  }
+});
+
+const adminUploadRateLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 20,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'تم تجاوز الحد المسموح للمحاولات. حاول مرة أخرى لاحقًا.' },
   keyGenerator: (req) => {
     const ip = req.ip || req.socket?.remoteAddress || 'unknown';
     return ipKeyGenerator(ip);
@@ -280,6 +302,14 @@ function requireAdminPage(req, res, next) {
 // Unauthenticated access to admin pages/assets should appear as a 404 instead of exposing the path.
 app.get('/admin', requireAdminPage, (req, res) => {
   return res.sendFile(path.join(__dirname, 'public', 'admin.html'));
+});
+
+app.get('/admin-panel', requireAdminPage, (req, res) => {
+  return res.sendFile(path.join(__dirname, 'public', 'admin-panel.html'));
+});
+
+app.get('/admin/upload', requireAdminPage, (req, res) => {
+  return res.sendFile(path.join(__dirname, 'public', 'admin-upload.html'));
 });
 
 app.get('/admin.html', requireAdminPage, (req, res) => {
@@ -540,7 +570,7 @@ app.post("/api/auth/login", (req, res) => {
   const ip = (req.ip || req.connection.remoteAddress || 'unknown').toString();
   const now = Date.now();
   const LOCK_DURATION_MS = Number(process.env.LOGIN_LOCK_MS || 10 * 60 * 1000); // default 10 minutes
-  const MAX_ATTEMPTS = Number(process.env.LOGIN_MAX_ATTEMPTS || 5);
+  const MAX_ATTEMPTS = Number(process.env.LOGIN_MAX_ATTEMPTS || 20);
 
   if (!loginAttemptsByIp[ip]) {
     loginAttemptsByIp[ip] = { attempts: 0, lockUntil: 0 };
@@ -606,6 +636,42 @@ app.post("/api/auth/logout", requireCsrf, (req, res) => {
     res.clearCookie("connect.sid");
     res.json({ ok: true });
   });
+});
+
+app.get('/api/admin/uploads', requireAdmin, (req, res) => {
+  return res.json({ uploads: runtimeAppUploads });
+});
+
+app.post('/api/admin/upload-app', adminUploadRateLimiter, requireAdmin, requireCsrf, upload.single('appFile'), (req, res) => {
+  try {
+    const title = String(req.body?.title || '').trim();
+    const description = String(req.body?.description || '').trim();
+    const fileUrl = req.file ? `/uploads/${req.file.filename}` : String(req.body?.fileUrl || '').trim();
+
+    if (!title) {
+      return res.status(400).json({ error: 'عنوان التطبيق مطلوب.' });
+    }
+
+    if (!fileUrl) {
+      return res.status(400).json({ error: 'يجب رفع ملف أو إدخال رابط التطبيق.' });
+    }
+
+    const record = {
+      id: Date.now(),
+      title,
+      description: description || 'بدون وصف',
+      fileUrl,
+      uploadedAt: new Date().toISOString(),
+      uploadedBy: 'admin'
+    };
+
+    runtimeAppUploads.unshift(record);
+    saveAppUploadsFile();
+    return res.json({ ok: true, message: 'تم حفظ التطبيق بنجاح.', upload: record });
+  } catch (error) {
+    console.error('Failed to store app upload', error);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
 });
 
 // Coupons - admin management
