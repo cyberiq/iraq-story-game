@@ -657,7 +657,7 @@
 
   function renderCheckout() {
     const items = getCartItems();
-    const shipping = items.length ? 2500 : 0;
+    const shipping = 0;
     const subtotal = items.reduce((sum, item) => sum + getItemLineTotal(item), 0);
     const discount = Math.round(subtotal * (couponPercent / 100));
     const total = subtotal + shipping - discount;
@@ -785,7 +785,7 @@
     }).join('\n');
 
     const subtotal = cartItems.reduce((sum, item) => sum + getItemLineTotal(item), 0);
-    const shipping = cartItems.length ? 2500 : 0;
+    const shipping = 0;
     const discount = Math.round(subtotal * (couponPercent / 100));
     const total = subtotal + shipping - discount;
     const fullMessage = `طلب شراء جديد:\n${message}\n\nالمجموع الفرعي: ${subtotal} د.ع\nالشحن: ${shipping} د.ع\nالخصم: ${discount} د.ع\nالإجمالي: ${total} د.ع`;

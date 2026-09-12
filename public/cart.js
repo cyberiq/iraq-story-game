@@ -83,7 +83,7 @@ function getLocalCartItems() {
 
 function renderSummary(items) {
   const subtotal = items.reduce((sum, item) => sum + Number(item.price || 0) * Number(item.qty || 1), 0);
-  const shipping = items.length ? 2500 : 0;
+  const shipping = 0;
   const total = subtotal + shipping;
   summarySubtotal.textContent = formatPrice(subtotal, 'IQD');
   summaryShipping.textContent = formatPrice(shipping, 'IQD');
