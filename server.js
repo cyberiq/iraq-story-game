@@ -308,7 +308,15 @@ app.get('/admin-panel', requireAdminPage, (req, res) => {
   return res.sendFile(path.join(__dirname, 'public', 'admin-panel.html'));
 });
 
+app.get('/admin-panel.html', requireAdminPage, (req, res) => {
+  return res.sendFile(path.join(__dirname, 'public', 'admin-panel.html'));
+});
+
 app.get('/admin/upload', requireAdminPage, (req, res) => {
+  return res.sendFile(path.join(__dirname, 'public', 'admin-upload.html'));
+});
+
+app.get('/admin-upload.html', requireAdminPage, (req, res) => {
   return res.sendFile(path.join(__dirname, 'public', 'admin-upload.html'));
 });
 

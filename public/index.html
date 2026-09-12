@@ -136,6 +136,24 @@
         font-weight: 800;
       }
 
+      .admin-home-link {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 138px;
+        padding: 10px 14px;
+        border-radius: 12px;
+        background: linear-gradient(135deg, rgba(139, 92, 246, 0.22), rgba(51, 224, 200, 0.22));
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        color: var(--white);
+        font-size: 13px;
+        font-weight: 700;
+      }
+
+      .admin-home-link.hidden {
+        display: none;
+      }
+
       .brand-mark {
         width: 34px;
         height: 34px;
@@ -467,6 +485,8 @@
           <div class="brand-mark">IQ</div>
           <span>Iraq Game</span>
         </div>
+
+        <a id="adminHomeLink" class="admin-home-link hidden" href="/admin">العودة إلى الإدارة</a>
       </div>
 
       <nav class="category-bar" aria-label="التصنيفات">
@@ -526,5 +546,21 @@
 
     <script src="/cart-widget.js" defer></script>
     <script src="/app.js" defer></script>
+    <script>
+      (async function () {
+        const adminHomeLink = document.getElementById('adminHomeLink');
+        if (!adminHomeLink) return;
+
+        try {
+          const response = await fetch('/api/auth/status', { credentials: 'same-origin' });
+          const payload = await response.json().catch(() => ({ authenticated: false }));
+          if (response.ok && payload.authenticated) {
+            adminHomeLink.classList.remove('hidden');
+          }
+        } catch (error) {
+          adminHomeLink.classList.add('hidden');
+        }
+      })();
+    </script>
   </body>
 </html>
