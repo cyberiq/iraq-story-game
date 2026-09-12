@@ -24,10 +24,29 @@ function formatPrice(value, currency = 'IQD') {
   return `${v.toLocaleString('en-US')} ${label}`;
 }
 
+function mergeCartEntries(items) {
+  const merged = new Map();
+  for (const item of Array.isArray(items) ? items : []) {
+    if (!item || (!item.id && !item.name)) continue;
+    const key = String(item.id || item.name || 'item');
+    if (!merged.has(key)) {
+      merged.set(key, { ...item, qty: Number(item.qty || 1) });
+      continue;
+    }
+
+    const existing = merged.get(key);
+    existing.qty = Number(existing.qty || 0) + Number(item.qty || 1);
+    existing.price = Number(item.price || existing.price || 0);
+    if (item.name) existing.name = item.name;
+    if (item.product_type) existing.product_type = item.product_type;
+    if (item.product_subtype) existing.product_subtype = item.product_subtype;
+    if (item.cover_image_url) existing.cover_image_url = item.cover_image_url;
+  }
+  return Array.from(merged.values());
+}
+
 function getLocalCartItems() {
   try {
-    const seen = new Set();
-    const merged = [];
     const namespacedKey = `${sessionStorage.getItem('iraqGameSessionNs') || 'iraqGame_default'}:iraqGameCart`;
     const sources = [
       localStorage.getItem('iraqGameCart'),
@@ -36,24 +55,20 @@ function getLocalCartItems() {
       sessionStorage.getItem(namespacedKey)
     ];
 
+    const merged = [];
     for (const raw of sources) {
       if (!raw) continue;
       const parsed = JSON.parse(raw);
-      if (!Array.isArray(parsed)) continue;
-      for (const item of parsed) {
-        const signature = `${item.id || item.name || 'item'}:${item.qty || 1}`;
-        if (!seen.has(signature)) {
-          seen.add(signature);
-          merged.push(item);
-        }
-      }
+      if (Array.isArray(parsed)) merged.push(...parsed);
     }
 
-    if (merged.length) {
-      localStorage.setItem('iraqGameCart', JSON.stringify(merged));
-      sessionStorage.setItem('iraqGameCart', JSON.stringify(merged));
-      sessionStorage.setItem(namespacedKey, JSON.stringify(merged));
-      return merged;
+    const normalized = mergeCartEntries(merged);
+    if (normalized.length) {
+      const payload = JSON.stringify(normalized);
+      localStorage.setItem('iraqGameCart', payload);
+      sessionStorage.setItem('iraqGameCart', payload);
+      sessionStorage.setItem(namespacedKey, payload);
+      return normalized;
     }
 
     return [];

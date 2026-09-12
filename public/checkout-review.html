@@ -556,50 +556,48 @@
     }
   }
 
-  function getCartItems() {
-    try {
-      const seen = new Set();
-      const merged = [];
-      const storageKeys = [
-        `${sessionStorage.getItem('iraqGameSessionNs') || 'iraqGame_default'}:iraqGameCart`,
-        'iraqGameCart',
-        'iraqGameCart'
-      ];
-
-      for (const key of storageKeys) {
-        const rawLocal = localStorage.getItem(key);
-        if (rawLocal) {
-          const parsed = JSON.parse(rawLocal);
-          if (Array.isArray(parsed)) {
-            for (const item of parsed) {
-              const signature = `${item.id || item.name || 'item'}:${item.qty || 1}`;
-              if (!seen.has(signature)) {
-                seen.add(signature);
-                merged.push(item);
-              }
-            }
-          }
-        }
-
-        const rawSession = sessionStorage.getItem(key);
-        if (rawSession) {
-          const parsed = JSON.parse(rawSession);
-          if (Array.isArray(parsed)) {
-            for (const item of parsed) {
-              const signature = `${item.id || item.name || 'item'}:${item.qty || 1}`;
-              if (!seen.has(signature)) {
-                seen.add(signature);
-                merged.push(item);
-              }
-            }
-          }
-        }
+  function mergeCartEntries(items) {
+    const merged = new Map();
+    for (const item of Array.isArray(items) ? items : []) {
+      if (!item || (!item.id && !item.name)) continue;
+      const key = String(item.id || item.name || 'item');
+      if (!merged.has(key)) {
+        merged.set(key, { ...item, qty: Number(item.qty || 1) });
+        continue;
       }
 
-      if (merged.length) {
-        localStorage.setItem('iraqGameCart', JSON.stringify(merged));
-        try { sessionStorage.setItem('iraqGameCart', JSON.stringify(merged)); } catch (_) {}
-        return merged;
+      const existing = merged.get(key);
+      existing.qty = Number(existing.qty || 0) + Number(item.qty || 1);
+      existing.price = Number(item.price || existing.price || 0);
+      if (item.name) existing.name = item.name;
+      if (item.product_type) existing.product_type = item.product_type;
+      if (item.product_subtype) existing.product_subtype = item.product_subtype;
+      if (item.cover_image_url) existing.cover_image_url = item.cover_image_url;
+    }
+    return Array.from(merged.values());
+  }
+
+  function getCartItems() {
+    try {
+      const namespacedKey = `${sessionStorage.getItem('iraqGameSessionNs') || 'iraqGame_default'}:iraqGameCart`;
+      const sources = [
+        localStorage.getItem(namespacedKey),
+        sessionStorage.getItem(namespacedKey),
+        localStorage.getItem('iraqGameCart'),
+        sessionStorage.getItem('iraqGameCart')
+      ];
+
+      const merged = [];
+      for (const raw of sources) {
+        if (!raw) continue;
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed)) merged.push(...parsed);
+      }
+
+      const normalized = mergeCartEntries(merged);
+      if (normalized.length) {
+        saveCartItems(normalized);
+        return normalized;
       }
 
       return [];
@@ -610,11 +608,13 @@
 
   function saveCartItems(items) {
     const namespacedKey = `${sessionStorage.getItem('iraqGameSessionNs') || 'iraqGame_default'}:iraqGameCart`;
-    localStorage.setItem('iraqGameCart', JSON.stringify(items));
-    localStorage.setItem(namespacedKey, JSON.stringify(items));
+    const normalized = mergeCartEntries(items);
+    const stored = JSON.stringify(normalized);
+    localStorage.setItem('iraqGameCart', stored);
+    localStorage.setItem(namespacedKey, stored);
     try {
-      sessionStorage.setItem('iraqGameCart', JSON.stringify(items));
-      sessionStorage.setItem(namespacedKey, JSON.stringify(items));
+      sessionStorage.setItem('iraqGameCart', stored);
+      sessionStorage.setItem(namespacedKey, stored);
     } catch (error) {
       // Ignore storage write issues in restrictive browsers.
     }
