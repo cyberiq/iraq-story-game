@@ -321,6 +321,13 @@ app.get('/index.html', (req, res) => {
 
 // Serve game page without .html suffix (friendly URL: /game?id=123)
 app.get('/game', (req, res) => {
+  const rawId = req.query && req.query.id;
+  const parsedId = Number(rawId);
+
+  if (rawId === undefined || rawId === null || String(rawId).trim() === '' || !Number.isInteger(parsedId) || parsedId <= 0) {
+    return res.status(404).sendFile(path.join(__dirname, 'public', '404.html'));
+  }
+
   return res.sendFile(path.join(__dirname, 'public', 'game.html'));
 });
 

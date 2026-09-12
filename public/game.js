@@ -50,7 +50,7 @@ function getGameIdFromQuery() {
 async function loadGameDetails() {
   const gameId = getGameIdFromQuery();
   if (!Number.isInteger(gameId) || gameId <= 0) {
-    applyBackgroundOnlyMode();
+    window.location.replace('/404.html');
     return;
   }
 
@@ -60,7 +60,7 @@ async function loadGameDetails() {
     const response = await fetch(`/api/games/${gameId}`);
     if (!response.ok) {
       if (response.status === 404) {
-        setStatus("لم يتم العثور على اللعبة المطلوبة.");
+        window.location.replace('/404.html');
         return;
       }
 
